@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.0.6). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.0.7). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -56,7 +56,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.0.6"; // voir CHANGELOG.md
+const VERSION = "0.9.0.7"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -222,6 +222,22 @@ function noteRefDisplays(tableId, rows) {
 }
 
 /* ---------- Métadonnées de mise en page ---------- */
+/* Diagnostic de lenteur : chaque lecture de table (fetchTable) est chronométrée ; les lectures de plus de
+   200 ms sont signalées dans la console du navigateur (F12), avec le total au premier affichage. */
+S.fetchLog = [];
+{
+  const orig = grist.docApi.fetchTable.bind(grist.docApi);
+  grist.docApi.fetchTable = async (tableId, ...rest) => {
+    const t0 = performance.now();
+    try {
+      return await orig(tableId, ...rest);
+    } finally {
+      const ms = Math.round(performance.now() - t0);
+      S.fetchLog.push([tableId, ms]);
+      if (ms > 200) console.info(`[UX widget] lecture de ${tableId} : ${ms} ms`);
+    }
+  };
+}
 async function loadMeta() {
   const names = [
     "_grist_Tables",
@@ -5982,6 +5998,15 @@ async function init() {
     if (hit) S.cfg = { ...DEFAULTS, ...hit.cfg, name: hit.name };
     S.ready = true;
     await render();
+    const tot = S.fetchLog.reduce((x, [, ms]) => x + ms, 0);
+    console.info(
+      `[UX widget] premier chargement : ${S.fetchLog.length} lectures de tables, ${tot} ms cumulés — les plus longues : ` +
+        [...S.fetchLog]
+          .sort((x, y) => y[1] - x[1])
+          .slice(0, 5)
+          .map(([t, ms]) => `${t} ${ms} ms`)
+          .join(", "),
+    );
   } catch (e) {
     status(e.message || String(e), true);
   }

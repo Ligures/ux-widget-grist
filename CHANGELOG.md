@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.0.7] — Diagnostic des lenteurs de chargement — 2026-10-18
+
+### Ajouté
+- **Diagnostic de chargement** dans la console du navigateur (F12) : chaque lecture de table de plus de 200 ms est signalée. Au premier affichage, une ligne récapitule le nombre de lectures, le temps cumulé et les cinq lectures les plus longues. Utile pour voir si une règle d'accès ralentit la lecture d'une table.
+
 ## [0.9.0.6] — Ajout de lignes dans un tableau modifiable — 2026-10-17
 
 ### Ajouté
