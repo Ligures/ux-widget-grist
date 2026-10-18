@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.0.7). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.0.8). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -56,7 +56,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.0.7"; // voir CHANGELOG.md
+const VERSION = "0.9.0.8"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -189,7 +189,9 @@ function fetchRows(tableId) {
         return rows;
       })
       .catch((e) => {
-        delete S.cache[tableId];
+        // table interdite par les règles d'accès : le refus est mémorisé jusqu'au prochain « Actualiser »
+        // (sinon elle serait redemandée au serveur à chaque sélection, ce qui peut prendre plusieurs secondes)
+        if (!/access|acc[eè]s|permission|denied|blocked/i.test(String(e?.message || e))) delete S.cache[tableId];
         throw e;
       });
   }

@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.0.8] — Tables interdites lues une seule fois — 2026-10-18
+
+### Corrigé
+- **Lenteurs pour les utilisateurs soumis à des règles d'accès** : une table interdite en lecture était redemandée au serveur à chaque affichage, donc à chaque changement de page et à chaque sélection. C'était le cas d'une table référencée par une colonne Référence, par exemple `U_Utilisateurs` derrière une colonne « Utilisateurs autorisés ». Chaque refus pouvait prendre plusieurs secondes. Le refus est désormais mémorisé jusqu'au prochain « Actualiser ».
+
 ## [0.9.0.7] — Diagnostic des lenteurs de chargement — 2026-10-18
 
 ### Ajouté
