@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.0.8). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.0.9). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -56,7 +56,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.0.8"; // voir CHANGELOG.md
+const VERSION = "0.9.0.9"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -161,11 +161,25 @@ const groupBy = (arr, key) => {
   return m;
 };
 // status — Affiche un message dans la zone d'état sous l'en-tête (err = en rouge).
+// Bulle flottante : un message en cours (« … ») reste affiché jusqu'à la fin ; une information s'efface
+// seule après 4 s, une erreur après 12 s (ou au clic).
+let statusTimer = null;
 function status(msg, err = false) {
   const el = $("#status");
+  clearTimeout(statusTimer);
   el.textContent = msg || "";
   el.className = err ? "err" : "";
+  el.title = msg && err ? `${msg} (cliquer pour fermer)` : msg || "";
+  if (!msg || (!err && /…$/.test(msg))) return;
+  statusTimer = setTimeout(
+    () => {
+      el.classList.add("fade");
+      statusTimer = setTimeout(() => (el.textContent = ""), 400);
+    },
+    err ? 12000 : 4000,
+  );
 }
+$("#status").addEventListener("click", () => status(""));
 
 // toRows — Convertit le format colonnes de fetchTable ({col: [valeurs]}) en tableau de lignes [{id, col…}].
 function toRows(tbl) {

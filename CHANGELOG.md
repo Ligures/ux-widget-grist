@@ -16,6 +16,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.0.9] — Messages en bulle flottante — 2026-10-18
+
+### Modifié
+- **Messages** (chargement, filtre appliqué, erreurs) : ils s'affichent dans une petite bulle discrète en haut au centre, entre le menu des pages et la barre d'outils, et ne décalent plus la page.
+  - Un message en cours (« Calcul en cours… ») reste affiché jusqu'à la fin du traitement.
+  - Une information s'efface seule après 4 s.
+  - Une erreur s'efface après 12 s, ou plus tôt d'un clic.
+
 ## [0.9.0.8] — Tables interdites lues une seule fois — 2026-10-18
 
 ### Corrigé

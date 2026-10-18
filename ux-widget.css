@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.0.8).
+/* UX widget grist — feuilles de style (version 0.9.0.9).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -440,12 +440,39 @@ button {
 .icon-btn:hover {
   background: var(--bleu-hover);
 }
+/* messages (chargement, filtre appliqué, erreurs) : petite bulle discrète en haut au centre, entre le menu
+   des pages et la barre d'outils ; elle flotte au-dessus de la page et ne décale plus l'affichage */
 #status {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  max-width: min(46vw, 520px);
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--bord);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   color: var(--muet);
-  padding: 4px 2px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+  pointer-events: none;
+  transition: opacity 0.4s;
 }
 #status.err {
   color: var(--rouge);
+  border-color: var(--rouge);
+  opacity: 1;
+  pointer-events: auto; /* un clic ferme le message d'erreur */
+  cursor: pointer;
+  white-space: normal;
+}
+#status.fade {
+  opacity: 0;
 }
 #status:empty {
   display: none;
