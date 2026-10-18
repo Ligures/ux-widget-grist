@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.0.10). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.0). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -56,7 +56,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.0.10"; // voir CHANGELOG.md
+const VERSION = "0.9.1.0"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -163,9 +163,14 @@ const groupBy = (arr, key) => {
 // status — Affiche un message dans la zone d'état sous l'en-tête (err = en rouge).
 // Bulle flottante : un message en cours (« … ») reste affiché jusqu'à la fin ; une information s'efface
 // seule après 4 s, une erreur après 12 s (ou au clic).
-let statusTimer = null;
-function status(msg, err = false) {
+let statusTimer = null,
+  statusErrUntil = 0;
+function status(msg, err = false, force = false) {
   const el = $("#status");
+  // une erreur (modification refusée…) reste lisible au moins 4 s : le réaffichage de la page, qui efface la
+  // ligne d'état ou affiche « Calcul en cours… », ne la remplace pas avant (seule une autre erreur le peut)
+  if (!force && !err && Date.now() < statusErrUntil) return;
+  if (err) statusErrUntil = Date.now() + 4000;
   clearTimeout(statusTimer);
   el.textContent = msg || "";
   el.className = err ? "err" : "";
@@ -176,10 +181,13 @@ function status(msg, err = false) {
       el.classList.add("fade");
       statusTimer = setTimeout(() => (el.textContent = ""), 400);
     },
-    err ? 12000 : 4000,
+    err ? 8000 : 4000,
   );
 }
-$("#status").addEventListener("click", () => status(""));
+$("#status").addEventListener("click", () => {
+  statusErrUntil = 0;
+  status("", false, true);
+});
 
 // toRows — Convertit le format colonnes de fetchTable ({col: [valeurs]}) en tableau de lignes [{id, col…}].
 function toRows(tbl) {

@@ -9,12 +9,19 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 **Numérotation** : le widget est en développement, donc en version 0.
 - Le **dixième** (`0.X`) marque une évolution majeure.
 - Le chiffre suivant (`0.X.Y`) marque une évolution secondaire ou un ensemble de corrections. Il peut dépasser 9 : 0.8.9 est suivie de 0.8.10, puis 0.8.11…
-- Depuis 0.8.10, un quatrième chiffre (`0.X.Y.Z`) change à chaque livraison intermédiaire : 0.8.10.1, 0.8.10.2… jusqu'au passage à 0.8.11.0.
+- Depuis 0.8.10, un quatrième chiffre (`0.X.Y.Z`) change à chaque livraison intermédiaire : 0.9.0.1, 0.9.0.2… jusqu'au passage au palier suivant (0.9.1.0).
 - La version 1.0 sera la première version stable.
 
 Les versions antérieures à 0.5.0 ont été développées avant la mise en dépôt du code. Leur numérotation est reconstituée a posteriori, et leurs dates ne sont pas connues précisément (septembre – début octobre 2026).
 
 ---
+
+## [0.9.1.0] — Messages d'erreur lisibles — 2026-10-18
+
+Version de palier : elle regroupe les évolutions 0.9.0.1 à 0.9.0.10 (impression fidèle à l'écran, ajout et suppression de lignes, messages en bulle flottante, infobulles du menu, chargement plus rapide avec des règles d'accès).
+
+### Corrigé
+- **Messages de refus** (« Modification refusée par les règles d'accès », ajout ou suppression refusés…) : le réaffichage de la page les effaçait aussitôt. Ils restent maintenant visibles au moins 4 s et s'effacent d'eux-mêmes après 8 s, ou plus tôt d'un clic.
 
 ## [0.9.0.10] — Suppression de lignes, infobulles du menu — 2026-10-18
 
