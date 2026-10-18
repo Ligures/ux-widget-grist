@@ -16,6 +16,15 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.0.10] — Suppression de lignes, infobulles du menu — 2026-10-18
+
+### Ajouté
+- **Suppression de lignes**, dans les blocs qui proposent l'ajout : bouton **− Supprimer la ligne** à côté de « + Ajouter une ligne ». Il agit sur la ligne sélectionnée, après confirmation dans le bouton lui-même (second clic dans les 4 s, ligne surlignée en rouge). Les règles d'accès de Grist s'appliquent : une suppression interdite est refusée avec un message. L'option du bloc s'appelle désormais « Ajout et suppression de lignes ».
+- **Infobulle des liens du menu** : nouveau champ « Infobulle » pour chaque lien de la navigation. Sans infobulle, le survol montre l'adresse de la page ; avec « Changer de page dans le widget », il ne montre plus rien.
+
+### Corrigé
+- Le message « Ligne ajoutée » s'affiche après le réaffichage de la page ; avant, il était effacé tout de suite.
+
 ## [0.9.0.9] — Messages en bulle flottante — 2026-10-18
 
 ### Modifié

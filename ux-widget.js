@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.0.9). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.0.10). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -56,7 +56,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.0.9"; // voir CHANGELOG.md
+const VERSION = "0.9.0.10"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -1626,7 +1626,10 @@ const blockEditable = (secId) => S.canEdit && !!S.cfg.blocks.find((x) => x.id ==
 const blockAddable = (b, info) =>
   S.canEdit && !!b?.editable && !!b?.addable && ["record", "detail"].includes(info?.kind);
 // addBtn — Bouton d'ajout d'une ligne en bas du bloc.
-const addBtn = (b) => `<button class="addrow" data-addrow="${b.id}" title="Ajouter un enregistrement dans la table">+ Ajouter une ligne</button>`;
+const addBtn = (b, del = true) =>
+  `<div class="rowbtns"><button class="addrow" data-addrow="${b.id}" title="Ajouter un enregistrement dans la table">+ Ajouter une ligne</button>` +
+  (del ? "" : "</div>") +
+  (!del ? "" : `<button class="addrow delrow" data-delrow="${b.id}" title="Supprimer la ligne sélectionnée (deux clics : le premier demande confirmation)">− Supprimer la ligne</button></div>`);
 // edAttr — Attributs HTML qui rendent une cellule éditable (double-clic).
 const edAttr = (on, f, row) =>
   on && isEditableCol(f.col)
@@ -3786,7 +3789,7 @@ async function render() {
           const el = blockShell(b, info, KIND[info.kind], qfCtl); // le filtre reste affiché pour revenir à « Tous »
           el.classList.add("empty");
           el.querySelector(".bb").textContent = "Aucune donnée";
-          if (blockAddable(b, info)) el.querySelector(".bb").insertAdjacentHTML("beforeend", addBtn(b));
+          if (blockAddable(b, info)) el.querySelector(".bb").insertAdjacentHTML("beforeend", addBtn(b, false));
           frag.append(el);
           continue;
         }
@@ -4178,8 +4181,8 @@ async function addRow(secId, btn) {
       }
     if (rid) S.sel[secId] = rid;
     S.search[secId] = ""; // la nouvelle ligne (vide) ne serait pas trouvée par la recherche
-    status("Ligne ajoutée");
     scheduleRender();
+    setTimeout(() => status("Ligne ajoutée"), 400);
     // après l'affichage : on se place sur la nouvelle ligne et on ouvre la saisie du premier champ
     for (let i = 0; rid && i < 30; i++) {
       await new Promise((r) => setTimeout(r, 100));
@@ -4201,9 +4204,54 @@ async function addRow(secId, btn) {
     btn.disabled = false;
   }
 }
+// delRow — Supprime la ligne sélectionnée du bloc (RemoveRecord). Premier clic : demande de confirmation dans le
+// bouton lui-même (pas de fenêtre) ; second clic dans les 4 s : suppression. Les règles d'accès de Grist s'appliquent.
+async function delRow(secId, btn) {
+  const b = S.cfg.blocks.find((x) => x.id === secId),
+    info = getInfo(secId);
+  if (!blockAddable(b, info)) return;
+  const tr = document.querySelector(`#grid .block[data-sec="${secId}"] .sel[data-row]`);
+  const rid = Number(tr?.dataset.row) || 0;
+  if (!rid) return status("Sélectionner d'abord la ligne à supprimer (clic sur la ligne).");
+  if (!btn.classList.contains("confirm")) {
+    btn.classList.add("confirm");
+    btn.textContent = "Confirmer la suppression ?";
+    tr.classList.add("todel");
+    setTimeout(() => {
+      btn.classList.remove("confirm");
+      btn.textContent = "− Supprimer la ligne";
+      tr.classList.remove("todel");
+    }, 4000);
+    return;
+  }
+  btn.disabled = true;
+  try {
+    await grist.docApi.applyUserActions([["RemoveRecord", info.tableId, rid]]);
+    const ref = info.sec.tableRef;
+    for (const [id, t] of S.meta.tables)
+      if (id === ref || t.summarySourceTable === ref) {
+        delete S.cache[t.tableId];
+        delete S.byId[t.tableId];
+      }
+    delete S.sel[secId];
+    scheduleRender();
+    setTimeout(() => status("Ligne supprimée"), 400);
+  } catch (e) {
+    const msg = String(e?.message || e);
+    status(
+      /access|acc[eè]s|permission|denied|blocked/i.test(msg)
+        ? "Suppression refusée par les règles d'accès"
+        : `Suppression impossible : ${msg}`,
+      true,
+    );
+    btn.disabled = false;
+  }
+}
 $("#grid").addEventListener("click", (ev) => {
   const a = ev.target.closest("[data-addrow]");
   if (a) addRow(Number(a.dataset.addrow), a);
+  const d = ev.target.closest("[data-delrow]");
+  if (d) delRow(Number(d.dataset.delrow), d);
 });
 $("#grid").addEventListener("dblclick", (ev) => {
   const c = ev.target.closest("td[data-ed]");
@@ -4985,7 +5033,7 @@ ${
     "Hauteur maximale du bloc (tableaux, graphiques, cartes). Au-delà, le contenu défile dans le bloc.",
   )}
   ${isFiche ? C(`data-edit="${i}"`, b.editable, "Édition des champs", "Permet de modifier les valeurs directement dans la page (double-clic). Les règles d'accès de Grist s'appliquent : une modification interdite est refusée ; les lecteurs restent en lecture seule.") : ""}
-  ${["record", "detail"].includes(s.parentKey) ? C(`data-addr="${i}"`, b.addable, "Ajout de lignes", "Avec « Édition des champs », affiche un bouton « + Ajouter une ligne » en bas du bloc. Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Les règles d'accès de Grist s'appliquent (droit de création).") : ""}
+  ${["record", "detail"].includes(s.parentKey) ? C(`data-addr="${i}"`, b.addable, "Ajout et suppression de lignes", "Avec « Édition des champs », affiche en bas du bloc « + Ajouter une ligne » et « − Supprimer la ligne » (ligne sélectionnée, après confirmation). Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Les règles d'accès de Grist s'appliquent (droits de création et de suppression).") : ""}
   ${["single", "detail"].includes(s.parentKey) ? C(`data-sempty="${i}"`, b.showEmpty, "Afficher les champs vides", "Pour ce bloc seulement, montre aussi les champs sans valeur (sinon masqués selon l'option générale).") : ""}
   ${C(`data-stk="${i}"`, b.sticky, "Figer à l'écran", "Le bloc reste visible pendant que l'on fait défiler un bloc voisin plus long.")}
   ${L(
@@ -5326,6 +5374,7 @@ ${
   .map(
     (x, i) => `<div class="mn">
   <input type="text" data-mnlabel="${i}" value="${esc(x.label || "")}" placeholder="Libellé" title="Texte du lien dans le menu (vide : nom de la page)" style="width:120px">
+  <input type="text" data-mntip="${i}" value="${esc(x.tip || "")}" placeholder="Infobulle" title="Texte affiché au survol du lien (facultatif)" style="width:180px">
   <select data-mnview="${i}" title="Page Grist ouverte par ce lien. En mode « Changer de page dans le widget », elle est facultative : le lien affiche simplement la configuration choisie.">${draftNav.inWidget ? `<option value="0" ${!m.pages.some((pg) => pg.viewId === x.viewId) ? "selected" : ""}>— ce widget —</option>` : ""}${m.pages.map((pg) => `<option value="${pg.viewId}" ${pg.viewId === x.viewId ? "selected" : ""}>${esc(pg.name)}</option>`).join("")}</select>
   <select data-mncfg="${i}" title="Configuration affichée sur cette page (sert à surligner la page courante et au changement de page dans le widget)"><option value="">— config —</option>${(
     S.stored || []
@@ -5427,6 +5476,10 @@ $("#panel").addEventListener("change", (ev) => {
   if (t.id === "cMnInWidget") {
     draftNav.inWidget = t.checked;
     renderConfig(); // la page Grist devient facultative (option « ce widget »)
+    return;
+  }
+  if (t.dataset.mntip) {
+    draftNav.items[Number(t.dataset.mntip)].tip = t.value;
     return;
   }
   if (t.dataset.mnlabel) {
@@ -5840,7 +5893,9 @@ function renderNav() {
     .map((x) => {
       const page = !!x.viewId && !!S.meta?.pageOfView.has(x.viewId);
       const url = page && safeBase(n.url) ? pageUrl(safeBase(n.url), x.viewId, n.singlePage && !n.inWidget) : ""; // lien Grist (clic du milieu)
-      return `<a href="${url ? esc(url) : "#"}" title="${esc(url)}" target="_top"${n.inWidget && x.cfg ? ` data-gocfg="${esc(x.cfg)}"` : ""} class="${x.cfg && x.cfg === S.cfg.name ? "cur" : ""}">${esc(x.label || (page ? S.meta.pageOfView.get(x.viewId) : x.cfg) || "Page")}</a>`;
+      // infobulle : celle saisie dans la configuration, sinon l'adresse (sauf navigation dans le widget)
+      const tip = String(x.tip || "").trim() || (n.inWidget ? "" : url);
+      return `<a href="${url ? esc(url) : "#"}"${tip ? ` title="${esc(tip)}"` : ""} target="_top"${n.inWidget && x.cfg ? ` data-gocfg="${esc(x.cfg)}"` : ""} class="${x.cfg && x.cfg === S.cfg.name ? "cur" : ""}">${esc(x.label || (page ? S.meta.pageOfView.get(x.viewId) : x.cfg) || "Page")}</a>`;
     });
   if (!links.length) {
     nav.replaceChildren();

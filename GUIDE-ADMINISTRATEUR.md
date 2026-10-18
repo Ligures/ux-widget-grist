@@ -59,7 +59,7 @@ Le bouton **⚙ Configurer** ouvre un panneau sur la moitié droite de l'écran 
 | À la ligne | Le bloc commence une nouvelle rangée |
 | Figer à l'écran | Le bloc reste visible pendant le défilement d'un bloc voisin. Plusieurs blocs figés d'une même colonne s'empilent. Un bloc déplié trop haut défile à l'intérieur de son cadre ; un bloc dont même l'en-tête ne tient plus défile normalement, sous les autres |
 | Édition des champs | Autorise la modification des valeurs (droits Grist respectés) |
-| Ajout de lignes | Tableaux et listes de fiches, avec « Édition des champs » : bouton « + Ajouter une ligne » en bas du bloc. Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Le bloc reste affiché même vide. Droit de création Grist requis |
+| Ajout et suppression de lignes | Tableaux et listes de fiches, avec « Édition des champs » : boutons « + Ajouter une ligne » et « − Supprimer la ligne » en bas du bloc. Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Le bloc reste affiché même vide. Droits de création et de suppression Grist requis : sinon l'action est refusée avec un message |
 | Afficher les champs vides | Pour les fiches de ce bloc |
 | Largeur des colonnes | Ajustées (sans ascenseur horizontal), celles de Grist, ou automatiques |
 | Afficher toutes les fiches | Une vue fiche affichée en liste |
@@ -148,6 +148,7 @@ Section **5. Navigation entre pages**. Ce réglage est commun à toutes les conf
 - **Ouvrir les pages en mode page unique** : les liens ouvrent Grist sans ses menus. Proposé seulement sans « Changer de page dans le widget » ; sinon, utiliser **☰ → Plein écran**.
 - **Pour chaque lien** :
   - libellé ;
+  - infobulle (facultative) : texte affiché au survol du lien ; sans infobulle, le survol montre l'adresse de la page, sauf avec « Changer de page dans le widget » ;
   - page Grist, ou **— ce widget —** ;
   - configuration à afficher ;
   - visibilité : *tous*, ou *si accès à* une table (le lien n'apparaît qu'aux personnes qui voient au moins une ligne de cette table).
