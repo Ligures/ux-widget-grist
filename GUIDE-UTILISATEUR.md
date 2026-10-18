@@ -35,9 +35,9 @@ En haut de la page, de gauche à droite et de haut en bas :
   | Action | Rôle |
   |---|---|
   | Tout replier / Tout déplier | Replie ou déplie tous les blocs d'un coup |
-  | Plein écran | Ouvre cette page dans un nouvel onglet, sans les menus de Grist (mode page unique) |
   | Imprimer | Imprime la page ou l'enregistre en PDF |
   | Aide | Ouvre ce guide ; l'onglet Nouveautés présente les évolutions du widget |
+  | Plein écran | Réservé aux administrateurs |
   | Disposition | Réservé aux administrateurs |
 
   Une pastille rouge sur ☰ signale une nouvelle version du widget : elle disparaît après lecture de l'onglet Nouveautés.

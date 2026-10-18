@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.0). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.1). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -56,7 +56,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.0"; // voir CHANGELOG.md
+const VERSION = "0.9.1.1"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -6049,6 +6049,7 @@ async function init() {
     applyTheme(S.nav.theme);
     $("#btnConfig").hidden = !S.isAdmin;
     $("#btnLayout").hidden = !S.isAdmin;
+    $("#btnSingle").hidden = !S.isAdmin; // plein écran : réservé aux administrateurs (vue par défaut des utilisateurs)
     try {
       S.ext.tableId = await grist.selectedTable.getTableId();
     } catch {

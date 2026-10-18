@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.1] — Plein écran réservé aux administrateurs — 2026-10-18
+
+### Modifié
+- Le bouton **Plein écran** n'est plus affiché aux utilisateurs non administrateurs : le widget est déjà leur vue par défaut.
+
 ## [0.9.1.0] — Messages d'erreur lisibles — 2026-10-18
 
 Version de palier : elle regroupe les évolutions 0.9.0.1 à 0.9.0.10 (impression fidèle à l'écran, ajout et suppression de lignes, messages en bulle flottante, infobulles du menu, chargement plus rapide avec des règles d'accès).

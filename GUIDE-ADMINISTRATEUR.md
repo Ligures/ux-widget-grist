@@ -145,7 +145,7 @@ Section **5. Navigation entre pages**. Ce réglage est commun à toutes les conf
 - **Adresse du document** : adresse de base du document Grist (https).
 - **Changer de page dans le widget** : le menu bascule de configuration sans recharger Grist. Recommandé quand toutes les configurations sont réunies dans une seule page Grist.
 - **Page d'accueil** : page affichée à l'ouverture, pour tous les utilisateurs. Avec « Changer de page dans le widget », elle s'impose ; sinon, elle sert quand le widget n'a pas de configuration enregistrée. Si le widget ne sait pas quelle configuration afficher, seul un administrateur se voit poser la question, et sa réponse devient la page d'accueil ; les utilisateurs ne sont jamais interrogés.
-- **Ouvrir les pages en mode page unique** : les liens ouvrent Grist sans ses menus. Proposé seulement sans « Changer de page dans le widget » ; sinon, utiliser **☰ → Plein écran**.
+- **Ouvrir les pages en mode page unique** : les liens ouvrent Grist sans ses menus. Proposé seulement sans « Changer de page dans le widget » ; sinon, utiliser le bouton **Plein écran** de la barre d'outils, réservé aux administrateurs.
 - **Pour chaque lien** :
   - libellé ;
   - infobulle (facultative) : texte affiché au survol du lien ; sans infobulle, le survol montre l'adresse de la page, sauf avec « Changer de page dans le widget » ;

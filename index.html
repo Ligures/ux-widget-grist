@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   ╔══════════════════════════════════════════════════════════════════════════════╗
-  ║  UX widget grist — widget personnalisé Grist (version 0.9.1.0)               ║
+  ║  UX widget grist — widget personnalisé Grist (version 0.9.1.1)               ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
   Affiche sur une seule page, condensée et lisible, plusieurs vues natives d'un
   document Grist (tableaux, fiches, listes de fiches, graphiques natifs et avancés,
@@ -36,7 +36,7 @@
       integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG"
       crossorigin="anonymous"
     ></script>
-    <link rel="stylesheet" href="ux-widget.css?v=0.9.1.0" />
+    <link rel="stylesheet" href="ux-widget.css?v=0.9.1.1" />
   </head>
   <body>
     <header id="top">
@@ -82,7 +82,7 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5" /></svg
           ><span class="lbl">Tout déplier</span>
         </button>
-        <button class="tb" id="btnSingle" aria-label="Plein écran" data-tip="Plein écran : ouvrir cette page dans un nouvel onglet, sans les menus de Grist">
+        <button class="tb" id="btnSingle" aria-label="Plein écran" data-tip="Plein écran : ouvrir cette page dans un nouvel onglet, sans les menus de Grist" hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg
           ><span class="lbl">Plein écran</span>
         </button>
@@ -162,6 +162,6 @@
       <div class="panel" id="panel"></div>
     </div>
 
-    <script src="ux-widget.js?v=0.9.1.0"></script>
+    <script src="ux-widget.js?v=0.9.1.1"></script>
   </body>
 </html>
