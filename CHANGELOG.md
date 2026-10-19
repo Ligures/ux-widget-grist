@@ -16,6 +16,15 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.3] — Couleurs personnalisées des camemberts — 2026-10-19
+
+### Ajouté
+- **Couleurs des camemberts** (graphique natif en secteurs ou en anneau, et graphique avancé Plotly de type *pie*) : nouvel encadré **Couleurs du camembert** dans les réglages du bloc, enregistré dans `W_Composition`.
+  - **Colonne de codes** : un code hexadécimal par ligne (`pieColorCol`).
+  - **Correspondance** « catégorie = #code » (`pieColorMap`), prioritaire sur la colonne.
+  - **Couleur de repli** pour les catégories sans code (`pieColorDefault`). Vide : la palette habituelle.
+  - Pour un graphique avancé, les couleurs sont passées à Plotly en `marker.colors`. Pour un graphique natif, rendu avec Chart.js, elles sont passées en couleurs de fond des parts.
+
 ## [0.9.1.2] — En-têtes de colonnes plus discrets — 2026-10-19
 
 ### Modifié

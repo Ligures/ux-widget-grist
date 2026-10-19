@@ -16,6 +16,7 @@ Ce guide s'adresse aux **administrateurs**, qui composent les pages. Il n'est af
    - [Filtre rapide](#filtre-rapide)
    - [Listes de sélection](#listes-de-sélection)
    - [Cartes : réglages](#cartes--réglages)
+   - [Camemberts : couleurs](#camemberts--couleurs)
    - [Menu de navigation](#menu-de-navigation)
    - [Apparence](#apparence)
    - [Enregistrer](#enregistrer)
@@ -137,6 +138,18 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
    - code INSEE pour les communes ;
    - SIREN pour les EPCI.
 2. Couleur des zones → *selon une table Grist* : choisir la table, la colonne du code et la colonne de la valeur.
+
+### Camemberts : couleurs
+
+Pour un graphique en secteurs ou en anneau, ou un graphique avancé de type *pie*, l'encadré **Couleurs du camembert** du bloc fixe la couleur de chaque part :
+
+| Réglage | Effet |
+|---|---|
+| Colonne de codes | Colonne de la table qui donne, pour chaque ligne, un code hexadécimal (`#000091`, `000091` ou `#009`). Elle peut être une formule, par exemple `$Reseau.Couleur` pour reprendre la couleur rangée dans une table de référence |
+| Correspondance | Une catégorie par ligne : `Public = #000091`, `Privé = #e1000f`. La casse est ignorée. Des pastilles montrent les couleurs reconnues |
+| Couleur de repli | Couleur des catégories sans code. Vide : couleurs habituelles du widget |
+
+Priorité : correspondance, puis colonne de codes, puis couleur de repli. Un code invalide est ignoré. Les réglages sont enregistrés avec la page dans `W_Composition`.
 
 ### Menu de navigation
 
