@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.4). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.5). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.4"; // voir CHANGELOG.md
+const VERSION = "0.9.1.5"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -76,6 +76,42 @@ const KIND = {
   form: "Formulaire",
 };
 const SUPPORTED = ["record", "single", "detail", "chart", "custom"];
+// Icônes des types de vue (configuration) : tracés SVG 24×24, couleur du texte
+const KIND_ICONS = {
+  table: '<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M3 14.5h18M9.5 4v16"/>',
+  card: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  cards: '<rect x="3" y="4" width="8" height="7" rx="1"/><rect x="13" y="4" width="8" height="7" rx="1"/><rect x="3" y="13" width="8" height="7" rx="1"/><rect x="13" y="13" width="8" height="7" rx="1"/>',
+  bar: '<path d="M4 20h16"/><rect x="6" y="11" width="3" height="9"/><rect x="11" y="6" width="3" height="14"/><rect x="16" y="14" width="3" height="6"/>',
+  pie: '<path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M14.5 2.5v7h7a7 7 0 0 0-7-7z"/>',
+  line: '<path d="M4 20h16M4 16l5-6 4 3 6-8"/>',
+  scatter: '<path d="M4 20h16"/><circle cx="7" cy="15" r="1.3"/><circle cx="11" cy="10" r="1.3"/><circle cx="15" cy="13" r="1.3"/><circle cx="18" cy="6" r="1.3"/>',
+  map: '<path d="M12 21s-6-5.3-6-11a6 6 0 0 1 12 0c0 5.7-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/>',
+  select: '<rect x="3" y="7" width="18" height="10" rx="2"/><path d="M14 11l2 2 2-2"/>',
+  form: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 13h3M13 13h3M8 17h8"/>',
+  widget: '<path d="M10 4h4v3a2 2 0 1 0 4 0V4h2v6h-3a2 2 0 1 0 0 4h3v6h-6v-3a2 2 0 1 0-4 0v3H4v-6h3a2 2 0 1 0 0-4H4V4z"/>',
+};
+// kindIcon — Icône du type d'une vue (tableau, fiche, graphique en barres / secteurs / courbe, carte, liste de sélection…).
+function kindIcon(s, b) {
+  let k = "widget",
+    t = KIND[s.parentKey] || s.parentKey;
+  if (b && isSelector(b)) [k, t] = ["select", "Liste de sélection"];
+  else if (s.parentKey === "record") k = "table";
+  else if (s.parentKey === "single") k = "card";
+  else if (s.parentKey === "detail") k = "cards";
+  else if (s.parentKey === "form") k = "form";
+  else if (s.parentKey === "chart") {
+    const ct = s.chartType || "bar";
+    k = ["pie", "donut"].includes(ct) ? "pie" : ["line", "area", "kaplan_meier"].includes(ct) ? "line" : ct === "scatter" ? "scatter" : "bar";
+    t = `Graphique (${{ pie: "secteurs", donut: "anneau", line: "courbe", area: "aires", scatter: "nuage de points", kaplan_meier: "courbe" }[ct] || "barres"})`;
+  } else if (s.parentKey === "custom") {
+    if (isMapSection(s)) [k, t] = ["map", "Carte"];
+    else {
+      const data = advChartSpec(s)?.data;
+      if (data) [k, t] = [data.some((x) => x?.type === "pie") ? "pie" : "bar", "Graphique avancé"];
+    }
+  }
+  return `<svg class="kico" viewBox="0 0 24 24" aria-hidden="true"><title>${esc(t)}</title>${KIND_ICONS[k]}</svg>`;
+}
 const DEFAULT_WIDTH = { record: 6, single: 2, detail: 6, chart: 3, custom: 3 };
 // BRAND — couleur principale des graphiques et cartes : bleu France (DSFR) ou bleu neutre (voir applyTheme)
 const BRAND = { c: "#000091" };
@@ -4947,7 +4983,7 @@ function renderConfig() {
       .map((s) => {
         const ok = SUPPORTED.includes(s.parentKey),
           on = draft.blocks.some((b) => b.id === s.id);
-        return `<label class="${ok ? "" : "dis"}"><input type="checkbox" data-add="${s.id}" ${on ? "checked" : ""} ${ok ? "" : "disabled"}> ${esc(secLabel(s.id))}</label>`;
+        return `<label class="${ok ? "" : "dis"}"><input type="checkbox" data-add="${s.id}" ${on ? "checked" : ""} ${ok ? "" : "disabled"}> ${kindIcon(s)}${esc(secLabel(s.id))}</label>`;
       })
       .join("") || '<div class="msg">Aucun widget sur cette page</div>';
   const widths = [
@@ -4988,7 +5024,7 @@ function renderConfig() {
         const isFiche = ["single", "detail", "record"].includes(s.parentKey),
           isMap = s.parentKey === "custom" && isMapSection(s);
         const fold = cfgFolded.has(b.id);
-        return `<li class="${fold ? "folded" : ""}"><button class="icon-btn fold-btn" data-fold="${b.id}" title="${fold ? "Afficher tous les réglages de ce bloc" : "Replier les réglages (garder la place dans la grille)"}" aria-expanded="${!fold}">${fold ? "▸" : "▾"}</button><span title="${esc(secLabel(b.id))}">${esc(secLabel(b.id))} <small>— ${esc(m.pageOfView.get(s.parentId) || "")} · table ${esc(m.tables.get(s.tableRef)?.tableId || "?")}</small></span>
+        return `<li class="${fold ? "folded" : ""}"><button class="icon-btn fold-btn" data-fold="${b.id}" title="${fold ? "Afficher tous les réglages de ce bloc" : "Replier les réglages (garder la place dans la grille)"}" aria-expanded="${!fold}">${fold ? "▸" : "▾"}</button><span title="${esc(secLabel(b.id))}">${kindIcon(s, b)}${esc(secLabel(b.id))} <small>— ${esc(m.pageOfView.get(s.parentId) || "")} · table ${esc(m.tables.get(s.tableRef)?.tableId || "?")}</small></span>
 <button class="icon-btn" data-up="${i}" title="Placer avant la vue précédente">↑</button><button class="icon-btn" data-down="${i}" title="Placer après la vue suivante">↓</button>
 <button class="icon-btn" data-rm="${i}" title="Retirer de la page (la vue Grist n'est pas supprimée)">✕</button>
 ${

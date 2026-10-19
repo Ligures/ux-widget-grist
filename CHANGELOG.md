@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.5] — Icônes des types de vue dans la configuration — 2026-10-19
+
+### Ajouté
+- **Configuration** : une icône devant le nom de chaque vue, dans « Vues disponibles » et « Vues retenues », indique son type. Le type exact s'affiche au survol de l'icône. Types reconnus : tableau, fiche, fiches, graphique en barres, secteurs, courbe ou nuage de points, graphique avancé, carte, liste de sélection, formulaire, autre widget.
+
 ## [0.9.1.4] — Réglages des vues repliables dans la configuration — 2026-10-19
 
 ### Ajouté
