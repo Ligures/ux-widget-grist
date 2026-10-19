@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.2] — En-têtes de colonnes plus discrets — 2026-10-19
+
+### Modifié
+- **En-têtes de colonnes des tableaux** : graisse moyenne au lieu de gras, et texte gris foncé. En style État, la graisse « Medium » de Marianne est chargée depuis le même paquet DSFR que les autres graisses. Un en-tête mis en gras dans Grist (style d'en-tête de la colonne) reste en gras.
+
 ## [0.9.1.1] — Plein écran réservé aux administrateurs — 2026-10-18
 
 ### Modifié

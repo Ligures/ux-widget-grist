@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.1.1).
+/* UX widget grist — feuilles de style (version 0.9.1.2).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -6,6 +6,12 @@
   font-weight: 400;
   font-display: swap;
   src: url("https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.14.4/dist/fonts/Marianne-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Marianne";
+  font-weight: 500;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.14.4/dist/fonts/Marianne-Medium.woff2") format("woff2");
 }
 @font-face {
   font-family: "Marianne";
@@ -1011,7 +1017,8 @@ th {
   top: 0;
   background: #f0f0f0;
   text-align: center;
-  font-weight: 700;
+  font-weight: 500; /* en-têtes discrets : graisse moyenne, gris foncé */
+  color: #3a3a3a;
   padding: 4px 6px;
   border-bottom: 1px solid var(--bord);
   white-space: normal;
