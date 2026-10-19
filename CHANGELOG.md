@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.4] — Réglages des vues repliables dans la configuration — 2026-10-19
+
+### Ajouté
+- **Configuration, « Vues retenues »** : chaque bloc a un bouton ▾ / ▸ qui replie ses réglages. Replié, le bloc garde visibles son titre, ses flèches ↑ ↓ ✕, sa **largeur**, sa **colonne** et son **nombre de lignes**. Les boutons **Tout replier** et **Tout déplier** agissent sur tous les blocs. L'état replié n'est pas enregistré dans la configuration.
+
 ## [0.9.1.3] — Couleurs personnalisées des camemberts — 2026-10-19
 
 ### Ajouté

@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.1.3).
+/* UX widget grist — feuilles de style (version 0.9.1.4).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1923,6 +1923,17 @@ textarea.ed-input {
   border: 1px solid var(--bord);
   border-radius: 4px;
   background: #fcfcff;
+}
+/* bloc replié dans la configuration : titre, flèches et place dans la grille seulement */
+.chosen li.folded > .ctrls.more,
+.chosen li.folded > .fl {
+  display: none;
+}
+.chosen .ctrls.lay + .ctrls.more {
+  margin-top: -2px;
+}
+.chosen .fold-btn {
+  min-width: 22px;
 }
 .chosen li > span {
   font-weight: 700;

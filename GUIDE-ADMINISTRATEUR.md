@@ -50,6 +50,7 @@ Le bouton **⚙ Configurer** ouvre un panneau sur la moitié droite de l'écran 
 1. **Vues disponibles** : choisir une page Grist, puis cocher ses vues. On peut combiner des vues de plusieurs pages.
 2. **Vues retenues** : chaque vue cochée devient un bloc.
    - Les flèches ↑ ↓ règlent l'ordre ; ✕ retire le bloc (la vue Grist n'est pas supprimée).
+   - ▾ / ▸ replie ou déplie les réglages d'un bloc. Replié, il garde visibles son titre, ses flèches, sa largeur, sa colonne et son nombre de lignes : pratique pour organiser une page de nombreux blocs. **Tout replier** et **Tout déplier** agissent sur tous les blocs. Cet état n'est pas enregistré.
    - Chaque bloc a ses réglages :
 
 | Réglage | Effet |

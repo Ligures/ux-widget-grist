@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.3). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.4). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.3"; // voir CHANGELOG.md
+const VERSION = "0.9.1.4"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -4760,6 +4760,9 @@ async function refreshAll() {
 
 /* ---------- Panneau de configuration ---------- */
 let draftNav = { url: "", items: [] };
+// réglages des vues retenues repliés dans la configuration (identifiants de vue) : seuls restent le titre,
+// les flèches et la place dans la grille (largeur, colonne, lignes) ; non enregistré
+const cfgFolded = new Set();
 let draft = null,
   cfgPage = null;
 /* Page en cours de réglage (0.8.8) : on peut régler une autre page, ou en créer une, sans toucher à celle
@@ -4984,7 +4987,8 @@ function renderConfig() {
           `<select data-f="${f}" data-i="${i}">${opts.map(([v, l]) => `<option value="${v}" ${String(v) === String(cur) ? "selected" : ""}>${l}</option>`).join("")}</select>`;
         const isFiche = ["single", "detail", "record"].includes(s.parentKey),
           isMap = s.parentKey === "custom" && isMapSection(s);
-        return `<li><span title="${esc(secLabel(b.id))}">${esc(secLabel(b.id))} <small>— ${esc(m.pageOfView.get(s.parentId) || "")} · table ${esc(m.tables.get(s.tableRef)?.tableId || "?")}</small></span>
+        const fold = cfgFolded.has(b.id);
+        return `<li class="${fold ? "folded" : ""}"><button class="icon-btn fold-btn" data-fold="${b.id}" title="${fold ? "Afficher tous les réglages de ce bloc" : "Replier les réglages (garder la place dans la grille)"}" aria-expanded="${!fold}">${fold ? "▸" : "▾"}</button><span title="${esc(secLabel(b.id))}">${esc(secLabel(b.id))} <small>— ${esc(m.pageOfView.get(s.parentId) || "")} · table ${esc(m.tables.get(s.tableRef)?.tableId || "?")}</small></span>
 <button class="icon-btn" data-up="${i}" title="Placer avant la vue précédente">↑</button><button class="icon-btn" data-down="${i}" title="Placer après la vue suivante">↓</button>
 <button class="icon-btn" data-rm="${i}" title="Retirer de la page (la vue Grist n'est pas supprimée)">✕</button>
 ${
@@ -5000,7 +5004,7 @@ ${
       )}${b.editable ? " — ✎ éditable, ƒ formule (non éditable)" : ""}</div>`
     : ""
 }
-<div class="ctrls">
+<div class="ctrls lay">
   ${
     draft.flux
       ? L(
@@ -5044,6 +5048,7 @@ ${
           "Nombre de rangées de la grille occupées par le bloc, pour placer plusieurs petits blocs à côté d'un grand. Ignoré en mode empilé.",
         )
   }
+</div><div class="ctrls more">
   ${
     s.parentKey === "record"
       ? L(
@@ -5402,7 +5407,7 @@ ${L("Titre affiché", `<input type="text" id="cTitle" value="${esc(draft.title)}
 ${L("Page", `<select id="cPage">${pageOpts}</select>`, "Page Grist dont on liste les vues. On peut combiner des vues de plusieurs pages.")}
 <div class="pick">${picks}</div>
     </section>
-    <section class="cs"><h4>2. Vues retenues <small>— dans l'ordre d'affichage</small></h4>
+    <section class="cs"><h4>2. Vues retenues <small>— dans l'ordre d'affichage</small> <button class="icon-btn" data-foldall="1" title="Replier les réglages de toutes les vues (largeur, colonne et lignes restent visibles)">Tout replier</button> <button class="icon-btn" data-foldall="0" title="Afficher tous les réglages de toutes les vues">Tout déplier</button></h4>
 <ul class="chosen">${chosen}</ul>
     </section>
     <section class="cs"><h4>3. Disposition</h4>
@@ -5693,6 +5698,16 @@ $("#panel").addEventListener("click", async (ev) => {
     [draft.blocks[i], draft.blocks[j]] = [draft.blocks[j], draft.blocks[i]];
     renderConfig();
   };
+  if (t.dataset.fold) {
+    const id = Number(t.dataset.fold);
+    cfgFolded.has(id) ? cfgFolded.delete(id) : cfgFolded.add(id);
+    return renderConfig();
+  }
+  if (t.dataset.foldall) {
+    cfgFolded.clear();
+    if (t.dataset.foldall === "1") draft.blocks.forEach((b) => cfgFolded.add(b.id));
+    return renderConfig();
+  }
   if (t.dataset.up) return move(Number(t.dataset.up), -1);
   if (t.dataset.down) return move(Number(t.dataset.down), 1);
   if (t.dataset.rm) {
