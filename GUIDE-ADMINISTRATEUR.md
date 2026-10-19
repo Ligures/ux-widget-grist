@@ -16,7 +16,7 @@ Ce guide s'adresse aux **administrateurs**, qui composent les pages. Il n'est af
    - [Filtre rapide](#filtre-rapide)
    - [Listes de sélection](#listes-de-sélection)
    - [Cartes : réglages](#cartes--réglages)
-   - [Camemberts : couleurs](#camemberts--couleurs)
+   - [Graphiques : couleurs](#graphiques--couleurs)
    - [Menu de navigation](#menu-de-navigation)
    - [Apparence](#apparence)
    - [Enregistrer](#enregistrer)
@@ -140,14 +140,18 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
    - SIREN pour les EPCI.
 2. Couleur des zones → *selon une table Grist* : choisir la table, la colonne du code et la colonne de la valeur.
 
-### Camemberts : couleurs
+### Graphiques : couleurs
 
-Pour un graphique en secteurs ou en anneau, ou un graphique avancé de type *pie*, l'encadré **Couleurs du camembert** du bloc fixe la couleur de chaque part :
+L'encadré **Couleurs du graphique** de chaque bloc graphique (natif ou avancé) fixe les couleurs :
+- **camembert** (secteurs, anneau) et **histogramme à une seule série** : une couleur par catégorie (part ou barre) ;
+- **plusieurs séries** (graphique multi-séries, plusieurs colonnes de valeurs) et **courbes** : une couleur par série, désignée par la valeur du regroupement (ex. `Public`) ou le nom de la colonne.
+
+Sans réglage, les couleurs suivent la palette du widget dans l'ordre d'apparition des catégories ou des séries ; cet ordre peut changer avec les données, d'où l'intérêt de les fixer.
 
 | Réglage | Effet |
 |---|---|
 | Colonne de codes | Colonne de la table qui donne, pour chaque ligne, un code hexadécimal (`#000091`, `000091` ou `#009`). Elle peut être une formule, par exemple `$Reseau.Couleur` pour reprendre la couleur rangée dans une table de référence |
-| Correspondance | Une catégorie par ligne : `Public = #000091`, `Privé = #e1000f`. La casse est ignorée. Des pastilles montrent les couleurs reconnues |
+| Correspondance | Une catégorie ou une série par ligne : `Public = #000091`, `Privé = #e1000f`. La casse est ignorée. Des pastilles montrent les couleurs reconnues |
 | Couleur de repli | Couleur des catégories sans code. Vide : couleurs habituelles du widget |
 
 Priorité : correspondance, puis colonne de codes, puis couleur de repli. Un code invalide est ignoré. Les réglages sont enregistrés avec la page dans `W_Composition`.

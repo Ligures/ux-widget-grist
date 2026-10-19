@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.5). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.6). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -42,7 +42,7 @@
  Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold
  Tableaux/fiches : colWidths, asList, cardW, editable, addable, showEmpty
  Liste de sélection : asSelect, selCol, selOrder, selGroup, syncId
- Camembert : pieColorCol, pieColorMap, pieColorDefault
+ Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
          qpvUrl, mapZone (communes|epci|iris), mapCommune, zoneColor,
          zoneSum, zoneTable/zoneKey/zoneVal, mapLabelsOn
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.5"; // voir CHANGELOG.md
+const VERSION = "0.9.1.6"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -2326,7 +2326,7 @@ function pieColorMapOf(txt) {
 const pieCustom = (b) => !!(b && (b.pieColorCol || String(b.pieColorMap || "").trim() || hexColor(b.pieColorDefault)));
 // pieColors — Couleur de chaque catégorie (labels), d'après la configuration du bloc.
 // labelOfRow(r) donne la catégorie d'une ligne (pour lire la colonne de codes).
-function pieColors(b, labels, rows, labelOfRow) {
+function pieColors(b, labels, rows, labelOfRow, fallback = (j) => PALETTE[j % PALETTE.length]) {
   const map = pieColorMapOf(b.pieColorMap),
     fromCol = new Map();
   if (b.pieColorCol)
@@ -2336,7 +2336,7 @@ function pieColors(b, labels, rows, labelOfRow) {
       if (c && !fromCol.has(k)) fromCol.set(k, c);
     }
   const dflt = hexColor(b.pieColorDefault);
-  return labels.map((l, j) => map.get(pieKey(l)) || fromCol.get(pieKey(l)) || dflt || PALETTE[j % PALETTE.length]);
+  return labels.map((l, j) => map.get(pieKey(l)) || fromCol.get(pieKey(l)) || dflt || fallback(j));
 }
 
 // renderChart — Affiche un graphique natif de Grist avec Chart.js (barres, lignes, secteurs, aires…).
@@ -2373,7 +2373,7 @@ function renderChart(info, rows, body, jobs) {
     const gl = multi ? rows.map((r) => textOf(groupF.col, groupF.opts, r[groupF.colId]) || "(vide)") : null;
     const labels = [...new Set(xl)];
     const blk = S.cfg.blocks.find((x) => x.id === info.secId);
-    const pieCols = pie && pieCustom(blk) ? pieColors(blk, labels, rows, (r) => textOf(xF.col, xF.opts, r[xF.colId]) || "(vide)") : null;
+    const custom = pieCustom(blk);
     const series = [];
     if (multi) {
       for (const g of new Set(gl))
@@ -2381,17 +2381,38 @@ function renderChart(info, rows, body, jobs) {
     } else {
       for (const y of pie ? yFs.slice(0, 1) : yFs) series.push({ label: y.label, y, g: null });
     }
+    // couleurs choisies (encadré « Couleurs du graphique ») : une couleur par catégorie pour un camembert ou un
+    // histogramme à une seule série, sinon une couleur par série (valeur du regroupement ou nom de la colonne)
+    const perCat = pie || (custom && series.length === 1 && type === "bar");
+    const catCols = perCat
+      ? custom
+        ? pieColors(blk, labels, rows, (r) => textOf(xF.col, xF.opts, r[xF.colId]) || "(vide)", pie ? undefined : () => PALETTE[0])
+        : labels.map((_, j) => PALETTE[j % PALETTE.length])
+      : null;
+    const map = custom ? pieColorMapOf(blk.pieColorMap) : null;
+    const serieColor = (s, i) => {
+      if (custom) {
+        const c =
+          map.get(pieKey(s.label)) ||
+          (s.g !== null && map.get(pieKey(s.g))) ||
+          map.get(pieKey(s.y.label)) ||
+          (blk.pieColorCol && s.g !== null && hexColor(rows.find((r, k) => gl[k] === s.g && hexColor(r[blk.pieColorCol]))?.[blk.pieColorCol])) ||
+          hexColor(blk.pieColorDefault);
+        if (c) return c;
+      }
+      return PALETTE[i % PALETTE.length];
+    };
     const datasets = series.map((s, i) => {
       const sums = new Map(labels.map((l) => [l, 0]));
       rows.forEach((r, k) => {
         if (s.g === null || gl[k] === s.g) sums.set(xl[k], sums.get(xl[k]) + num(r[s.y.colId]));
       });
-      const c = PALETTE[i % PALETTE.length];
+      const c = serieColor(s, i);
       return {
         label: s.label,
         data: labels.map((l) => sums.get(l)),
-        backgroundColor: pie ? pieCols || labels.map((_, j) => PALETTE[j % PALETTE.length]) : type === "area" ? c + "55" : c,
-        borderColor: pie ? "#fff" : c,
+        backgroundColor: catCols || (type === "area" ? c + "55" : c),
+        borderColor: pie ? "#fff" : catCols || c,
         fill: type === "area",
         tension: 0.2,
         pointRadius: type === "line" ? 2 : 0,
@@ -3678,7 +3699,25 @@ async function renderAdvChart(info, rows, body, jobs) {
   const blk = S.cfg.blocks.find((x) => x.id === info.secId);
   if (pieCustom(blk))
     for (const t of data)
-      if (t?.type === "pie" && Array.isArray(t.labels)) {
+      if (t && t.type !== "pie") {
+        // barres, courbes… : couleur de la trace d'après son nom ; une seule trace de barres : une couleur par barre
+        const map = pieColorMapOf(blk.pieColorMap);
+        const named = map.get(pieKey(t.name));
+        const cats = t.orientation === "h" ? t.y : t.x;
+        if (named) {
+          t.marker = { ...(t.marker || {}), color: named };
+          if (t.type === "scatter") t.line = { ...(t.line || {}), color: named };
+        } else if (data.length === 1 && (t.type || "scatter") === "bar" && Array.isArray(cats)) {
+          const lab = cats.map((l) => (Array.isArray(l) ? l.join(" ") : l));
+          const cols = pieColors(blk, lab, [], () => "", () => BRAND.c);
+          if (blk.pieColorCol)
+            lab.forEach((l, k) => {
+              const own = hexColor(rows[k]?.[blk.pieColorCol]);
+              if (own && !map.has(pieKey(l))) cols[k] = own;
+            });
+          if (cols.some((c) => c !== BRAND.c)) t.marker = { ...(t.marker || {}), color: cols };
+        } else if (hexColor(blk.pieColorDefault) && !t.marker?.color) t.marker = { ...(t.marker || {}), color: hexColor(blk.pieColorDefault) };
+      } else if (t?.type === "pie" && Array.isArray(t.labels)) {
         const lab = t.labels.map((l) => (Array.isArray(l) ? l.join(" ") : l));
         const cols = pieColors(blk, lab, [], () => "");
         // la colonne de codes se lit ligne à ligne (les étiquettes suivent l'ordre des lignes)
@@ -5156,17 +5195,17 @@ ${
   )}
   ${C(`data-nl="${i}"`, b.newLine, "À la ligne", "Le bloc commence une nouvelle rangée, même s'il reste de la place à droite du bloc précédent.")}
   ${(() => {
-    // couleurs des camemberts (graphique natif secteurs / anneau, ou graphique avancé Plotly de type pie)
-    const isPie =
-      (s.parentKey === "chart" && ["pie", "donut"].includes(s.chartType)) ||
-      (s.parentKey === "custom" && !isMap && (advChartSpec(s)?.data || []).some((t) => t?.type === "pie"));
-    if (!isPie) return "";
+    // couleurs des graphiques (natifs, ou avancés Plotly) : par catégorie (camembert, histogramme à une série)
+    // ou par série (plusieurs séries, courbes)
+    const adv = s.parentKey === "custom" && !isMap ? advChartSpec(s)?.data : null;
+    if (s.parentKey !== "chart" && !adv) return "";
+    const isPie = (s.parentKey === "chart" && ["pie", "donut"].includes(s.chartType)) || (adv || []).some((t) => t?.type === "pie");
     const swatches = [...pieColorMapOf(b.pieColorMap).values()].slice(0, 12).map((c) => `<span class="pcs" style="background:${c}"></span>`).join("");
     const dflt = hexColor(b.pieColorDefault);
     return (
-      `<div class="mgrps"><div class="mgrp"><div class="mgrp-h" title="Couleur de chaque part du camembert. Priorité : correspondance, puis colonne de codes, puis couleur de repli.">Couleurs du camembert</div>` +
-      L("Colonne de codes", sel("pieColorCol", [["", "aucune"], ...colOpts(s)], b.pieColorCol || ""), "Colonne de la table contenant, pour chaque ligne, un code couleur hexadécimal (#000091). Peut être une formule, par exemple $Reseau.Couleur.") +
-      L("Correspondance", `<textarea data-pcm="${i}" rows="3" placeholder="Public = #000091&#10;Privé = #e1000f">${esc(b.pieColorMap || "")}</textarea>`, "Une catégorie par ligne : « catégorie = #code ». La casse est ignorée. Prioritaire sur la colonne de codes.") +
+      `<div class="mgrps"><div class="mgrp"><div class="mgrp-h" title="${isPie ? "Couleur de chaque part du camembert." : "Histogramme à une seule série : une couleur par barre (catégorie). Plusieurs séries, ou courbes : une couleur par série (valeur du regroupement ou nom de la colonne)."} Priorité : correspondance, puis colonne de codes, puis couleur de repli.">Couleurs du graphique</div>` +
+      L("Colonne de codes", sel("pieColorCol", [["", "aucune"], ...colOpts(s)], b.pieColorCol || ""), "Colonne de la table contenant, pour chaque ligne, un code couleur hexadécimal (#000091), appliqué à la catégorie (ou à la série) de la ligne. Peut être une formule, par exemple $Reseau.Couleur.") +
+      L("Correspondance", `<textarea data-pcm="${i}" rows="3" placeholder="Public = #000091&#10;Privé = #e1000f">${esc(b.pieColorMap || "")}</textarea>`, "Une catégorie ou une série par ligne : « Public = #000091 ». La casse est ignorée. Prioritaire sur la colonne de codes.") +
       (swatches ? `<div class="pcsl">${swatches}</div>` : "") +
       L("Couleur de repli", `<input type="text" data-pcd="${i}" value="${esc(b.pieColorDefault || "")}" placeholder="#c8c8c8" size="9">${dflt ? `<span class="pcs" style="background:${dflt}"></span>` : ""}`, "Couleur des catégories sans code. Vide : couleurs habituelles du widget.") +
       `</div></div>`

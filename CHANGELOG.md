@@ -16,6 +16,15 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.6] — Couleurs choisies pour tous les graphiques — 2026-10-19
+
+### Ajouté
+- **Couleurs des histogrammes et des courbes** : l'encadré « Couleurs du camembert » devient **Couleurs du graphique** et s'applique à tous les graphiques, natifs ou avancés. Les mêmes réglages servent : correspondance, colonne de codes, couleur de repli.
+  - Histogramme à une seule série : une couleur par barre (catégorie).
+  - Plusieurs séries : une couleur par série, désignée par la valeur du regroupement ou le nom de la colonne de valeurs.
+  - Graphique avancé (Plotly) : couleur de chaque trace d'après son nom. Avec une seule trace de barres, une couleur par barre.
+- Sans réglage, rien ne change : la palette du widget est appliquée dans l'ordre d'apparition des séries, qui dépend des données.
+
 ## [0.9.1.5] — Icônes des types de vue dans la configuration — 2026-10-19
 
 ### Ajouté
