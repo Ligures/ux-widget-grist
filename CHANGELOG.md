@@ -16,6 +16,12 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.7] — Vues retenues plus lisibles dans la configuration — 2026-10-20
+
+### Modifié
+- **Configuration, nom des vues** : l'icône est suivie du **type** (en bleu), puis du **titre** de la vue, par exemple « ▦ Tableau · Bloc A ». C'est le cas dans « Vues disponibles » et dans « Vues retenues ».
+- **Vues retenues** : chaque vue forme une carte distincte. Un bandeau de titre teinté contient l'icône, le type, le titre et les flèches. Un liseré bleu marque la gauche de la carte, et les cartes sont plus espacées.
+
 ## [0.9.1.6] — Couleurs choisies pour tous les graphiques — 2026-10-19
 
 ### Ajouté

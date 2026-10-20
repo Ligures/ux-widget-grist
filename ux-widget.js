@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.6). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.7). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.6"; // voir CHANGELOG.md
+const VERSION = "0.9.1.7"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -90,8 +90,8 @@ const KIND_ICONS = {
   form: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 13h3M13 13h3M8 17h8"/>',
   widget: '<path d="M10 4h4v3a2 2 0 1 0 4 0V4h2v6h-3a2 2 0 1 0 0 4h3v6h-6v-3a2 2 0 1 0-4 0v3H4v-6h3a2 2 0 1 0 0-4H4V4z"/>',
 };
-// kindIcon — Icône du type d'une vue (tableau, fiche, graphique en barres / secteurs / courbe, carte, liste de sélection…).
-function kindIcon(s, b) {
+// viewKind — Type d'une vue : [clé d'icône, libellé] (tableau, fiche, graphique en barres / secteurs…, carte, liste de sélection…).
+function viewKind(s, b) {
   let k = "widget",
     t = KIND[s.parentKey] || s.parentKey;
   if (b && isSelector(b)) [k, t] = ["select", "Liste de sélection"];
@@ -110,7 +110,16 @@ function kindIcon(s, b) {
       if (data) [k, t] = [data.some((x) => x?.type === "pie") ? "pie" : "bar", "Graphique avancé"];
     }
   }
+  return [k, t];
+}
+// kindIcon — Icône SVG du type d'une vue.
+function kindIcon(s, b) {
+  const [k, t] = viewKind(s, b);
   return `<svg class="kico" viewBox="0 0 24 24" aria-hidden="true"><title>${esc(t)}</title>${KIND_ICONS[k]}</svg>`;
+}
+// kindTitle — Icône, type puis titre d'une vue (configuration).
+function kindTitle(s, b) {
+  return `${kindIcon(s, b)}<b class="ctype">${esc(viewKind(s, b)[1])}</b> <span class="ctitle">${esc(getInfo(s.id)?.title || `#${s.id}`)}</span>`;
 }
 const DEFAULT_WIDTH = { record: 6, single: 2, detail: 6, chart: 3, custom: 3 };
 // BRAND — couleur principale des graphiques et cartes : bleu France (DSFR) ou bleu neutre (voir applyTheme)
@@ -5022,7 +5031,7 @@ function renderConfig() {
       .map((s) => {
         const ok = SUPPORTED.includes(s.parentKey),
           on = draft.blocks.some((b) => b.id === s.id);
-        return `<label class="${ok ? "" : "dis"}"><input type="checkbox" data-add="${s.id}" ${on ? "checked" : ""} ${ok ? "" : "disabled"}> ${kindIcon(s)}${esc(secLabel(s.id))}</label>`;
+        return `<label class="${ok ? "" : "dis"}"><input type="checkbox" data-add="${s.id}" ${on ? "checked" : ""} ${ok ? "" : "disabled"}> ${kindTitle(s)}</label>`;
       })
       .join("") || '<div class="msg">Aucun widget sur cette page</div>';
   const widths = [
@@ -5063,9 +5072,9 @@ function renderConfig() {
         const isFiche = ["single", "detail", "record"].includes(s.parentKey),
           isMap = s.parentKey === "custom" && isMapSection(s);
         const fold = cfgFolded.has(b.id);
-        return `<li class="${fold ? "folded" : ""}"><button class="icon-btn fold-btn" data-fold="${b.id}" title="${fold ? "Afficher tous les réglages de ce bloc" : "Replier les réglages (garder la place dans la grille)"}" aria-expanded="${!fold}">${fold ? "▸" : "▾"}</button><span title="${esc(secLabel(b.id))}">${kindIcon(s, b)}${esc(secLabel(b.id))} <small>— ${esc(m.pageOfView.get(s.parentId) || "")} · table ${esc(m.tables.get(s.tableRef)?.tableId || "?")}</small></span>
+        return `<li class="${fold ? "folded" : ""}"><div class="chead"><button class="icon-btn fold-btn" data-fold="${b.id}" title="${fold ? "Afficher tous les réglages de ce bloc" : "Replier les réglages (garder la place dans la grille)"}" aria-expanded="${!fold}">${fold ? "▸" : "▾"}</button><span class="cname" title="${esc(secLabel(b.id))}">${kindTitle(s, b)} <small>— ${esc(m.pageOfView.get(s.parentId) || "")} · table ${esc(m.tables.get(s.tableRef)?.tableId || "?")}</small></span>
 <button class="icon-btn" data-up="${i}" title="Placer avant la vue précédente">↑</button><button class="icon-btn" data-down="${i}" title="Placer après la vue suivante">↓</button>
-<button class="icon-btn" data-rm="${i}" title="Retirer de la page (la vue Grist n'est pas supprimée)">✕</button>
+<button class="icon-btn" data-rm="${i}" title="Retirer de la page (la vue Grist n'est pas supprimée)">✕</button></div>
 ${
   isFiche
     ? `<div class="fl">Champs lus : ${esc(
