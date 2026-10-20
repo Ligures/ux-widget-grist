@@ -16,6 +16,19 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.9] — Noms des champs masquables dans les fiches — 2026-10-20
+
+### Ajouté
+- **Option de bloc « Masquer les noms des champs »** (fiches et listes de fiches) : seules les valeurs sont affichées, ce qui rend les fiches plus compactes. Le nom du champ reste visible au survol de la valeur (`hideLabels`).
+
+## [0.9.1.8] — Champs alignés d'une fiche à l'autre — 2026-10-20
+
+### Corrigé
+- **Listes de fiches** : la largeur des champs dépendait de leur contenu, et la disposition variait d'une fiche à l'autre. Désormais :
+  - sans disposition Grist, les champs se rangent dans des colonnes de même largeur pour toutes les fiches ;
+  - un champ masqué parce qu'il est vide garde sa place (case invisible) : les champs suivants ne se décalent plus. Un champ vide dans toutes les fiches est retiré ;
+  - un champ est affiché sur toute la largeur dans toutes les fiches ou dans aucune : il l'est dès qu'une de ses valeurs est longue (plus de 60 caractères ou plusieurs lignes).
+
 ## [0.9.1.7] — Vues retenues plus lisibles dans la configuration — 2026-10-20
 
 ### Modifié

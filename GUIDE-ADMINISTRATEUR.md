@@ -62,6 +62,7 @@ Le bouton **⚙ Configurer** ouvre un panneau sur la moitié droite de l'écran 
 | Figer à l'écran | Le bloc reste visible pendant le défilement d'un bloc voisin. Plusieurs blocs figés d'une même colonne s'empilent. Un bloc déplié trop haut défile à l'intérieur de son cadre ; un bloc dont même l'en-tête ne tient plus défile normalement, sous les autres |
 | Édition des champs | Autorise la modification des valeurs (droits Grist respectés) |
 | Ajout et suppression de lignes | Tableaux et listes de fiches, avec « Édition des champs » : boutons « + Ajouter une ligne » et « − Supprimer la ligne » en bas du bloc. Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Le bloc reste affiché même vide. Droits de création et de suppression Grist requis : sinon l'action est refusée avec un message |
+| Masquer les noms des champs | Fiches et listes de fiches : seules les valeurs sont affichées ; le nom du champ apparaît au survol de la valeur |
 | Afficher les champs vides | Pour les fiches de ce bloc |
 | Largeur des colonnes | Ajustées (sans ascenseur horizontal), celles de Grist, ou automatiques |
 | Afficher toutes les fiches | Une vue fiche affichée en liste |

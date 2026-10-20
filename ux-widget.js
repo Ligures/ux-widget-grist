@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.7). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.9). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -40,7 +40,7 @@
  hideEmptyBlocks, tableMaxHeight, chartHeight, dataTable }
      Bloc (blocks[i]) : id = identifiant de la vue Grist (_grist_Views_section)
  Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold
- Tableaux/fiches : colWidths, asList, cardW, editable, addable, showEmpty
+ Tableaux/fiches : colWidths, asList, cardW, editable, addable, showEmpty, hideLabels
  Liste de sélection : asSelect, selCol, selOrder, selGroup, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.7"; // voir CHANGELOG.md
+const VERSION = "0.9.1.9"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -2201,13 +2201,18 @@ async function saveValue(el, tableId, rid, col, value) {
   scheduleRender();
 }
 // ficheCell — HTML d'un champ dans une fiche (libellé + valeur).
+// Liste de fiches (renderCards) : mêmes emplacements d'une fiche à l'autre — un champ vide masqué garde sa place
+// (case vide invisible) et un champ est « long » (pleine largeur) pour toutes les fiches ou pour aucune.
+let ficheCtx = null,
+  ficheNoLab = false; // noms des champs masqués (option du bloc) : le nom reste en infobulle
 function ficheCell(f, row, showEmpty = false, ed = false) {
   const v = row[f.colId];
-  if (S.cfg.hideEmptyFields && !showEmpty && !(ed && isEditableCol(f.col)) && isEmpty(v)) return "";
+  if (S.cfg.hideEmptyFields && !showEmpty && !(ed && isEditableCol(f.col)) && isEmpty(v))
+    return ficheCtx && !ficheCtx.allEmpty.has(f) ? `<div class="vide${ficheCtx.longF.has(f) ? " long" : ""}" aria-hidden="true"></div>` : "";
   const t = textOf(f.col, f.opts, v);
-  const long = t.length > 60 || t.includes("\n");
+  const long = ficheCtx ? ficheCtx.longF.has(f) : t.length > 60 || t.includes("\n");
   const css = cellStyle(f, row);
-  return `<div class="${long ? "long" : ""}"><dt${descAttr(f)}>${esc(f.label)}${infoMark(f)}</dt><dd class="${isNumCol(f.col) ? "num" : ""}${css.includes("background") ? " styled" : ""}" style="${css}"${edAttr(ed, f, row)}>${htmlOf(f, typeof v === "string" ? v.replace(/\s+$/, "") : v)}</dd></div>`;
+  return `<div class="${long ? "long" : ""}"${ficheNoLab ? ` title="${esc(f.label)}"` : ""}><dt${descAttr(f)}>${esc(f.label)}${infoMark(f)}</dt><dd class="${isNumCol(f.col) ? "num" : ""}${css.includes("background") ? " styled" : ""}" style="${css}"${edAttr(ed, f, row)}>${htmlOf(f, typeof v === "string" ? v.replace(/\s+$/, "") : v)}</dd></div>`;
 }
 /* Disposition de la fiche telle que construite dans Grist (layoutSpec) :
    niveaux alternés vertical / horizontal, feuilles = champs de la vue */
@@ -2227,8 +2232,19 @@ function layoutHTML(node, depth, byField, row, used, se, ed) {
   return `<div class="${depth % 2 === 0 ? "lv" : "lh"}">${parts.join("")}</div>`;
 }
 // ficheHTML — HTML d'une fiche complète, en respectant la disposition de la vue Grist si elle existe.
-function ficheHTML(info, row) {
+function ficheHTML(info, row, ctx = null) {
+  ficheCtx = ctx;
+  try {
+    return ficheHTMLIn(info, row);
+  } finally {
+    ficheCtx = null;
+    ficheNoLab = false;
+  }
+}
+function ficheHTMLIn(info, row) {
   const se = !!S.cfg.blocks.find((x) => x.id === info.secId)?.showEmpty; // option du bloc : afficher les champs vides
+  ficheNoLab = !!S.cfg.blocks.find((x) => x.id === info.secId)?.hideLabels; // option : noms des champs masqués
+  const nl = ficheNoLab ? " nolabels" : "";
   const ed = blockEditable(info.secId);
   const style = styleCss(rowStyle(info, row));
   const spec = parseJSON(info.sec.layoutSpec, null);
@@ -2241,10 +2257,10 @@ function ficheHTML(info, row) {
       .map((f) => ficheCell(f, row, se, ed))
       .join(""); // champs absents de la disposition
     if (rest) html += `<div class="lh wrap">${rest}</div>`;
-    return `<dl class="fiche lay" style="${style}">${html || '<div class="msg">Aucun champ renseigné</div>'}</dl>`;
+    return `<dl class="fiche lay${nl}" style="${style}">${html || '<div class="msg">Aucun champ renseigné</div>'}</dl>`;
   }
   const items = info.fields.map((f) => ficheCell(f, row, se, ed)).join("");
-  return `<dl class="fiche" style="${style}">${items || '<div class="msg">Aucun champ renseigné</div>'}</dl>`;
+  return `<dl class="fiche${nl}" style="${style}">${items || '<div class="msg">Aucun champ renseigné</div>'}</dl>`;
 }
 // renderSingle — Affiche une vue fiche (un enregistrement, avec flèches précédent/suivant).
 function renderSingle(info, rows, body, selId, el) {
@@ -2271,12 +2287,22 @@ function renderSingle(info, rows, body, selId, el) {
 function renderCards(info, rows, body, selId, jobs = []) {
   const FIRST = 60,
     CHUNK = 200;
+  // champs « longs » : décidés une fois pour toute la liste (au moins une valeur longue dans les lignes)
+  const longF = new Set(
+    info.fields.filter((f) =>
+      rows.some((r) => {
+        const t = textOf(f.col, f.opts, r[f.colId]);
+        return t.length > 60 || t.includes("\n");
+      }),
+    ),
+  );
+  const allEmpty = new Set(info.fields.filter((f) => rows.every((r) => isEmpty(r[f.colId])))); // champ vide partout : retiré
   const card = (r) => {
     const txt = info.fields
       .map((f) => textOf(f.col, f.opts, r[f.colId]))
       .join(" ")
       .toLowerCase();
-    return `<div class="mini ${r.id === selId ? "sel" : ""}" data-row="${r.id}" data-text="${esc(txt)}">${ficheHTML(info, r)}</div>`;
+    return `<div class="mini ${r.id === selId ? "sel" : ""}" data-row="${r.id}" data-text="${esc(txt)}">${ficheHTML(info, r, { longF, allEmpty })}</div>`;
   };
   body.innerHTML = `<div class="cartes">${rows.slice(0, FIRST).map(card).join("")}</div>`;
   if (rows.length > FIRST)
@@ -5187,6 +5213,7 @@ ${
   )}
   ${isFiche ? C(`data-edit="${i}"`, b.editable, "Édition des champs", "Permet de modifier les valeurs directement dans la page (double-clic). Les règles d'accès de Grist s'appliquent : une modification interdite est refusée ; les lecteurs restent en lecture seule.") : ""}
   ${["record", "detail"].includes(s.parentKey) ? C(`data-addr="${i}"`, b.addable, "Ajout et suppression de lignes", "Avec « Édition des champs », affiche en bas du bloc « + Ajouter une ligne » et « − Supprimer la ligne » (ligne sélectionnée, après confirmation). Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Les règles d'accès de Grist s'appliquent (droits de création et de suppression).") : ""}
+  ${["single", "detail"].includes(s.parentKey) ? C(`data-nolab="${i}"`, b.hideLabels, "Masquer les noms des champs", "Pour ce bloc, n'affiche que les valeurs : les noms des champs restent visibles au survol d'une valeur.") : ""}
   ${["single", "detail"].includes(s.parentKey) ? C(`data-sempty="${i}"`, b.showEmpty, "Afficher les champs vides", "Pour ce bloc seulement, montre aussi les champs sans valeur (sinon masqués selon l'option générale).") : ""}
   ${C(`data-stk="${i}"`, b.sticky, "Figer à l'écran", "Le bloc reste visible pendant que l'on fait défiler un bloc voisin plus long.")}
   ${L(
@@ -5683,6 +5710,10 @@ $("#panel").addEventListener("change", (ev) => {
   }
   if (t.dataset.edit) {
     draft.blocks[Number(t.dataset.edit)].editable = t.checked;
+    return;
+  }
+  if (t.dataset.nolab) {
+    draft.blocks[Number(t.dataset.nolab)].hideLabels = t.checked;
     return;
   }
   if (t.dataset.addr) {
