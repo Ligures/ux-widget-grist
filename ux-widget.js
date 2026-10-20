@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.9). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.10). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.9"; // voir CHANGELOG.md
+const VERSION = "0.9.1.10"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -2203,16 +2203,18 @@ async function saveValue(el, tableId, rid, col, value) {
 // ficheCell — HTML d'un champ dans une fiche (libellé + valeur).
 // Liste de fiches (renderCards) : mêmes emplacements d'une fiche à l'autre — un champ vide masqué garde sa place
 // (case vide invisible) et un champ est « long » (pleine largeur) pour toutes les fiches ou pour aucune.
+// fwStyle — Largeur fixe d'un champ dans une liste de fiches sans disposition Grist (identique d'une fiche à l'autre).
+const fwStyle = (f) => (ficheCtx?.widths?.has(f) ? ` style="flex:0 0 ${ficheCtx.widths.get(f)}"` : "");
 let ficheCtx = null,
   ficheNoLab = false; // noms des champs masqués (option du bloc) : le nom reste en infobulle
 function ficheCell(f, row, showEmpty = false, ed = false) {
   const v = row[f.colId];
   if (S.cfg.hideEmptyFields && !showEmpty && !(ed && isEditableCol(f.col)) && isEmpty(v))
-    return ficheCtx && !ficheCtx.allEmpty.has(f) ? `<div class="vide${ficheCtx.longF.has(f) ? " long" : ""}" aria-hidden="true"></div>` : "";
+    return ficheCtx && !ficheCtx.allEmpty.has(f) ? `<div class="vide${ficheCtx.longF.has(f) ? " long" : ""}"${fwStyle(f)} aria-hidden="true"></div>` : "";
   const t = textOf(f.col, f.opts, v);
   const long = ficheCtx ? ficheCtx.longF.has(f) : t.length > 60 || t.includes("\n");
   const css = cellStyle(f, row);
-  return `<div class="${long ? "long" : ""}"${ficheNoLab ? ` title="${esc(f.label)}"` : ""}><dt${descAttr(f)}>${esc(f.label)}${infoMark(f)}</dt><dd class="${isNumCol(f.col) ? "num" : ""}${css.includes("background") ? " styled" : ""}" style="${css}"${edAttr(ed, f, row)}>${htmlOf(f, typeof v === "string" ? v.replace(/\s+$/, "") : v)}</dd></div>`;
+  return `<div class="${long ? "long" : ""}"${fwStyle(f)}${ficheNoLab ? ` title="${esc(f.label)}"` : ""}><dt${descAttr(f)}>${esc(f.label)}${infoMark(f)}</dt><dd class="${isNumCol(f.col) ? "num" : ""}${css.includes("background") ? " styled" : ""}" style="${css}"${edAttr(ed, f, row)}>${htmlOf(f, typeof v === "string" ? v.replace(/\s+$/, "") : v)}</dd></div>`;
 }
 /* Disposition de la fiche telle que construite dans Grist (layoutSpec) :
    niveaux alternés vertical / horizontal, feuilles = champs de la vue */
@@ -2297,12 +2299,33 @@ function renderCards(info, rows, body, selId, jobs = []) {
     ),
   );
   const allEmpty = new Set(info.fields.filter((f) => rows.every((r) => isEmpty(r[f.colId])))); // champ vide partout : retiré
+  // sans disposition Grist : chaque champ a la même largeur dans toutes les fiches, celle de sa plus longue valeur
+  // (et de son nom s'il est affiché), entre 6 et 40 caractères ; les champs « longs » prennent toute la ligne
+  const spec = parseJSON(info.sec.layoutSpec, null);
+  const widths = new Map();
+  if (!(spec && (spec.children || spec.leaf !== undefined))) {
+    const noLab = !!S.cfg.blocks.find((x) => x.id === info.secId)?.hideLabels;
+    // largeur mesurée dans la police de la page (canevas), plus juste qu'un nombre de caractères
+    const ctx2d = (renderCards.cv ??= document.createElement("canvas")).getContext("2d");
+    const ff = getComputedStyle(document.body).fontFamily;
+    const measure = (txt, px) => {
+      ctx2d.font = `${px}px ${ff}`;
+      return ctx2d.measureText(txt).width;
+    };
+    for (const f of info.fields) {
+      if (longF.has(f) || allEmpty.has(f)) continue;
+      let w = noLab ? 0 : measure(String(f.label || ""), 11);
+      for (const r of rows.length > 2000 ? rows.slice(0, 2000) : rows)
+        w = Math.max(w, measure(textOf(f.col, f.opts, r[f.colId]), 13));
+      widths.set(f, `${Math.round(Math.min(360, Math.max(40, w + 6)))}px`);
+    }
+  }
   const card = (r) => {
     const txt = info.fields
       .map((f) => textOf(f.col, f.opts, r[f.colId]))
       .join(" ")
       .toLowerCase();
-    return `<div class="mini ${r.id === selId ? "sel" : ""}" data-row="${r.id}" data-text="${esc(txt)}">${ficheHTML(info, r, { longF, allEmpty })}</div>`;
+    return `<div class="mini ${r.id === selId ? "sel" : ""}" data-row="${r.id}" data-text="${esc(txt)}">${ficheHTML(info, r, { longF, allEmpty, widths })}</div>`;
   };
   body.innerHTML = `<div class="cartes">${rows.slice(0, FIRST).map(card).join("")}</div>`;
   if (rows.length > FIRST)

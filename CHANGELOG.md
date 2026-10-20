@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.10] — Largeur des champs des listes de fiches — 2026-10-20
+
+### Corrigé
+- **Listes de fiches sans disposition Grist** : les colonnes de largeur fixe introduites en 0.9.1.8 (environ 110 px) coupaient les valeurs sur plusieurs lignes alors que la place ne manquait pas. Chaque champ prend maintenant la largeur de sa plus longue valeur, mesurée sur toutes les fiches (et de son nom s'il est affiché), entre 40 et 360 px. Cette largeur est la même dans toutes les fiches : les champs restent alignés et ne passent à la ligne que si la fiche est trop étroite.
+
 ## [0.9.1.9] — Noms des champs masquables dans les fiches — 2026-10-20
 
 ### Ajouté

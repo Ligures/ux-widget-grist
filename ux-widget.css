@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.1.9).
+/* UX widget grist — feuilles de style (version 0.9.1.10).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1190,15 +1190,14 @@ td.num {
   max-height: none;
   flex: 1 1 auto;
 }
-/* liste de fiches : sans disposition Grist, les champs se rangent dans des colonnes de même largeur pour
-   toutes les fiches (et non selon leur contenu) ; un champ long occupe toute la ligne */
+/* liste de fiches : sans disposition Grist, chaque champ a une largeur fixe (calculée sur toutes les fiches,
+   voir renderCards) ; un champ long occupe toute la ligne */
 .cartes .fiche:not(.lay) {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   gap: 6px 18px;
 }
-.cartes .fiche:not(.lay) > div.long {
-  grid-column: 1 / -1;
+.cartes .fiche:not(.lay) > div {
+  min-width: 0;
+  max-width: 100%;
 }
 .fiche.nolabels dt {
   display: none;
