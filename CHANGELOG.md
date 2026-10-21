@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.13] — Correctif cartes — 2026-10-21
+
+### Corrigé
+- **Cartes** : depuis 0.9.1.12, les cartes affichaient « can't access property "isOpen", this._tooltip is undefined » dès qu'un point n'avait pas d'étiquette (nom vide, ou étiquette affichée en fenêtre au clic). Le cadre coloré n'est maintenant appliqué qu'aux points qui ont une étiquette.
+
 ## [0.9.1.12] — Étiquettes des cartes : angles droits, cadre de la couleur du point — 2026-10-21
 
 ### Modifié

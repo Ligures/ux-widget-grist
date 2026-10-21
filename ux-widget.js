@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.12). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.13). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.12"; // voir CHANGELOG.md
+const VERSION = "0.9.1.13"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3395,7 +3395,7 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
           });
         // cadre de l'étiquette de la couleur du point (rouge s'il est sélectionné sans couleur choisie)
         m.on("tooltipopen", (e) => tipColor(e.tooltip, ptColor(p.id === (S.sel[info.secId] ?? selId), p.fill)));
-        if (m.isTooltipOpen?.()) tipColor(m.getTooltip(), ptColor(p.id === selId, p.fill)); // étiquette permanente déjà ouverte
+        if (m.getTooltip() && m.isTooltipOpen()) tipColor(m.getTooltip(), ptColor(p.id === selId, p.fill)); // étiquette permanente déjà ouverte (point sans étiquette : pas de tooltip)
         m.on("click", () => {
           S.sel[info.secId] = p.id;
           if (hasRenderedDependents(info.secId)) scheduleRender();
