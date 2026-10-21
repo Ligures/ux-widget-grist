@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.11). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.12). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.11"; // voir CHANGELOG.md
+const VERSION = "0.9.1.12"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3368,6 +3368,12 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
           : on
             ? { radius: 8, color: "#fff", weight: 2, fillColor: "#ce0500", fillOpacity: 1 }
             : { radius: 6, color: "#fff", weight: 1.5, fillColor: BRAND.c, fillOpacity: 0.85 };
+      // couleur visible d'un point (celle reprise par le cadre de son étiquette)
+      const ptColor = (on, fill) => fill || (on ? "#ce0500" : BRAND.c);
+      const tipColor = (tt, c) => {
+        const el = tt?.getElement?.();
+        if (el) el.style.setProperty("--tc", c);
+      };
       // contour coloré : cercle plus épais autour du point (sélection : point agrandi)
       const style = (on, fill, rc) =>
         rc
@@ -3387,12 +3393,16 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
             permanent: !!b.mapLabelsOn,
             className: b.mapLabelsOn ? "lbl" : "",
           });
+        // cadre de l'étiquette de la couleur du point (rouge s'il est sélectionné sans couleur choisie)
+        m.on("tooltipopen", (e) => tipColor(e.tooltip, ptColor(p.id === (S.sel[info.secId] ?? selId), p.fill)));
+        if (m.isTooltipOpen?.()) tipColor(m.getTooltip(), ptColor(p.id === selId, p.fill)); // étiquette permanente déjà ouverte
         m.on("click", () => {
           S.sel[info.secId] = p.id;
           if (hasRenderedDependents(info.secId)) scheduleRender();
           else
             for (const [id, mk] of markers) {
               mk.setStyle(style(id === p.id, mk.fill, mk.ring));
+              if (mk.getTooltip()) tipColor(mk.getTooltip(), ptColor(id === p.id, mk.fill));
               if (id === p.id) mk.bringToFront();
             }
         });

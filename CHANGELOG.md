@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.12] — Étiquettes des cartes : angles droits, cadre de la couleur du point — 2026-10-21
+
+### Modifié
+- **Cartes, étiquettes des points** (permanentes ou au survol) : angles droits au lieu d'arrondis, et cadre fin (1 px) de la couleur du point, pointe comprise. Sans colonne de couleur, le cadre est bleu, ou rouge pour le point sélectionné ; il suit la sélection quand on clique sur un autre point. Les étiquettes des zones (communes, EPCI, IRIS) gardent un cadre gris.
+
 ## [0.9.1.11] — Ordre des groupes des listes de sélection — 2026-10-21
 
 ### Ajouté
