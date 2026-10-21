@@ -1732,14 +1732,14 @@ textarea.ed-input {
 /* étiquettes des points : angles droits, fin cadre de la couleur du point (--tc, posée par le script) */
 .map-box .leaflet-tooltip {
   border-radius: 0;
-  border: 1px solid var(--tc, #c8c8c8);
+  border: 2px solid var(--tc, #c8c8c8);
 }
 .map-box .leaflet-popup-content-wrapper {
   border-radius: 0;
-  border: 1px solid var(--tc, #c8c8c8);
+  border: 2px solid var(--tc, #c8c8c8);
 }
 .map-box .leaflet-popup-tip {
-  border: 1px solid var(--tc, #c8c8c8);
+  border: 2px solid var(--tc, #c8c8c8);
 }
 .map-box .leaflet-tooltip-top::before {
   border-top-color: var(--tc, #c8c8c8);

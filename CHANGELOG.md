@@ -19,7 +19,7 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 ## [0.9.1.14] — Fenêtres d'information des cartes — 2026-10-21
 
 ### Corrigé
-- **Cartes** : les fenêtres d'information qui s'ouvrent au clic sur un point (étiquette en HTML, avec IPS, circonscription, écoles proches…) gardaient leurs angles arrondis et leur cadre par défaut. Elles reçoivent maintenant le même style que les étiquettes : angles droits et cadre fin de la couleur du point, pointe comprise.
+- **Cartes** : les fenêtres d'information qui s'ouvrent au clic sur un point (étiquette en HTML, avec IPS, circonscription, écoles proches…) gardaient leurs angles arrondis et leur cadre par défaut. Elles reçoivent maintenant le même style que les étiquettes : angles droits et cadre de 2 px de la couleur du point, pointe comprise. Le cadre des étiquettes passe aussi à 2 px.
 
 ## [0.9.1.13] — Correctif cartes — 2026-10-21
 
