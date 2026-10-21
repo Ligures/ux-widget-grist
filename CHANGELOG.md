@@ -16,6 +16,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.15] — Fenêtres des cartes : maintien à l'écran et double liseré — 2026-10-21
+
+### Corrigé
+- **Cartes liées à d'autres blocs** : la fenêtre d'information d'un point s'ouvrait puis disparaissait aussitôt. Le clic sur le point met à jour les blocs liés en redessinant la page, ce qui supprimait la fenêtre. Elle est maintenant rouverte sur le même point après ce redessin, et ne se ferme que par ✕ ou un clic ailleurs sur la carte.
+
+### Modifié
+- **Étiquettes et fenêtres des cartes** : le cadre de 2 px de la couleur du point est doublé, à l'intérieur, d'un second liseré de 2 px de la couleur du contour du point : couleur de la règle de contour, sinon le liseré du cercle (blanc, ou noir pour le point sélectionné coloré).
+
 ## [0.9.1.14] — Fenêtres d'information des cartes — 2026-10-21
 
 ### Corrigé

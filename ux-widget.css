@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.1.14).
+/* UX widget grist — feuilles de style (version 0.9.1.15).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1733,10 +1733,15 @@ textarea.ed-input {
 .map-box .leaflet-tooltip {
   border-radius: 0;
   border: 2px solid var(--tc, #c8c8c8);
+  box-shadow: inset 0 0 0 2px var(--tc2, #fff);
 }
 .map-box .leaflet-popup-content-wrapper {
   border-radius: 0;
   border: 2px solid var(--tc, #c8c8c8);
+  /* second liseré à l'intérieur : couleur du contour du point (--tc2) */
+  box-shadow:
+    inset 0 0 0 2px var(--tc2, #fff),
+    0 3px 14px rgba(0, 0, 0, 0.4);
 }
 .map-box .leaflet-popup-tip {
   border: 2px solid var(--tc, #c8c8c8);

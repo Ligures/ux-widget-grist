@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.14). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.15). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.14"; // voir CHANGELOG.md
+const VERSION = "0.9.1.15"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3370,9 +3370,13 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
             : { radius: 6, color: "#fff", weight: 1.5, fillColor: BRAND.c, fillOpacity: 0.85 };
       // couleur visible d'un point (celle reprise par le cadre de son étiquette)
       const ptColor = (on, fill) => fill || (on ? "#ce0500" : BRAND.c);
-      const tipColor = (tt, c) => {
+      // contour du point : couleur de la règle de contour, sinon le liseré du cercle (noir si sélectionné et coloré, sinon blanc)
+      const ptRing = (on, fill, ring) => ring || (on && fill ? "#161616" : "#fff");
+      const tipColor = (tt, c, c2) => {
         const el = tt?.getElement?.();
-        if (el) el.style.setProperty("--tc", c);
+        if (!el) return;
+        el.style.setProperty("--tc", c);
+        el.style.setProperty("--tc2", c2 || "#fff"); // second liseré, à l'intérieur : couleur du contour du point
       };
       // contour coloré : cercle plus épais autour du point (sélection : point agrandi)
       const style = (on, fill, rc) =>
@@ -3388,7 +3392,16 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
         if (p.name && looksHtml(p.name) && !b.mapLabelsOn) {
           m.bindPopup(safeHtml(p.name) + qx, { maxWidth: 420 });
           // fenêtre d'information : même cadre que les étiquettes (couleur du point)
-          m.on("popupopen", (e) => tipColor(e.popup, ptColor(p.id === (S.sel[info.secId] ?? selId), p.fill)));
+          m.on("popupopen", (e) => {
+            {
+              const on = p.id === (S.sel[info.secId] ?? selId);
+              tipColor(e.popup, ptColor(on, p.fill), ptRing(on, p.fill, p.ring));
+            }
+            S.mapPopup = { sec: info.secId, id: p.id }; // à rouvrir si la page est redessinée (sélection d'un point lié)
+          });
+          m.on("popupclose", () => {
+            if (!S.mapTeardown) S.mapPopup = null; // fermée par l'utilisateur (et non par le redessin de la page)
+          });
         }
         else if (p.name || qx)
           m.bindTooltip((looksHtml(p.name) ? safeHtml(p.name) : esc(p.name)) + (b.mapLabelsOn ? "" : qx), {
@@ -3398,15 +3411,18 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
             className: b.mapLabelsOn ? "lbl" : "",
           });
         // cadre de l'étiquette de la couleur du point (rouge s'il est sélectionné sans couleur choisie)
-        m.on("tooltipopen", (e) => tipColor(e.tooltip, ptColor(p.id === (S.sel[info.secId] ?? selId), p.fill)));
-        if (m.getTooltip() && m.isTooltipOpen()) tipColor(m.getTooltip(), ptColor(p.id === selId, p.fill)); // étiquette permanente déjà ouverte (point sans étiquette : pas de tooltip)
+        m.on("tooltipopen", (e) => {
+          const on = p.id === (S.sel[info.secId] ?? selId);
+          tipColor(e.tooltip, ptColor(on, p.fill), ptRing(on, p.fill, p.ring));
+        });
+        if (m.getTooltip() && m.isTooltipOpen()) tipColor(m.getTooltip(), ptColor(p.id === selId, p.fill), ptRing(p.id === selId, p.fill, p.ring)); // étiquette permanente déjà ouverte (point sans étiquette : pas de tooltip)
         m.on("click", () => {
           S.sel[info.secId] = p.id;
           if (hasRenderedDependents(info.secId)) scheduleRender();
           else
             for (const [id, mk] of markers) {
               mk.setStyle(style(id === p.id, mk.fill, mk.ring));
-              if (mk.getTooltip()) tipColor(mk.getTooltip(), ptColor(id === p.id, mk.fill));
+              if (mk.getTooltip()) tipColor(mk.getTooltip(), ptColor(id === p.id, mk.fill), ptRing(id === p.id, mk.fill, mk.ring));
               if (id === p.id) mk.bringToFront();
             }
         });
@@ -3514,6 +3530,8 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
       map.on("moveend", () => {
         S.mapViews[info.secId] = { key, center: map.getCenter(), zoom: map.getZoom(), userMoved };
       });
+      // un clic sur un point redessine la page quand d'autres blocs en dépendent : sa fenêtre d'information est rouverte
+      if (S.mapPopup?.sec === info.secId) markers.get(S.mapPopup.id)?.openPopup();
       let lastW = el.clientWidth,
         lastH = el.clientHeight;
       new ResizeObserver(() => {
@@ -4071,7 +4089,9 @@ async function render() {
   S.charts.forEach((c) => c.destroy());
   S.charts = [];
   if (window.Plotly) grid.querySelectorAll(".plot-box").forEach((el) => Plotly.purge(el));
+  S.mapTeardown = true; // les fenêtres fermées par la suppression des cartes seront rouvertes
   S.maps.forEach((m) => m.remove());
+  S.mapTeardown = false;
   S.maps = [];
   grid.replaceChildren(frag);
   if (S.maxed && !grid.querySelector(".maxed")) {
