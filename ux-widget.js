@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.13). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.14). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.13"; // voir CHANGELOG.md
+const VERSION = "0.9.1.14"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3385,7 +3385,11 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
         const m = L.circleMarker([p.lat, p.lng], style(p.id === selId, p.fill, p.ring)).addTo(map);
         // Leaflet interprète les étiquettes comme du HTML : HTML nettoyé (popup au clic, comme la carte native), sinon texte échappé
         const qx = p.qpv ? `<div class="qpvinfo">${esc(qpvText(p.qpv))}</div>` : ""; // (l'IRIS est indiqué au survol de la zone)
-        if (p.name && looksHtml(p.name) && !b.mapLabelsOn) m.bindPopup(safeHtml(p.name) + qx, { maxWidth: 420 });
+        if (p.name && looksHtml(p.name) && !b.mapLabelsOn) {
+          m.bindPopup(safeHtml(p.name) + qx, { maxWidth: 420 });
+          // fenêtre d'information : même cadre que les étiquettes (couleur du point)
+          m.on("popupopen", (e) => tipColor(e.popup, ptColor(p.id === (S.sel[info.secId] ?? selId), p.fill)));
+        }
         else if (p.name || qx)
           m.bindTooltip((looksHtml(p.name) ? safeHtml(p.name) : esc(p.name)) + (b.mapLabelsOn ? "" : qx), {
             direction: "top",
