@@ -94,6 +94,7 @@ Pour une vue affichée en **Liste de sélection** :
 - **Colonne affichée** : le texte proposé dans la liste.
 - **Ordre** : alphabétique, ou celui de la vue Grist.
 - **Regrouper par** : intertitres dans la liste (par exemple les écoles par commune).
+- **Ordre des groupes** (si « Regrouper par » est choisi) : intertitres en ordre alphabétique (A → Z) ou inverse (Z → A). Les nombres et les années sont classés par valeur : en ordre inverse, la rentrée la plus récente vient en premier.
 - **ID de synchronisation** : les listes qui portent le même identifiant gardent la même sélection d'une page à l'autre (pages du widget comme autres pages Grist du même onglet).
   - Seules les listes **sur la même table** se synchronisent : deux listes de tables différentes (par exemple Circonscriptions et Écoles) peuvent porter le même identifiant sans interférer.
   - La sélection partagée est propre au **document** : elle ne passe pas d'un document à un autre (par exemple d'une copie de développement au document en service).

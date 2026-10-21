@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.10). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.11). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -41,7 +41,7 @@
      Bloc (blocks[i]) : id = identifiant de la vue Grist (_grist_Views_section)
  Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold
  Tableaux/fiches : colWidths, asList, cardW, editable, addable, showEmpty, hideLabels
- Liste de sélection : asSelect, selCol, selOrder, selGroup, syncId
+ Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
          qpvUrl, mapZone (communes|epci|iris), mapCommune, zoneColor,
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.10"; // voir CHANGELOG.md
+const VERSION = "0.9.1.11"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3630,9 +3630,10 @@ async function renderSelectors(sels, ctx) {
         g: gcol ? textOf(gcol, gopts, r[gcol.colId]) || "(sans valeur)" : "",
       }));
       // groupe d'abord (ex. commune), puis ordre alphabétique du texte affiché, ou ordre de la vue Grist si choisi
-      const viewOrder = b.selOrder === "vue";
+      const viewOrder = b.selOrder === "vue",
+        gDir = b.selGroupOrder === "desc" ? -1 : 1; // intertitres : A → Z, ou Z → A
       items.sort(
-        (a, c) => (gcol ? cmpFr(a.g, c.g) : 0) || (viewOrder ? a.i - c.i : cmpFr(a.t, c.t) || a.i - c.i),
+        (a, c) => (gcol ? gDir * cmpFr(a.g, c.g) : 0) || (viewOrder ? a.i - c.i : cmpFr(a.t, c.t) || a.i - c.i),
       );
       const cur = await selectedRowId(b.id, ctx);
       const opt = (x) => `<option value="${x.id}" ${x.id === cur ? "selected" : ""}>${esc(x.t)}</option>`;
@@ -5473,6 +5474,20 @@ ${
           sel("selGroup", [["", "aucun"], ...colOpts(s)], b.selGroup || ""),
           "Classe les valeurs de la liste sous des intertitres (par exemple les écoles par commune).",
         ) +
+        (b.selGroup
+          ? L(
+              "Ordre des groupes",
+              sel(
+                "selGroupOrder",
+                [
+                  ["", "alphabétique (A → Z)"],
+                  ["desc", "inverse (Z → A)"],
+                ],
+                b.selGroupOrder || "",
+              ),
+              "Ordre des intertitres dans la liste. Les nombres et les années sont classés par valeur (2024 avant 2025, 9 avant 10).",
+            )
+          : "") +
         L(
           "ID de synchronisation",
           `<input type="text" data-sync="${i}" value="${esc(b.syncId ?? "")}" placeholder="${esc(selectorSyncId({ id: b.id }) || "aucun")}" style="width:110px">`,
@@ -5655,6 +5670,7 @@ $("#panel").addEventListener("change", (ev) => {
       "height",
       "selCol",
       "selGroup",
+      "selGroupOrder",
       "selOrder",
       "mapLabel",
       "mapColor",

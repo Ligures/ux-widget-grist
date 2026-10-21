@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.11] — Ordre des groupes des listes de sélection — 2026-10-21
+
+### Ajouté
+- **Listes de sélection, « Ordre des groupes »** : les intertitres créés par « Regrouper par » se classent en ordre alphabétique (A → Z, comme avant) ou inverse (Z → A). Les nombres et les années sont classés par valeur, par exemple la rentrée la plus récente en premier (`selGroupOrder`).
+
 ## [0.9.1.10] — Largeur des champs des listes de fiches — 2026-10-20
 
 ### Corrigé
