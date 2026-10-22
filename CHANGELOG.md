@@ -16,6 +16,19 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.2.0] — Configuration des vues réorganisée — 2026-10-22
+
+### Modifié
+- **Configuration, « Vues retenues »** : les réglages de chaque bloc sont rangés dans des encadrés titrés, dans le même ordre pour toutes les vues.
+  - **Affichage**, commun à toutes les vues : taille, état à l'ouverture, « À la ligne », « Figer à l'écran », « Liste de sélection ».
+  - Puis les encadrés propres au type de vue, affichés seulement s'il y a lieu : **Tableau** (largeur des colonnes), **Fiches** (fiches en liste, largeur des fiches, noms des champs, champs vides), **Édition** (édition des champs, ajout et suppression de lignes), **Liste de sélection** (colonne affichée, ordre, regroupement, synchronisation), **Couleurs du graphique**, **Filtre rapide**, et les encadrés des cartes.
+- **Blocs repliés par défaut** à l'ouverture de la configuration : seuls restent visibles le titre, les flèches, la largeur, la colonne et le nombre de lignes. **Tout déplier** ouvre tous les blocs. Une vue que l'on vient d'ajouter s'ouvre dépliée.
+
+## [0.9.1.19] — Zones en contours seuls — 2026-10-22
+
+### Ajouté
+- **Cartes, « Couleur des zones » → aucune (contours seuls)** : le zonage principal est tracé en traits gris, sans couleur de fond, et le nom de la zone reste affiché au survol. Par exemple : communes en traits gris, circonscriptions en pointillés noirs (second zonage), sans aplat de couleur.
+
 ## [0.9.1.18] — Rattachement des points aux circonscriptions par code — 2026-10-22
 
 ### Ajouté

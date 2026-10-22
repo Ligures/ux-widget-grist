@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.18). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.2.0). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.18"; // voir CHANGELOG.md
+const VERSION = "0.9.2.0"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3158,7 +3158,8 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
       byCode.get(p.code).push(p);
     }
   if (!byCode.size && !fileZ) return note("Zonage : aucun code INSEE reconnu");
-  const how = outline ? "" : b.zoneColor || "";
+  const noFill = !outline && b.zoneColor === "none"; // contours seuls, sans couleur de fond
+  const how = outline || noFill ? "" : b.zoneColor || "";
   try {
     const codes = [...byCode.keys()];
     const deps = [...new Set(codes.map(depOf))];
@@ -3286,7 +3287,12 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
       { type: "FeatureCollection", features: feats },
       {
         pane: outline ? "zones2" : "zones",
-        style: (f) => outline ? { color: "#161616", weight: mode === "iris" ? 1.2 : 2, opacity: 0.85, dashArray: "6 4", fill: false } : ({
+        style: (f) =>
+          outline
+            ? { color: "#161616", weight: mode === "iris" ? 1.2 : 2, opacity: 0.85, dashArray: "6 4", fill: false }
+            : noFill
+              ? { color: "#3a3a3a", weight: mode === "iris" ? 1 : 1.5, opacity: 0.8, fillOpacity: 0 } // fond transparent : survol conservé
+              : ({
           color: how ? "#1d3fb8" : f.properties.color,
           weight: mode === "epci" || fileZ ? 2.5 : mode === "iris" ? 1 : 1.5,
           opacity: 0.9,
@@ -5027,9 +5033,10 @@ async function refreshAll() {
 
 /* ---------- Panneau de configuration ---------- */
 let draftNav = { url: "", items: [] };
-// réglages des vues retenues repliés dans la configuration (identifiants de vue) : seuls restent le titre,
-// les flèches et la place dans la grille (largeur, colonne, lignes) ; non enregistré
-const cfgFolded = new Set();
+// vues retenues dont les réglages sont dépliés dans la configuration (identifiants de vue). Par défaut, toutes
+// sont repliées : seuls restent le titre, les flèches et la place dans la grille (largeur, colonne, lignes) ;
+// non enregistré
+const cfgOpen = new Set();
 let draft = null,
   cfgPage = null;
 /* Page en cours de réglage (0.8.8) : on peut régler une autre page, ou en créer une, sans toucher à celle
@@ -5237,6 +5244,9 @@ function renderConfig() {
   const L = (text, ctrl, tip, after = false) =>
     `<label${tip ? ` title="${esc(tip)}"` : ""}>${after ? `${ctrl} <span class="lt">${text}</span>` : `<span class="lt">${text}</span> ${ctrl}`}</label>`;
   const C = (attr, on, text, tip) => L(text, `<input type="checkbox" ${attr} ${on ? "checked" : ""}>`, tip, true);
+  // encadré de réglages titré, omis s'il est vide (réglages propres à un type de vue)
+  const G = (title, tip, html) =>
+    html && String(html).trim() ? `<div class="mgrp"><div class="mgrp-h" title="${esc(tip)}">${title}</div>${html}</div>` : "";
   const colOpts = (s) =>
     byLabel(
       (m.colsByTable.get(s.tableRef) || []).filter(
@@ -5254,7 +5264,7 @@ function renderConfig() {
           `<select data-f="${f}" data-i="${i}">${opts.map(([v, l]) => `<option value="${v}" ${String(v) === String(cur) ? "selected" : ""}>${l}</option>`).join("")}</select>`;
         const isFiche = ["single", "detail", "record"].includes(s.parentKey),
           isMap = s.parentKey === "custom" && isMapSection(s);
-        const fold = cfgFolded.has(b.id);
+        const fold = !cfgOpen.has(b.id);
         return `<li class="${fold ? "folded" : ""}"><div class="chead"><button class="icon-btn fold-btn" data-fold="${b.id}" title="${fold ? "Afficher tous les réglages de ce bloc" : "Replier les réglages (garder la place dans la grille)"}" aria-expanded="${!fold}">${fold ? "▸" : "▾"}</button><span class="cname" title="${esc(secLabel(b.id))}">${kindTitle(s, b)} <small>— ${esc(m.pageOfView.get(s.parentId) || "")} · table ${esc(m.tables.get(s.tableRef)?.tableId || "?")}</small></span>
 <button class="icon-btn" data-up="${i}" title="Placer avant la vue précédente">↑</button><button class="icon-btn" data-down="${i}" title="Placer après la vue suivante">↓</button>
 <button class="icon-btn" data-rm="${i}" title="Retirer de la page (la vue Grist n'est pas supprimée)">✕</button></div>
@@ -5316,8 +5326,35 @@ ${
         )
   }
 </div><div class="ctrls more">
-  ${
-    s.parentKey === "record"
+<div class="mgrps">
+  ${G("Affichage", "Réglages communs à toutes les vues : taille, état à l'ouverture, placement dans la page.", [(L(
+    "Taille",
+    sel(
+      "height",
+      [
+        ["", "normale"],
+        ["mini", "mini"],
+        ["compact", "compacte"],
+        ["grand", "grande"],
+        ["tresgrand", "très grande"],
+      ],
+      b.height || "",
+    ),
+    "Hauteur maximale du bloc (tableaux, graphiques, cartes). Au-delà, le contenu défile dans le bloc.",
+  )),(L(
+    "À l'ouverture",
+    sel(
+      "startFold",
+      [
+        ["", s.parentKey === "chart" || (s.parentKey === "custom" && !isMap) ? "auto (replié)" : "auto (déplié)"],
+        ["fold", "replié"],
+        ["open", "déplié"],
+      ],
+      b.startFold || "",
+    ),
+    "État du bloc à l'ouverture de la page. Un bloc replié n'affiche que son titre ; un clic sur le titre le déplie.",
+  )),(C(`data-nl="${i}"`, b.newLine, "À la ligne", "Le bloc commence une nouvelle rangée, même s'il reste de la place à droite du bloc précédent.")),(C(`data-stk="${i}"`, b.sticky, "Figer à l'écran", "Le bloc reste visible pendant que l'on fait défiler un bloc voisin plus long.")),(C(`data-asel="${i}"`, isSelector(b), "Liste de sélection", "Affiche cette vue sous forme de liste déroulante dans l'en-tête : choisir une valeur pilote les blocs liés, comme un sélecteur."))].join(""))}
+  ${G("Tableau", "Réglages propres aux tableaux.", (s.parentKey === "record"
       ? L(
           "Largeur des colonnes",
           sel(
@@ -5331,11 +5368,8 @@ ${
           ),
           "Ajustées : les colonnes se partagent la largeur du bloc, sans ascenseur horizontal. Grist : largeurs réglées dans la vue native. Automatique : selon le contenu.",
         )
-      : ""
-  }
-  ${s.parentKey === "single" ? C(`data-aslist="${i}"`, b.asList, "Afficher toutes les fiches (en liste)", "Affiche une fiche par enregistrement au lieu de la seule fiche sélectionnée.") : ""}
-  ${
-    s.parentKey === "detail" || (s.parentKey === "single" && b.asList)
+      : ""))}
+  ${G("Fiches", "Réglages propres aux fiches et listes de fiches.", [(s.parentKey === "single" ? C(`data-aslist="${i}"`, b.asList, "Afficher toutes les fiches (en liste)", "Affiche une fiche par enregistrement au lieu de la seule fiche sélectionnée.") : ""),(s.parentKey === "detail" || (s.parentKey === "single" && b.asList)
       ? L(
           "Largeur des fiches",
           sel(
@@ -5351,42 +5385,52 @@ ${
           ),
           "Largeur de chaque fiche : plusieurs fiches étroites se placent côte à côte.",
         )
-      : ""
-  }
-  ${L(
-    "Taille",
-    sel(
-      "height",
-      [
-        ["", "normale"],
-        ["mini", "mini"],
-        ["compact", "compacte"],
-        ["grand", "grande"],
-        ["tresgrand", "très grande"],
-      ],
-      b.height || "",
-    ),
-    "Hauteur maximale du bloc (tableaux, graphiques, cartes). Au-delà, le contenu défile dans le bloc.",
-  )}
-  ${isFiche ? C(`data-edit="${i}"`, b.editable, "Édition des champs", "Permet de modifier les valeurs directement dans la page (double-clic). Les règles d'accès de Grist s'appliquent : une modification interdite est refusée ; les lecteurs restent en lecture seule.") : ""}
-  ${["record", "detail"].includes(s.parentKey) ? C(`data-addr="${i}"`, b.addable, "Ajout et suppression de lignes", "Avec « Édition des champs », affiche en bas du bloc « + Ajouter une ligne » et « − Supprimer la ligne » (ligne sélectionnée, après confirmation). Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Les règles d'accès de Grist s'appliquent (droits de création et de suppression).") : ""}
-  ${["single", "detail"].includes(s.parentKey) ? C(`data-nolab="${i}"`, b.hideLabels, "Masquer les noms des champs", "Pour ce bloc, n'affiche que les valeurs : les noms des champs restent visibles au survol d'une valeur.") : ""}
-  ${["single", "detail"].includes(s.parentKey) ? C(`data-sempty="${i}"`, b.showEmpty, "Afficher les champs vides", "Pour ce bloc seulement, montre aussi les champs sans valeur (sinon masqués selon l'option générale).") : ""}
-  ${C(`data-stk="${i}"`, b.sticky, "Figer à l'écran", "Le bloc reste visible pendant que l'on fait défiler un bloc voisin plus long.")}
-  ${L(
-    "À l'ouverture",
-    sel(
-      "startFold",
-      [
-        ["", s.parentKey === "chart" || (s.parentKey === "custom" && !isMap) ? "auto (replié)" : "auto (déplié)"],
-        ["fold", "replié"],
-        ["open", "déplié"],
-      ],
-      b.startFold || "",
-    ),
-    "État du bloc à l'ouverture de la page. Un bloc replié n'affiche que son titre ; un clic sur le titre le déplie.",
-  )}
-  ${C(`data-nl="${i}"`, b.newLine, "À la ligne", "Le bloc commence une nouvelle rangée, même s'il reste de la place à droite du bloc précédent.")}
+      : ""),(["single", "detail"].includes(s.parentKey) ? C(`data-nolab="${i}"`, b.hideLabels, "Masquer les noms des champs", "Pour ce bloc, n'affiche que les valeurs : les noms des champs restent visibles au survol d'une valeur.") : ""),(["single", "detail"].includes(s.parentKey) ? C(`data-sempty="${i}"`, b.showEmpty, "Afficher les champs vides", "Pour ce bloc seulement, montre aussi les champs sans valeur (sinon masqués selon l'option générale).") : "")].join(""))}
+  ${G("Édition", "Modification des données depuis la page (droits Grist respectés).", [(isFiche ? C(`data-edit="${i}"`, b.editable, "Édition des champs", "Permet de modifier les valeurs directement dans la page (double-clic). Les règles d'accès de Grist s'appliquent : une modification interdite est refusée ; les lecteurs restent en lecture seule.") : ""),(["record", "detail"].includes(s.parentKey) ? C(`data-addr="${i}"`, b.addable, "Ajout et suppression de lignes", "Avec « Édition des champs », affiche en bas du bloc « + Ajouter une ligne » et « − Supprimer la ligne » (ligne sélectionnée, après confirmation). Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Les règles d'accès de Grist s'appliquent (droits de création et de suppression).") : "")].join(""))}
+  ${G("Liste de sélection", "La vue est affichée comme une liste déroulante dans l'en-tête de la page.", (isSelector(b)
+      ? L(
+          "Colonne affichée",
+          sel("selCol", [["", "auto"], ...colOpts(s)], b.selCol || ""),
+          "Colonne dont les valeurs apparaissent dans la liste déroulante.",
+        ) +
+        L(
+          "Ordre",
+          sel(
+            "selOrder",
+            [
+              ["", "alphabétique"],
+              ["vue", "celui de la vue Grist"],
+            ],
+            b.selOrder || "",
+          ),
+          "Ordre des valeurs dans la liste.",
+        ) +
+        L(
+          "Regrouper par",
+          sel("selGroup", [["", "aucun"], ...colOpts(s)], b.selGroup || ""),
+          "Classe les valeurs de la liste sous des intertitres (par exemple les écoles par commune).",
+        ) +
+        (b.selGroup
+          ? L(
+              "Ordre des groupes",
+              sel(
+                "selGroupOrder",
+                [
+                  ["", "alphabétique (A → Z)"],
+                  ["desc", "inverse (Z → A)"],
+                ],
+                b.selGroupOrder || "",
+              ),
+              "Ordre des intertitres dans la liste. Les nombres et les années sont classés par valeur (2024 avant 2025, 9 avant 10).",
+            )
+          : "") +
+        L(
+          "ID de synchronisation",
+          `<input type="text" data-sync="${i}" value="${esc(b.syncId ?? "")}" placeholder="${esc(selectorSyncId({ id: b.id }) || "aucun")}" style="width:110px">`,
+          "Les listes portant le même identifiant gardent la même sélection d'une page à l'autre (comme le drop-down de Varamil).",
+        )
+      : ""))}
+</div>
   ${(() => {
     // couleurs des graphiques (natifs, ou avancés Plotly) : par catégorie (camembert, histogramme à une série)
     // ou par série (plusieurs séries, courbes)
@@ -5404,7 +5448,6 @@ ${
       `</div></div>`
     );
   })()}
-  ${C(`data-asel="${i}"`, isSelector(b), "Liste de sélection", "Affiche cette vue sous forme de liste déroulante dans l'en-tête : choisir une valeur pilote les blocs liés, comme un sélecteur.")}
   ${(() => {
     // filtres rapides du bloc (0.9.0.2) : un encadré par filtre — champ, valeur à l'ouverture, valeurs exclues
     if (!(["record", "detail", "chart", "custom"].includes(s.parentKey) || (s.parentKey === "single" && b.asList)) || isSelector(b)) return "";
@@ -5591,6 +5634,7 @@ ${
                 "zoneColor",
                 [
                   ["", zoneMode(b) === "epci" ? "une couleur par EPCI" : FILE_ZONES[zoneMode(b)] ? `une couleur par ${FILE_ZONES[zoneMode(b)].one}` : "couleur majoritaire des points"],
+                  ["none", "aucune (contours seuls)"],
                   ["count", "selon le nombre de points"],
                   ["sum", "selon la somme d'une colonne"],
                   ["table", "selon une table Grist (par code)"],
@@ -5618,51 +5662,6 @@ ${
             )
           : "") +
         `</div></div>`
-      : ""
-  }
-  ${
-    isSelector(b)
-      ? L(
-          "Colonne affichée",
-          sel("selCol", [["", "auto"], ...colOpts(s)], b.selCol || ""),
-          "Colonne dont les valeurs apparaissent dans la liste déroulante.",
-        ) +
-        L(
-          "Ordre",
-          sel(
-            "selOrder",
-            [
-              ["", "alphabétique"],
-              ["vue", "celui de la vue Grist"],
-            ],
-            b.selOrder || "",
-          ),
-          "Ordre des valeurs dans la liste.",
-        ) +
-        L(
-          "Regrouper par",
-          sel("selGroup", [["", "aucun"], ...colOpts(s)], b.selGroup || ""),
-          "Classe les valeurs de la liste sous des intertitres (par exemple les écoles par commune).",
-        ) +
-        (b.selGroup
-          ? L(
-              "Ordre des groupes",
-              sel(
-                "selGroupOrder",
-                [
-                  ["", "alphabétique (A → Z)"],
-                  ["desc", "inverse (Z → A)"],
-                ],
-                b.selGroupOrder || "",
-              ),
-              "Ordre des intertitres dans la liste. Les nombres et les années sont classés par valeur (2024 avant 2025, 9 avant 10).",
-            )
-          : "") +
-        L(
-          "ID de synchronisation",
-          `<input type="text" data-sync="${i}" value="${esc(b.syncId ?? "")}" placeholder="${esc(selectorSyncId({ id: b.id }) || "aucun")}" style="width:110px">`,
-          "Les listes portant le même identifiant gardent la même sélection d'une page à l'autre (comme le drop-down de Varamil).",
-        )
       : ""
   }
 </div></li>`;
@@ -5816,7 +5815,10 @@ $("#panel").addEventListener("change", (ev) => {
   }
   if (t.dataset.add) {
     const id = Number(t.dataset.add);
-    if (t.checked) draft.blocks.push({ id, width: DEFAULT_WIDTH[S.meta.sections.get(id)?.parentKey] || 3 });
+    if (t.checked) {
+      draft.blocks.push({ id, width: DEFAULT_WIDTH[S.meta.sections.get(id)?.parentKey] || 3 });
+      cfgOpen.add(id); // vue ajoutée : ses réglages s'ouvrent
+    }
     else draft.blocks = draft.blocks.filter((b) => b.id !== id);
     renderConfig();
     return;
@@ -6031,12 +6033,12 @@ $("#panel").addEventListener("click", async (ev) => {
   };
   if (t.dataset.fold) {
     const id = Number(t.dataset.fold);
-    cfgFolded.has(id) ? cfgFolded.delete(id) : cfgFolded.add(id);
+    cfgOpen.has(id) ? cfgOpen.delete(id) : cfgOpen.add(id);
     return renderConfig();
   }
   if (t.dataset.foldall) {
-    cfgFolded.clear();
-    if (t.dataset.foldall === "1") draft.blocks.forEach((b) => cfgFolded.add(b.id));
+    cfgOpen.clear();
+    if (t.dataset.foldall === "0") draft.blocks.forEach((b) => cfgOpen.add(b.id));
     return renderConfig();
   }
   if (t.dataset.up) return move(Number(t.dataset.up), -1);

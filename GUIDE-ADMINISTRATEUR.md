@@ -50,7 +50,10 @@ Le bouton **⚙ Configurer** ouvre un panneau sur la moitié droite de l'écran 
 1. **Vues disponibles** : choisir une page Grist, puis cocher ses vues. On peut combiner des vues de plusieurs pages.
 2. **Vues retenues** : chaque vue cochée devient un bloc.
    - Les flèches ↑ ↓ règlent l'ordre ; ✕ retire le bloc (la vue Grist n'est pas supprimée).
-   - ▾ / ▸ replie ou déplie les réglages d'un bloc. Replié, il garde visibles son titre, ses flèches, sa largeur, sa colonne et son nombre de lignes : pratique pour organiser une page de nombreux blocs. **Tout replier** et **Tout déplier** agissent sur tous les blocs. Cet état n'est pas enregistré.
+   - Les réglages de chaque bloc sont **repliés par défaut** : restent visibles son titre, ses flèches, sa largeur, sa colonne et son nombre de lignes. ▸ / ▾ déplie ou replie un bloc ; **Tout déplier** et **Tout replier** agissent sur tous. Une vue que l'on vient d'ajouter s'ouvre dépliée.
+   - Déplié, un bloc présente ses réglages dans des encadrés titrés, toujours dans le même ordre :
+     - **Affichage**, commun à toutes les vues : taille, état à l'ouverture, « À la ligne », « Figer à l'écran », « Liste de sélection » ;
+     - puis les encadrés propres au type de vue, s'il y a lieu : **Tableau**, **Fiches**, **Édition**, **Liste de sélection**, **Couleurs du graphique**, **Filtre rapide**, et pour les cartes **Points**, **Contour des points**, **QPV**, **Zones sous les points**.
    - Chaque bloc a ses réglages :
 
 | Réglage | Effet |
@@ -136,7 +139,7 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
 | Rattachement : circonscriptions / secteurs de collège | « position des points » (défaut) : la zone dont le contour contient le point. Ou une colonne de code (ex. `2201`, UAI) : la zone désignée par vos données, même si le point est hors de son contour (commune partagée entre deux zones, commune nouvelle…) |
 | Fichier : circonscriptions / secteurs de collège | Fichier GeoJSON déposé à côté du widget. Vide : `circonscriptions-bretagne.geojson`, `secteurs-colleges-bretagne.geojson`. Préparation : voir le README |
 | Code INSEE | Colonne du code commune ; ou « position des points » pour le déduire des coordonnées |
-| Couleur des zones | Une couleur par zone, nombre de points, somme d'une colonne, ou valeur d'une table Grist reliée par code |
+| Couleur des zones | Une couleur par zone, aucune (contours seuls, sans fond), nombre de points, somme d'une colonne, ou valeur d'une table Grist reliée par code |
 
 **Colorer les zones avec vos propres données** (par exemple la population des 3-10 ans par IRIS) :
 1. Importer une table dans Grist, avec une colonne de code :
