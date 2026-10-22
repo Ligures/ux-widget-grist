@@ -16,6 +16,13 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.18] — Rattachement des points aux circonscriptions par code — 2026-10-22
+
+### Ajouté
+- **Cartes, zonages lus dans un fichier** (circonscriptions législatives, secteurs de collège) : nouveau réglage **Rattachement**.
+  - « position des points » (comme avant) : chaque point est rattaché à la zone dont le contour le contient.
+  - Une colonne de code (ex. `2201` pour la 1re circonscription des Côtes-d'Armor, ou l'UAI d'un collège) : chaque point est rattaché à la zone que donnent vos données. Seule la circonscription sélectionnée s'affiche alors, même si certaines écoles sont hors de son contour officiel, par exemple dans une commune nouvelle à cheval sur deux circonscriptions.
+
 ## [0.9.1.17] — Secteurs de collège, fichiers de zonage régionaux — 2026-10-22
 
 ### Ajouté

@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.17). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.18). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -44,7 +44,7 @@
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
-         qpvUrl, mapZone (communes|epci|iris|legis|college), mapZone2 (contours croisés), legisUrl, collegeUrl, mapCommune, zoneColor,
+         qpvUrl, mapZone (communes|epci|iris|legis|college), mapZone2 (contours croisés), legisUrl, collegeUrl, legisCol, collegeCol, mapCommune, zoneColor,
          zoneSum, zoneTable/zoneKey/zoneVal, mapLabelsOn
 
    RÈGLES À RESPECTER
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.17"; // voir CHANGELOG.md
+const VERSION = "0.9.1.18"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3014,6 +3014,7 @@ const FILE_ZONES = {
   legis: {
     def: "circonscriptions-bretagne.geojson",
     urlKey: "legisUrl",
+    colKey: "legisCol",
     label: "Circonscriptions législatives",
     one: "circonscription",
     code: [/^(id_?circo|code_?circ|codecirconscription|circo(nscription)?_?code|ref)$/i, /circ/i, /^code$/i, /^id$/i],
@@ -3022,6 +3023,7 @@ const FILE_ZONES = {
   college: {
     def: "secteurs-colleges-bretagne.geojson",
     urlKey: "collegeUrl",
+    colKey: "collegeCol",
     label: "Secteurs de collège",
     one: "secteur",
     code: [/^(uai|code_?uai|code_?rne|rne|numero_?uai|uai_?college)$/i, /uai|rne/i, /^code$/i, /^id$/i],
@@ -3182,11 +3184,16 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
       for (const z of zones.values()) for (const f of z.feats) z.pts.push(...(byCode.get(codeOf(f)) || []));
       for (const [k, z] of zones) if (!z.pts.length) zones.delete(k); // seulement les EPCI qui contiennent des points
     } else if (fileZ) {
-      // zones qui contiennent au moins un point (test du point dans le polygone, après le rectangle englobant)
+      // zones des points : par la colonne de code choisie (ex. 2201), sinon par position (point dans le polygone,
+      // après le rectangle englobant)
+      const byCol = !!b[fileZ.colKey];
+      const norm = (v) => String(v ?? "").trim().toUpperCase().replace(/^0+(?=\w)/, "");
       for (const c of fileFeats) {
-        const cand = pts.filter((p) => p.lng >= c.bb[0] && p.lng <= c.bb[2] && p.lat >= c.bb[1] && p.lat <= c.bb[3]);
-        if (!cand.length) continue;
-        const inside = cand.filter((p) => inGeom(c.f.geometry, p.lng, p.lat));
+        const inside = byCol
+          ? pts.filter((p) => norm(p.zc?.[mode]) === norm(c.key))
+          : pts
+              .filter((p) => p.lng >= c.bb[0] && p.lng <= c.bb[2] && p.lat >= c.bb[1] && p.lat <= c.bb[3])
+              .filter((p) => inGeom(c.f.geometry, p.lng, p.lat));
         if (!inside.length) continue;
         if (zones.has(c.key)) zones.get(c.key).feats.push(c.f), zones.get(c.key).pts.push(...inside); // zone en plusieurs morceaux
         else zones.set(c.key, { key: c.key, name: c.name, feats: [c.f], pts: inside });
@@ -3363,6 +3370,11 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
   await ensureRefTables([nameC, colorC, colorC2, comC, ringC].filter(Boolean));
   const ringOpts = ringC ? parseJSON(ringC.widgetOptions) : null;
   const colorOpts = colorC ? parseJSON(colorC.widgetOptions) : null;
+  // zonages lus dans un fichier : rattachement des points par une colonne de code (sinon par leur position)
+  const zcCols = Object.entries(FILE_ZONES)
+    .map(([k, Z]) => [k, b[Z.colKey] && cols.find((c) => c.colId === b[Z.colKey])])
+    .filter(([, c]) => c);
+  await ensureRefTables(zcCols.map(([, c]) => c));
   const pts = rows
     .map((r) => {
       const ll = toLatLng(toNum(r[latC.colId]), toNum(r[lngC.colId]));
@@ -3377,6 +3389,7 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
           rv: ringC ? r[ringC.colId] : null,
           sv: sumC ? toNum(r[sumC.colId]) : null,
           code: comC ? communeCode(comC, r[comC.colId]) : null,
+          zc: Object.fromEntries(zcCols.map(([k, c]) => [k, textOf(c, parseJSON(c.widgetOptions), r[c.colId])])),
         }
       );
     })
@@ -4963,7 +4976,7 @@ $("#btnConfig").addEventListener("click", () => openConfig());
 /* Colonnes choisies dans la configuration : elles sont enregistrées par identifiant (colId), qui change quand
    on renomme une colonne dans Grist. On garde aussi leur numéro interne (colRef, stable) dans b._refs pour
    retrouver le nouvel identifiant automatiquement. */
-const COL_FIELDS = ["mapLabel", "mapColor", "mapColor2", "mapRing", "mapCommune", "selCol", "selGroup", "zoneSum", "qfField", "qfField2"];
+const COL_FIELDS = ["mapLabel", "mapColor", "mapColor2", "mapRing", "mapCommune", "selCol", "selGroup", "zoneSum", "qfField", "qfField2", "legisCol", "collegeCol", "pieColorCol"];
 const COL_SPECIAL = new Set(["", "__qpv", "__pos"]); // valeurs qui ne sont pas des colonnes
 // colFieldTable — Table d'une option de colonne (zoneKey / zoneVal : table choisie pour colorer les zones).
 function colFieldTable(b, f) {
@@ -5549,6 +5562,11 @@ ${
           .filter(([k]) => [zoneMode(b), zoneMode(b) ? b.mapZone2 : ""].includes(k))
           .map(([k, Z]) =>
             L(
+              `Rattachement : ${Z.label.toLowerCase()}`,
+              sel(Z.colKey, [["", "position des points"], ...colOpts(s)], b[Z.colKey] || ""),
+              `Comment relier chaque point à sa zone. « position des points » : la zone dont le contour contient le point. Une colonne : la zone dont le code est la valeur de la colonne (${k === "legis" ? "ex. 2201 pour la 1re circonscription des Côtes-d'Armor" : "UAI du collège"}) ; c'est le choix à faire quand vos données font foi, par exemple pour une commune partagée entre deux zones.`,
+            ) +
+            L(
               `Fichier : ${Z.label.toLowerCase()}`,
               `<input type="text" data-zfile="${i}" data-zkey="${Z.urlKey}" value="${esc(b[Z.urlKey] || "")}" placeholder="${Z.def}" style="width:220px">`,
               `Fichier GeoJSON (WGS84) déposé à côté du widget sur GitHub, restreint à la région (voir le README). Vide : ${Z.def}. Un fichier sur un autre site doit être autorisé dans la CSP de index.html.`,
@@ -5832,6 +5850,8 @@ $("#panel").addEventListener("change", (ev) => {
       "mapCommune",
       "mapZone",
       "mapZone2",
+      "legisCol",
+      "collegeCol",
       "zoneColor",
       "zoneSum",
       "zoneTable",
