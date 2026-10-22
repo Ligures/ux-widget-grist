@@ -19,11 +19,24 @@ Chaque ligne commence par la nature du changement : *Nouveau*, *Amélioré*, *Co
 - Le **dixième** (`0.X`) marque une évolution majeure.
 - Le chiffre suivant (`0.X.Y`) marque une évolution secondaire ou un ensemble de corrections. Il peut dépasser 9 : 0.8.9 est suivie de 0.8.10, puis 0.8.11…
 - Depuis 0.8.10, un quatrième chiffre (`0.X.Y.Z`) change à chaque livraison intermédiaire : 0.9.2.1, 0.9.2.2… jusqu'au palier suivant.
+- **Regroupement** : le palier en cours garde le détail de chaque livraison. Au passage au palier suivant, ses livraisons sont regroupées en une seule entrée (par exemple 0.9.1.0 à 0.9.1.19 dans « 0.9.1 »), qui ne garde que le résultat final.
 - La version 1.0 sera la première version stable.
 
 Les versions antérieures à 0.5.0 ont été développées avant la mise en dépôt du code. Leur numérotation est reconstituée a posteriori, et leurs dates ne sont pas connues précisément (septembre – début octobre 2026).
 
 ---
+
+## [0.9.2.3] — Étiquettes des camemberts sur plusieurs lignes — 2026-10-22
+
+### Utilisateurs
+- *Corrigé* — **Camemberts avec étiquettes à l'extérieur** : les noms de plusieurs mots passent à la ligne (environ 14 caractères par ligne) et ne sont plus coupés au bord du bloc.
+- *Amélioré* — Quand les parts portent déjà leur nom, la légende, redondante et qui recouvrait les étiquettes, n'est plus affichée, sauf si le graphique la demande explicitement. Le camembert gagne de la place.
+
+### Administrateurs
+- *Amélioré* — **Journal des modifications** : les livraisons des paliers terminés sont regroupées (0.8.10, 0.8.11, 0.9.0, 0.9.1), seul le palier en cours (0.9.2) garde le détail.
+
+### Développeurs
+- *Amélioré* — Graphiques avancés de type *pie* : `automargin` activé ; le nom des parts passe par `text` (coupé avec `<br>`) au lieu de `label`, si bien que `labels` reste intact pour les couleurs et la légende.
 
 ## [0.9.2.2] — Journal des modifications par public — 2026-10-22
 
@@ -46,321 +59,95 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
   - Puis les encadrés propres au type de vue, s'il y a lieu : **Tableau**, **Fiches**, **Édition**, **Liste de sélection**, **Couleurs du graphique**, **Filtre rapide**, et les encadrés des cartes.
 - *Amélioré* — **Blocs repliés par défaut** à l'ouverture de la configuration : restent visibles le titre, les flèches, la largeur, la colonne et le nombre de lignes. **Tout déplier** ouvre tous les blocs ; une vue que l'on vient d'ajouter s'ouvre dépliée.
 
-## [0.9.1.19] — Zones en contours seuls — 2026-10-22
+## [0.9.1] — Couleurs des graphiques, cartes enrichies, configuration plus lisible — 2026-10-18 → 2026-10-22
 
-### Administrateurs
-- *Nouveau* — **Cartes, « Couleur des zones » → aucune (contours seuls)** : le zonage principal est tracé en traits gris, sans fond ; le nom de la zone reste affiché au survol.
-
-## [0.9.1.18] — Rattachement des points aux circonscriptions par code — 2026-10-22
-
-### Administrateurs
-- *Nouveau* — **Cartes, zonages lus dans un fichier** (circonscriptions législatives, secteurs de collège) : réglage **Rattachement**.
-  - « position des points » (comme avant) : la zone dont le contour contient le point.
-  - Une colonne de code (ex. `2201`, ou l'UAI d'un collège) : la zone donnée par vos données, même si le point est hors de son contour officiel (commune nouvelle à cheval sur deux circonscriptions…).
-
-## [0.9.1.17] — Secteurs de collège, fichiers de zonage régionaux — 2026-10-22
+Regroupe les livraisons 0.9.1.0 à 0.9.1.19.
 
 ### Utilisateurs
-- *Amélioré* — Étiquettes et fenêtres des cartes : liseré intérieur plus large (8 px).
+- *Corrigé* — **Messages de refus** (« Modification refusée par les règles d'accès »…) : ils restent visibles au moins 4 s, et s'effacent après 8 s ou d'un clic.
+- *Retiré* — Bouton **Plein écran** : réservé aux administrateurs, le widget étant déjà la vue par défaut des utilisateurs.
+- *Amélioré* — **En-têtes de colonnes** des tableaux plus discrets (graisse moyenne, gris foncé).
+- *Corrigé* — **Listes de fiches** : les champs sont au même endroit dans toutes les fiches, chacun à la largeur de sa plus longue valeur, sans retour à la ligne inutile ; un champ vide garde sa place.
+- *Nouveau* — Fiches compactes, quand l'administrateur l'a choisi : seules les valeurs sont affichées, le nom du champ apparaît au survol.
+- *Corrigé* — **Couleurs des graphiques** stables d'un affichage à l'autre quand l'administrateur les a fixées.
+- *Amélioré* — **Cartes** : étiquettes et fenêtres d'information à angles droits, encadrées de la couleur du point, doublée à l'intérieur de la couleur de son contour. Sur une carte liée à d'autres blocs, la fenêtre d'un point reste ouverte après le clic.
 
 ### Administrateurs
-- *Nouveau* — **Cartes, zonage « secteurs de collège »**, coloré ou en contours (second zonage). Une table Grist peut colorer les secteurs, reliée par l'UAI du collège.
-- *Amélioré* — **Circonscriptions législatives et secteurs de collège** lus dans des fichiers régionaux déposés à côté du widget : `circonscriptions-bretagne.geojson`, `secteurs-colleges-bretagne.geojson`. L'option « Fichier : … » permet d'en indiquer un autre. Le README explique comment les extraire des fichiers nationaux avec mapshaper.org.
+- *Nouveau* — **Couleurs du graphique** pour tous les graphiques (camemberts, histogrammes, courbes, graphiques avancés) : correspondance « catégorie = #code », colonne de codes, couleur de repli. Camembert et histogramme à une série : une couleur par catégorie ; plusieurs séries : une couleur par série.
+- *Nouveau* — **Fiches : « Masquer les noms des champs »** (`hideLabels`).
+- *Nouveau* — **Listes de sélection : « Ordre des groupes »** (A → Z ou Z → A, nombres et années classés par valeur).
+- *Nouveau* — **Cartes, nouveaux zonages** : circonscriptions législatives et secteurs de collège, lus dans des fichiers régionaux déposés à côté du widget (`circonscriptions-bretagne.geojson`, `secteurs-colleges-bretagne.geojson`, préparation décrite dans le README).
+  - **Rattachement** des points à leur zone par position ou par une colonne de code (ex. `2201`, UAI).
+  - **Second zonage (contours)** : un autre découpage en pointillés par-dessus le premier, pour croiser deux fonds de carte.
+  - **Couleur des zones → aucune (contours seuls)**.
+- *Amélioré* — **Configuration des vues** : icône, type puis titre de chaque vue ; chaque vue retenue forme une carte distincte, repliable (▾ / ▸, **Tout replier**, **Tout déplier**).
 
 ### Développeurs
-- *Sécurité* — CSP : les adresses data.gouv.fr ajoutées en 0.9.1.16 sont retirées, les fichiers étant désormais sur le même site que le widget.
-- *Amélioré* — Lecture générique des zonages en fichier (`FILE_ZONES`, `loadZoneFile`) : code et nom de chaque zone reconnus d'après le nom des propriétés.
+- *Nouveau* — Zonages en fichier génériques (`FILE_ZONES`, `loadZoneFile`) : code et nom de zone reconnus d'après le nom des propriétés ; fichiers lus sur le site du widget, CSP inchangée.
+- *Nouveau* — Couleurs passées à Plotly (`marker.color(s)`) et à Chart.js ; graisse « Medium » de Marianne chargée depuis le paquet DSFR.
 
-## [0.9.1.16] — Circonscriptions législatives et second zonage — 2026-10-22
+## [0.9.0] — Code séparé, sécurité stricte, ajout et suppression de lignes, impression fidèle — 2026-10-14 → 2026-10-18
 
-### Administrateurs
-- *Nouveau* — **Cartes, zonage « circonscriptions législatives »** : circonscriptions qui contiennent des points, colorées comme les autres zonages (une par circonscription, nombre de points, somme d'une colonne, table Grist reliée par le code).
-- *Nouveau* — **Second zonage (contours)** : un deuxième découpage (communes, EPCI, IRIS, circonscriptions) tracé en pointillés noirs par-dessus le premier, pour croiser deux fonds de carte. Nom de la zone au survol du trait (`mapZone2`).
-
-### Développeurs
-- *Sécurité* — CSP : `connect-src` autorisait www.data.gouv.fr et static.data.gouv.fr (retiré en 0.9.1.17).
-
-## [0.9.1.15] — Fenêtres des cartes : maintien à l'écran et double liseré — 2026-10-21
+Regroupe les livraisons 0.9.0 à 0.9.0.10. Évolution majeure de la structure du widget.
 
 ### Utilisateurs
-- *Corrigé* — **Cartes liées à d'autres blocs** : la fenêtre d'information d'un point s'ouvrait puis disparaissait aussitôt. Elle reste maintenant ouverte, et ne se ferme que par ✕ ou un clic ailleurs sur la carte.
-- *Amélioré* — **Étiquettes et fenêtres des cartes** : le cadre de la couleur du point est doublé, à l'intérieur, d'un liseré de la couleur du contour du point.
-
-## [0.9.1.14] — Fenêtres d'information des cartes — 2026-10-21
-
-### Utilisateurs
-- *Amélioré* — **Cartes** : les fenêtres d'information (au clic sur un point) prennent le style des étiquettes : angles droits et cadre de 2 px de la couleur du point, pointe comprise. Le cadre des étiquettes passe aussi à 2 px.
-
-## [0.9.1.13] — Correctif cartes — 2026-10-21
-
-### Utilisateurs
-- *Corrigé* — **Cartes** : depuis 0.9.1.12, une carte affichait une erreur (« can't access property "isOpen"… ») dès qu'un point n'avait pas d'étiquette.
-
-## [0.9.1.12] — Étiquettes des cartes : angles droits, cadre de la couleur du point — 2026-10-21
-
-### Utilisateurs
-- *Amélioré* — **Cartes, étiquettes des points** : angles droits et cadre fin de la couleur du point, pointe comprise. Sans colonne de couleur, le cadre est bleu, ou rouge pour le point sélectionné. Les étiquettes des zones gardent un cadre gris.
-
-## [0.9.1.11] — Ordre des groupes des listes de sélection — 2026-10-21
-
-### Administrateurs
-- *Nouveau* — **Listes de sélection, « Ordre des groupes »** : intertitres de « Regrouper par » en ordre alphabétique (A → Z) ou inverse (Z → A). Nombres et années classés par valeur (`selGroupOrder`).
-
-## [0.9.1.10] — Largeur des champs des listes de fiches — 2026-10-20
-
-### Utilisateurs
-- *Corrigé* — **Listes de fiches** : les valeurs n'étaient plus coupées inutilement sur plusieurs lignes. Chaque champ prend la largeur de sa plus longue valeur, la même dans toutes les fiches, pour que les champs restent alignés.
-
-## [0.9.1.9] — Noms des champs masquables dans les fiches — 2026-10-20
-
-### Utilisateurs
-- *Nouveau* — Dans les fiches où l'administrateur l'a choisi, seules les valeurs sont affichées ; le nom du champ apparaît au survol de la valeur.
-
-### Administrateurs
-- *Nouveau* — **Option de bloc « Masquer les noms des champs »** (fiches et listes de fiches) (`hideLabels`).
-
-## [0.9.1.8] — Champs alignés d'une fiche à l'autre — 2026-10-20
-
-### Utilisateurs
-- *Corrigé* — **Listes de fiches** : les champs sont au même endroit dans toutes les fiches. Un champ vide garde sa place (il est retiré s'il est vide partout) ; un champ long occupe toute la largeur dans toutes les fiches ou dans aucune.
-
-## [0.9.1.7] — Vues retenues plus lisibles dans la configuration — 2026-10-20
-
-### Administrateurs
-- *Amélioré* — **Nom des vues** dans la configuration : icône, **type** (en bleu), puis **titre**.
-- *Amélioré* — **Vues retenues** : chaque vue forme une carte distincte, avec un bandeau de titre et un liseré bleu.
-
-## [0.9.1.6] — Couleurs choisies pour tous les graphiques — 2026-10-19
-
-### Utilisateurs
-- *Corrigé* — Les couleurs des séries ne changent plus d'un affichage à l'autre quand l'administrateur les a fixées.
-
-### Administrateurs
-- *Nouveau* — **Couleurs du graphique** pour tous les graphiques, natifs ou avancés (l'encadré « Couleurs du camembert » est généralisé) : correspondance, colonne de codes, couleur de repli.
-  - Histogramme à une seule série : une couleur par barre.
-  - Plusieurs séries ou courbes : une couleur par série (valeur du regroupement ou nom de la colonne).
-  - Graphique avancé (Plotly) : couleur de chaque trace d'après son nom.
-  - Sans réglage, la palette est appliquée dans l'ordre d'apparition des séries, qui dépend des données.
-
-## [0.9.1.5] — Icônes des types de vue dans la configuration — 2026-10-19
-
-### Administrateurs
-- *Nouveau* — **Configuration** : une icône devant chaque vue indique son type (tableau, fiche, graphique en barres, secteurs, courbe, carte, liste de sélection…). Le type exact s'affiche au survol.
-
-## [0.9.1.4] — Réglages des vues repliables dans la configuration — 2026-10-19
-
-### Administrateurs
-- *Nouveau* — **Vues retenues** : bouton ▾ / ▸ pour replier les réglages d'un bloc (restent visibles : titre, flèches, largeur, colonne, nombre de lignes) ; boutons **Tout replier** et **Tout déplier**.
-
-## [0.9.1.3] — Couleurs personnalisées des camemberts — 2026-10-19
-
-### Administrateurs
-- *Nouveau* — **Couleurs des camemberts** (natifs ou avancés) : encadré dans les réglages du bloc, enregistré dans `W_Composition`.
-  - **Colonne de codes** : un code hexadécimal par ligne (`pieColorCol`).
-  - **Correspondance** « catégorie = #code » (`pieColorMap`), prioritaire.
-  - **Couleur de repli** pour les catégories sans code (`pieColorDefault`).
-
-### Développeurs
-- *Nouveau* — Couleurs passées à Plotly en `marker.colors` (graphiques avancés), et en couleurs de fond des parts pour Chart.js (graphiques natifs).
-
-## [0.9.1.2] — En-têtes de colonnes plus discrets — 2026-10-19
-
-### Utilisateurs
-- *Amélioré* — **En-têtes de colonnes des tableaux** : graisse moyenne et gris foncé. Un en-tête mis en gras dans Grist reste en gras.
-
-### Développeurs
-- *Amélioré* — Graisse « Medium » de Marianne chargée depuis le paquet DSFR, comme les autres graisses.
-
-## [0.9.1.1] — Plein écran réservé aux administrateurs — 2026-10-18
-
-### Utilisateurs
-- *Retiré* — Le bouton **Plein écran** n'est plus affiché aux utilisateurs : le widget est déjà leur vue par défaut.
-
-## [0.9.1.0] — Messages d'erreur lisibles — 2026-10-18
-
-Version de palier : elle regroupe les évolutions 0.9.0.1 à 0.9.0.10 (impression fidèle à l'écran, ajout et suppression de lignes, messages en bulle flottante, infobulles du menu, chargement plus rapide avec des règles d'accès).
-
-### Utilisateurs
-- *Corrigé* — **Messages de refus** (« Modification refusée par les règles d'accès »…) : ils étaient effacés aussitôt. Ils restent visibles au moins 4 s, s'effacent après 8 s ou d'un clic.
-
-## [0.9.0.10] — Suppression de lignes, infobulles du menu — 2026-10-18
-
-### Utilisateurs
-- *Nouveau* — **− Supprimer la ligne**, à côté de « + Ajouter une ligne » : agit sur la ligne sélectionnée, après confirmation dans le bouton (second clic dans les 4 s, ligne surlignée en rouge). Une suppression interdite par les règles d'accès est refusée avec un message.
-- *Nouveau* — Infobulles explicatives sur les liens du menu des pages, quand l'administrateur en a saisi.
-- *Corrigé* — Le message « Ligne ajoutée » restait invisible.
-
-### Administrateurs
-- *Amélioré* — L'option du bloc devient « Ajout et suppression de lignes ».
-- *Nouveau* — **Navigation** : champ « Infobulle » pour chaque lien du menu. Sans infobulle, le survol montre l'adresse de la page, sauf avec « Changer de page dans le widget ».
-
-## [0.9.0.9] — Messages en bulle flottante — 2026-10-18
-
-### Utilisateurs
-- *Amélioré* — **Messages** (chargement, filtre appliqué, erreurs) dans une petite bulle discrète en haut au centre : ils ne décalent plus la page. Un message en cours reste jusqu'à la fin du traitement ; une information s'efface après 4 s ; une erreur après quelques secondes ou d'un clic.
-
-## [0.9.0.8] — Tables interdites lues une seule fois — 2026-10-18
-
-### Utilisateurs
-- *Corrigé* — **Lenteurs** au changement de page et aux sélections, pour les personnes soumises à des règles d'accès.
-
-### Développeurs
-- *Corrigé* — Une table interdite en lecture (par exemple `U_Utilisateurs` derrière une colonne Référence) était redemandée au serveur à chaque affichage, chaque refus pouvant prendre plusieurs secondes. Le refus est mémorisé jusqu'au prochain « Actualiser ».
-
-## [0.9.0.7] — Diagnostic des lenteurs de chargement — 2026-10-18
-
-### Développeurs
-- *Nouveau* — **Diagnostic dans la console du navigateur** (F12) : toute lecture de table de plus de 200 ms est signalée ; au premier affichage, une ligne récapitule le nombre de lectures, le temps cumulé et les cinq plus longues.
-
-## [0.9.0.6] — Ajout de lignes dans un tableau modifiable — 2026-10-17
-
-### Utilisateurs
-- *Nouveau* — **+ Ajouter une ligne** en bas des blocs qui le proposent : la ligne est créée, rattachée à l'élément sélectionné dans la liste liée (par exemple une classe sous l'école choisie), puis la saisie de son premier champ s'ouvre. Un ajout interdit par les règles d'accès est refusé avec un message.
-
-### Administrateurs
-- *Nouveau* — **Option de bloc « Ajout de lignes »** (tableaux et listes de fiches, avec « Édition des champs »). Un bloc vide qui propose l'ajout reste affiché, même avec « masquer les blocs vides ».
-
-## [0.9.0.5] — Impression des tableaux longs, 2ᵉ correction — 2026-10-14
-
-### Utilisateurs
-- *Corrigé* — **Impression des tableaux longs** : plus de pages blanches ni de morceaux de tableau isolés. Les blocs courts restent côte à côte ; un bloc plus haut qu'une page commence sur une nouvelle ligne et se poursuit sur les pages suivantes, en-tête de colonnes répété. Les tableaux des blocs figés et très grands s'impriment en entier, y compris avec Ctrl+P.
-
-### Développeurs
-- *Amélioré* — À l'impression, la grille CSS est remplacée par un flux normal (blocs courts en `inline-block`, blocs longs en `block`), que les navigateurs savent couper d'une page à l'autre.
-
-## [0.9.0.4] — Impression des tableaux longs — 2026-10-14
-
-### Utilisateurs
-- *Corrigé* — **Impression** : un tableau ou une liste de fiches plus haut qu'une page peut se couper d'une page à l'autre, au lieu d'être repoussé en laissant une page blanche. Les lignes ne sont jamais coupées en deux et l'en-tête est répété.
-
-## [0.9.0.3] — Impression fidèle à l'écran — 2026-10-14
-
-### Utilisateurs
-- *Amélioré* — **Impression en A4 paysage**, avec la disposition de l'écran : un graphique qui occupe 1/6 de l'écran occupe 1/6 de la page. Graphiques, cartes et tableaux sont redessinés à la taille de la page.
-- *Corrigé* — Les blocs n'étaient plus empilés un par ligne à l'impression, et l'option « sans trous » ne provoque plus de chevauchements sur le papier.
-
-## [0.9.0.2] — Réglages des filtres rapides regroupés — 2026-10-14
-
-### Administrateurs
-- *Amélioré* — Chaque filtre rapide a son encadré (**Filtre rapide**, **2ᵉ filtre rapide**) : champ, valeur à l'ouverture, valeurs exclues.
-- *Amélioré* — **1er filtre** : l'option **(SO)** peut être choisie à l'ouverture et exclue.
-
-## [0.9.0.1] — Légende de la seconde couleur allégée — 2026-10-14
-
-### Utilisateurs
-- *Amélioré* — Cartes : la légende de la 2ᵉ colonne de couleur n'affiche plus la mention « (si … vide) ».
-
-## [0.9.0] — Code séparé et politique de sécurité stricte — 2026-10-14
-
-Évolution majeure de la structure du widget, sans changement visible pour les utilisateurs.
+- *Nouveau* — **+ Ajouter une ligne** et **− Supprimer la ligne** en bas des blocs qui le proposent. La ligne ajoutée est rattachée à l'élément sélectionné (une classe sous l'école choisie) et sa saisie s'ouvre ; la suppression demande confirmation. Les règles d'accès s'appliquent, avec un message en cas de refus.
+- *Amélioré* — **Impression en A4 paysage**, avec la disposition de l'écran. Les tableaux longs se poursuivent sur les pages suivantes, en-tête répété, sans pages blanches.
+- *Amélioré* — **Messages** dans une bulle discrète en haut au centre : ils ne décalent plus la page.
+- *Nouveau* — Infobulles sur les liens du menu des pages, quand l'administrateur en a saisi.
+- *Corrigé* — **Lenteurs** au changement de page et aux sélections pour les personnes soumises à des règles d'accès.
+- *Amélioré* — Cartes : légende de la 2ᵉ colonne de couleur allégée.
 
 ### Administrateurs
 - *Amélioré* — **Trois fichiers au lieu d'un**, à déposer ensemble dans le dépôt : `index.html`, `ux-widget.css`, `ux-widget.js`.
+- *Nouveau* — Option de bloc **« Ajout et suppression de lignes »** (tableaux et listes de fiches, avec « Édition des champs »).
+- *Nouveau* — **Navigation** : champ « Infobulle » pour chaque lien du menu.
+- *Amélioré* — Chaque filtre rapide a son encadré (champ, valeur à l'ouverture, valeurs exclues) ; l'option **(SO)** du 1er filtre peut être choisie à l'ouverture ou exclue.
 
 ### Développeurs
-- *Amélioré* — `index.html` charge le style et le script avec le numéro de version (`?v=…`), pour éviter l'usage d'une ancienne version en cache.
-- *Sécurité* — **Politique de sécurité du contenu (CSP)** : aucun script en ligne exécuté ; scripts limités au site du widget, à Grist et à jsDelivr ; connexions limitées au site du widget, à jsDelivr, à geo.api.gouv.fr et à data.geopf.fr ; aucun envoi de formulaire ; pas d'objets intégrés.
-- *Sécurité* — L'attribut `onerror` de l'icône AIA est remplacé par un traitement dans le script.
+- *Sécurité* — **Politique de sécurité du contenu (CSP)** : aucun script en ligne ; scripts limités au site du widget, à Grist et à jsDelivr ; connexions limitées au site du widget, à jsDelivr, à geo.api.gouv.fr et à data.geopf.fr ; pas d'envoi de formulaire ni d'objets intégrés. L'attribut `onerror` de l'icône AIA est remplacé par un traitement dans le script.
+- *Amélioré* — Style et script chargés avec le numéro de version (`?v=…`), contre le cache des navigateurs.
+- *Nouveau* — Diagnostic dans la console (F12) : lectures de tables de plus de 200 ms et récapitulatif du premier chargement.
+- *Corrigé* — Une table interdite en lecture était redemandée au serveur à chaque affichage ; le refus est mémorisé jusqu'au prochain « Actualiser ».
+- *Amélioré* — Impression en flux normal au lieu de la grille CSS, que les navigateurs coupent mal d'une page à l'autre.
 
-## [0.8.11.6] — Filtres rapides affichés sur un bloc sans données — 2026-10-14
+## [0.8.11] — Cadrage des cartes, filtres rapides affinés — 2026-10-14
 
-### Utilisateurs
-- *Amélioré* — **Filtres rapides** : ils restent affichés quand le bloc n'a aucune donnée (par exemple après une sélection), sauf si le bloc est masqué par « Masquer les blocs sans données ».
-
-## [0.8.11.5] — Valeur « (SO) » du premier filtre — 2026-10-14
-
-### Utilisateurs
-- *Nouveau* — **Filtres rapides** : le 1er filtre propose **« (SO) »** (sans objet), en dernière position, pour n'afficher que les lignes sans valeur. Le 2nd filtre ne la propose pas.
-
-## [0.8.11.4] — Pas d'option « (vide) » dans les filtres rapides — 2026-10-14
+Regroupe les livraisons 0.8.11.0 à 0.8.11.6.
 
 ### Utilisateurs
-- *Retiré* — **Filtres rapides** : la valeur « (vide) » n'est plus proposée ; les lignes sans valeur restent visibles avec « Tous ».
-
-## [0.8.11.3] — Réglages des cartes réorganisés — 2026-10-14
+- *Nouveau* — **Cartes cadrées sur l'ensemble des données** à l'ouverture, recadrées quand le bloc change de taille ; bouton **⤢** pour y revenir.
+- *Nouveau* — Cartes : points sans valeur pour la couleur principale colorés selon une 2ᵉ colonne, avec sa légende.
+- *Amélioré* — **Filtres rapides** : même présentation pour les deux filtres d'un bloc (au-delà de 4 valeurs : valeur active et liste au clic) ; option **(SO)** dans le 1er filtre pour les lignes sans valeur ; filtres affichés même quand le bloc n'a aucune donnée.
 
 ### Administrateurs
-- *Amélioré* — **Configuration d'une carte** en quatre encadrés : **Points**, **Contour des points**, **Quartiers prioritaires (QPV)**, **Zones sous les points**. Le code INSEE suit directement le choix du zonage.
+- *Nouveau* — **Valeurs exclues** pour chaque filtre rapide.
+- *Nouveau* — Cartes, **« … sinon selon »** : 2ᵉ colonne de couleur des points.
+- *Amélioré* — Réglages d'une carte en quatre encadrés : Points, Contour des points, Quartiers prioritaires (QPV), Zones sous les points.
 
-## [0.8.11.2] — Seconde couleur des points — 2026-10-14
+## [0.8.10] — Plein écran, droit de configurer fermé par défaut, page d'accueil, second filtre — 2026-10-12 → 2026-10-14
+
+Regroupe les livraisons 0.8.10 à 0.8.10.6.
 
 ### Utilisateurs
-- *Nouveau* — Cartes : les points sans valeur pour la couleur principale peuvent être colorés selon une 2ᵉ colonne, avec sa propre légende.
+- *Nouveau* — **Plein écran** : la page Grist du widget dans un nouvel onglet, sans les menus de Grist.
+- *Amélioré* — **Grand écran** : toutes les actions en icônes dans la barre, libellé en infobulle (menu ☰ sur écran étroit). Actualiser (⟳) et Configurer (⚙) sont des boutons directs. Version du widget en infobulle de l'aide.
+- *Nouveau* — **Second filtre rapide** sur certains blocs, cumulé au premier.
+- *Corrigé* — Le widget ne demande plus quelle configuration afficher : il ouvre la page d'accueil.
+- *Corrigé* — **Références vers des lignes non lisibles** : le texte calculé par Grist s'affiche, comme dans les vues natives, au lieu d'un numéro.
+- *Amélioré* — L'onglet « Guide » de l'aide ne traite plus que de l'utilisation.
 
 ### Administrateurs
-- *Nouveau* — **Cartes, « … sinon selon »** : 2ᵉ colonne de couleur pour les points dont « Couleur selon » est vide.
-
-## [0.8.11.1] — Valeurs exclues des filtres rapides, présentation homogène — 2026-10-14
-
-### Utilisateurs
-- *Amélioré* — **Filtres rapides** : au-delà de 4 valeurs, même présentation que sur écran réduit (valeur active, liste au clic). Les deux filtres d'un bloc se présentent de la même façon.
-
-### Administrateurs
-- *Nouveau* — **Valeurs exclues** pour chaque filtre rapide : retirées des boutons et des lignes du bloc, y compris sur « Tous ».
-
-## [0.8.11.0] — Cadrage des cartes — 2026-10-14
-
-### Utilisateurs
-- *Nouveau* — **Cartes cadrées sur l'ensemble des données** à l'ouverture (points et zones). Tant qu'on n'a pas déplacé la carte, elle se recadre quand son bloc change de taille.
-- *Nouveau* — **Bouton ⤢** sous le zoom : revient au cadrage sur l'ensemble des données.
-
-## [0.8.10.6] — Plus de question « quelle configuration ? » aux utilisateurs — 2026-10-14
-
-### Utilisateurs
-- *Corrigé* — Le widget ne demande plus quelle configuration afficher : il ouvre directement la page d'accueil.
-
-### Administrateurs
-- *Amélioré* — La question n'est posée qu'aux administrateurs ; leur choix devient la **page d'accueil** commune (enregistrée dans `W_Composition`).
-- *Amélioré* — **Page d'accueil** toujours proposée (section Navigation). Avec « Changer de page dans le widget », elle s'impose ; sinon, elle sert quand le widget n'a pas de configuration enregistrée.
-
-## [0.8.10.5] — Correction des références protégées — 2026-10-14
-
-### Utilisateurs
-- *Corrigé* — Références vers des lignes non lisibles : le texte affiché pouvait être celui d'une autre colonne (par exemple l'UAI au lieu du nom).
-
-## [0.8.10.4] — Références vers des lignes protégées — 2026-10-14
-
-### Utilisateurs
-- *Corrigé* — **Références vers des lignes non lisibles** (règles d'accès par ligne) : le widget affichait un numéro ; il affiche le texte calculé par Grist, comme les vues natives.
-
-## [0.8.10.3] — Guide d'administration séparé — 2026-10-14
-
-### Utilisateurs
-- *Amélioré* — **Aide** : l'onglet « Guide » ne contient plus que l'utilisation.
-
-### Administrateurs
-- *Nouveau* — Onglet **Administration** de l'aide (`GUIDE-ADMINISTRATEUR.md`), affiché aux seuls administrateurs, avec ses propres questions fréquentes (onglets absents, éditeur qui voit Configurer…).
-
-## [0.8.10.2] — Actions en icônes sur grand écran — 2026-10-14
-
-### Utilisateurs
-- *Amélioré* — **Grand écran** (plus de 900 px) : plus de menu ☰ ; toutes les actions sont des icônes dans la barre, avec leur libellé en infobulle. Sur écran étroit, le menu ☰ revient.
-- *Nouveau* — La version du widget figure dans l'infobulle du bouton Aide.
-
-## [0.8.10.1] — Second filtre rapide, boutons directs, page d'accueil — 2026-10-14
-
-### Utilisateurs
-- *Nouveau* — **Second filtre rapide** sur certains blocs ; les deux filtres se cumulent et se synchronisent par clic milieu.
-- *Amélioré* — **Actualiser** (⟳) et **Configurer** (⚙) sont des boutons directs de la barre.
-
-### Administrateurs
-- *Nouveau* — Réglage « 2ᵉ filtre rapide » par bloc, avec sa valeur à l'ouverture.
-- *Nouveau* — **Page d'accueil** de la navigation (mode « Changer de page dans le widget »).
-- *Retiré* — Fenêtre de choix de l'apparence à la première ouverture : l'apparence se règle dans la configuration (section Affichage). Par défaut : style État (DSFR).
-
-## [0.8.10] — Plein écran, droit de configurer fermé par défaut — 2026-10-12
-
-### Utilisateurs
-- *Nouveau* — **Plein écran** : ouvre la page Grist du widget dans un nouvel onglet, sans les menus de Grist.
-- *Nouveau* — Version du widget dans l'infobulle du menu ☰, avec la mention « nouvelle version » tant que les nouveautés n'ont pas été lues.
-
-### Administrateurs
-- *Amélioré* — L'option « Ouvrir les pages en mode page unique » n'est plus proposée avec « Changer de page dans le widget », où elle ne sert pas.
-- *Sécurité* — **Droit de configurer fermé par défaut** : seul qui lit au moins une ligne de `W_Admin` peut configurer. Exception : un document encore sans configuration, où `W_Admin` est créée au premier enregistrement.
+- *Sécurité* — **Droit de configurer fermé par défaut** : seul qui lit au moins une ligne de `W_Admin` peut configurer (sauf document encore sans configuration).
+- *Nouveau* — **Page d'accueil** de la navigation ; la question « quelle configuration ? » n'est plus posée qu'aux administrateurs et leur réponse devient la page d'accueil.
+- *Nouveau* — Réglage du **2ᵉ filtre rapide** par bloc.
+- *Nouveau* — Onglet **Administration** de l'aide (`GUIDE-ADMINISTRATEUR.md`), réservé aux administrateurs.
+- *Retiré* — Fenêtre de choix de l'apparence à la première ouverture : l'apparence se règle dans la configuration (section Affichage).
+- *Amélioré* — « Ouvrir les pages en mode page unique » n'est plus proposé avec « Changer de page dans le widget ».
 
 ### Développeurs
-- *Sécurité* — Un éditeur qui ne voyait pas `W_Admin` pouvait configurer quand le témoin `_Securite` manquait ou lui était illisible : une table interdite était prise pour une table absente.
-- *Amélioré* — Documentation : tableau des données envoyées à des services externes par les cartes (README). Pour les communes et EPCI, c'est le code du département qui est envoyé à geo.api.gouv.fr.
+- *Sécurité* — Un éditeur pouvait configurer quand le témoin `_Securite` manquait ou lui était illisible : une table interdite était prise pour une table absente.
+- *Amélioré* — README : tableau des données envoyées aux services externes par les cartes.
 
 ## [0.8.9] — Apparence au choix, menu des pages sur smartphone, licence MIT, sans export CSV — 2026-10-11
 

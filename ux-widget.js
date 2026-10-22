@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.2.2). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.2.3). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.2.2"; // voir CHANGELOG.md
+const VERSION = "0.9.2.3"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3924,6 +3924,30 @@ async function renderAdvChart(info, rows, body, jobs) {
           });
         t.marker = { ...(t.marker || {}), colors: cols };
       }
+  // camemberts : les étiquettes longues passent à la ligne (Plotly ne le fait pas) et la marge s'agrandit au
+  // besoin pour les étiquettes placées à l'extérieur, qui étaient coupées au bord du bloc
+  const wrapLabel = (l, max = 14) => {
+    const words = String(l ?? "").split(/\s+/).filter(Boolean);
+    if (String(l ?? "").length <= max || words.length < 2) return l;
+    const lines = [];
+    for (const w of words) {
+      const last = lines[lines.length - 1];
+      if (last && (last + " " + w).length <= max) lines[lines.length - 1] = last + " " + w;
+      else lines.push(w);
+    }
+    return lines.join("<br>");
+  };
+  for (const t of data)
+    if (t?.type === "pie") {
+      t.automargin = true;
+      // le nom des parts sur le graphique passe par « text » (coupé en lignes) ; « labels » reste intact pour la
+      // légende et les couleurs
+      const ti = String(t.textinfo || "percent");
+      if (Array.isArray(t.labels) && /label/.test(ti) && !t.text) {
+        t.text = t.labels.map((l) => (Array.isArray(l) ? l.join(" ") : wrapLabel(l)));
+        t.textinfo = ti.replace("label", "text");
+      }
+    }
   if (!matched.length) {
     body.innerHTML =
       `<div class="msg">Graphique avancé : aucune colonne reconnue.<br>Références trouvées : ${esc(seen.join(" · ") || "aucune")}<br>` +
@@ -3939,6 +3963,11 @@ async function renderAdvChart(info, rows, body, jobs) {
     plot_bgcolor: "#fff",
   };
   delete layout.width;
+  // camemberts : quand les parts portent déjà leur nom, la légende fait double emploi et recouvrait les étiquettes
+  // placées à l'extérieur : elle est masquée (sauf si la légende est explicitement demandée dans le graphique)
+  const pies = data.filter((t) => t?.type === "pie");
+  if (pies.length && pies.every((t) => /text|label/.test(String(t.textinfo || ""))) && spec.layout?.showlegend !== true)
+    layout.showlegend = false;
   body.innerHTML = '<div class="plot-box"></div>';
   const el = body.querySelector(".plot-box");
   delete layout.height;
