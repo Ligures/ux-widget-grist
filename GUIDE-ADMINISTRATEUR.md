@@ -131,7 +131,9 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
 
 | Réglage | Effet |
 |---|---|
-| Zonage | Communes, EPCI ou IRIS, dessinés sous les points |
+| Zonage | Communes, EPCI, IRIS, circonscriptions législatives ou secteurs de collège, dessinés sous les points |
+| Second zonage (contours) | Un autre découpage tracé en pointillés noirs par-dessus le premier, pour croiser deux fonds (ex. secteurs de collège colorés + circonscriptions législatives). Nom au survol du trait |
+| Fichier : circonscriptions / secteurs de collège | Fichier GeoJSON déposé à côté du widget. Vide : `circonscriptions-bretagne.geojson`, `secteurs-colleges-bretagne.geojson`. Préparation : voir le README |
 | Code INSEE | Colonne du code commune ; ou « position des points » pour le déduire des coordonnées |
 | Couleur des zones | Une couleur par zone, nombre de points, somme d'une colonne, ou valeur d'une table Grist reliée par code |
 
@@ -139,7 +141,9 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
 1. Importer une table dans Grist, avec une colonne de code :
    - code IRIS à 9 caractères pour les IRIS ;
    - code INSEE pour les communes ;
-   - SIREN pour les EPCI.
+   - SIREN pour les EPCI ;
+   - code de la circonscription (ex. `2901`) pour les circonscriptions législatives ;
+   - UAI du collège pour les secteurs de collège.
 2. Couleur des zones → *selon une table Grist* : choisir la table, la colonne du code et la colonne de la valeur.
 
 ### Graphiques : couleurs

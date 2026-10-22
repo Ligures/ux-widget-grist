@@ -16,6 +16,28 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.1.17] — Secteurs de collège, fichiers de zonage régionaux — 2026-10-22
+
+### Ajouté
+- **Cartes, zonage « secteurs de collège »** : les secteurs qui contiennent des points sont dessinés sous les points, ou en contours avec « Second zonage ». Une table Grist peut colorer les secteurs, reliée par l'UAI du collège.
+
+### Modifié
+- **Circonscriptions législatives et secteurs de collège** : lus dans des fichiers restreints à la région, déposés à côté du widget comme celui des QPV : `circonscriptions-bretagne.geojson` et `secteurs-colleges-bretagne.geojson`. L'option « Fichier : … » permet d'en indiquer un autre. Le README explique comment les extraire des fichiers nationaux avec mapshaper.org.
+- CSP : les adresses data.gouv.fr ajoutées en 0.9.1.16 sont retirées, car les fichiers sont désormais sur le même site que le widget.
+- Étiquettes et fenêtres des cartes : liseré intérieur de 8 px.
+
+## [0.9.1.16] — Circonscriptions législatives et second zonage — 2026-10-22
+
+### Ajouté
+- **Cartes, zonage « circonscriptions législatives »** : les circonscriptions qui contiennent des points sont dessinées sous les points. Les couleurs sont les mêmes que pour les autres zonages : une par circonscription, selon le nombre de points, la somme d'une colonne, ou une table Grist reliée par le code de la circonscription.
+  - Source par défaut : le fichier GeoJSON national de data.gouv.fr, lu une fois par session.
+  - Option **Fichier des circonscriptions** : un fichier limité au département, placé à côté du widget, se charge plus vite.
+  - Le code et le nom de chaque circonscription sont reconnus d'après les noms des propriétés du fichier (codeCirconscription, nomCirconscription…).
+- **Second zonage (contours)** : un deuxième découpage (communes, EPCI, IRIS ou circonscriptions) est tracé en pointillés noirs par-dessus le premier, sans couleur de fond, pour croiser deux fonds de carte. Le nom de la zone s'affiche au survol du trait (`mapZone2`).
+
+### Sécurité
+- CSP : `connect-src` autorise www.data.gouv.fr et static.data.gouv.fr, où le fichier national est téléchargé. Aucune donnée n'est envoyée à ces sites. Le README détaille les flux.
+
 ## [0.9.1.15] — Fenêtres des cartes : maintien à l'écran et double liseré — 2026-10-21
 
 ### Corrigé

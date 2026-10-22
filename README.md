@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.1.15** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.1.17** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---
@@ -164,7 +164,11 @@ Un bloc carte reprend le widget carte de Grist : colonnes Nom / Latitude / Longi
 | Communes | [geo.api.gouv.fr](https://geo.api.gouv.fr) | Communes qui contiennent des points |
 | EPCI | geo.api.gouv.fr, communes fusionnées | EPCI entiers |
 | IRIS | Géoplateforme IGN, couche WFS `STATISTICALUNITS.IRISGE:iris_ge` | Communes découpées en IRIS uniquement |
+| Circonscriptions législatives | Fichier `circonscriptions-bretagne.geojson` déposé à côté du widget (extrait du fichier national data.gouv.fr) | Circonscriptions qui contiennent des points |
+| Secteurs de collège | Fichier `secteurs-colleges-bretagne.geojson` déposé à côté du widget (extrait du fichier national data.gouv.fr) | Secteurs qui contiennent des points |
 | QPV | Fichier GeoJSON fourni (QPV 2024, ANCT) | Points dans un QPV ou à moins de X m |
+
+**Second zonage** : un deuxième découpage peut être tracé en pointillés noirs, sans couleur de fond, par-dessus le premier. On croise ainsi, par exemple, les communes colorées et les circonscriptions législatives.
 
 **Commune des points** : lue dans une colonne de code INSEE (directement ou via une référence), sinon **déduite de la position du point**.
 
@@ -177,6 +181,23 @@ Un bloc carte reprend le widget carte de Grist : colonnes Nom / Latitude / Longi
 2. Filtrer les départements voulus.
 3. Convertir en WGS84 (EPSG:4326).
 4. Déposer le fichier à côté du widget, puis indiquer son nom dans l'option *Fichier des QPV*.
+
+**Fichiers des circonscriptions législatives et des secteurs de collège (Bretagne)**
+
+Les fichiers nationaux sont trop lourds pour être lus à chaque ouverture : on en extrait la région une fois, avec [mapshaper.org](https://mapshaper.org). Le site travaille dans le navigateur et n'envoie pas le fichier sur un serveur.
+1. Télécharger le fichier national depuis data.gouv.fr : [circonscriptions législatives](https://www.data.gouv.fr/api/1/datasets/r/dbf42fce-a563-412e-9db1-1f7ab453c2ef), [secteurs de collège](https://www.data.gouv.fr/api/1/datasets/r/36ace01a-2d9c-4001-9473-39e6fc7a0ad8).
+2. Le glisser sur mapshaper.org (un ZIP de shapefile se dépose tel quel), puis ouvrir la **Console** (en haut à droite).
+3. Taper `info` : la console liste les **champs** de chaque zone (avec un exemple) et l'**emprise** (*Bounds*).
+   - Emprise de l'ordre de −5 à 9 et 41 à 51 : coordonnées en degrés (WGS84), rien à faire.
+   - Grands nombres (ex. 100 000 à 1 200 000) : Lambert 93 ; taper `proj wgs84`.
+4. Ne garder que la Bretagne (22, 29, 35, 56), en adaptant le nom du champ à celui que montre `info` :
+   - circonscriptions : `filter '["22","29","35","56"].indexOf(String(codeDepartement)) > -1'` ;
+   - secteurs de collège, avec un champ département : même commande avec ce champ ; sinon, avec l'UAI du collège (ses 3 premiers caractères donnent le département) : `filter '["022","029","035","056"].indexOf(String(UAI).slice(0,3)) > -1'`.
+5. Facultatif, pour alléger : `simplify 20% keep-shapes`, puis vérifier à l'écran que les contours restent fidèles.
+6. Exporter : `o format=geojson`, ou bouton **Export** → GeoJSON. Renommer le fichier `circonscriptions-bretagne.geojson` ou `secteurs-colleges-bretagne.geojson`.
+7. Déposer le fichier dans le dépôt GitHub, à côté de `index.html` (Add file → Upload files). Il est publié avec le widget.
+
+Le widget reconnaît le code et le nom de chaque zone d'après le nom des champs : `codeCirconscription`, `nomCirconscription`, `codeDepartement` pour les circonscriptions ; `UAI` (ou `code_rne`) et le nom du collège pour les secteurs. Des noms très différents peuvent nécessiter un ajustement du widget.
 
 ---
 
@@ -196,7 +217,7 @@ Un bloc carte reprend le widget carte de Grist : colonnes Nom / Latitude / Longi
   | geo.api.gouv.fr | les **coordonnées d'un point** (latitude, longitude) | seulement pour un point sans code INSEE, afin de trouver son département |
   | data.geopf.fr (IGN) | des **codes INSEE de communes** | zonage IRIS : contours des IRIS de ces communes |
   | Fond de carte (OpenStreetMap par défaut, ou le fournisseur réglé dans la carte Grist) | les numéros des tuiles affichées | toujours : le fournisseur voit la zone regardée, pas les points |
-  | Fichier QPV | rien | lu sur le même site que le widget |
+  | Fichiers QPV, circonscriptions, secteurs de collège | rien | lus sur le même site que le widget |
 
   Comme pour toute page web, chaque service voit aussi l'adresse IP de l'utilisateur et le site d'origine de la demande. Les bibliothèques (jsDelivr) sont téléchargées sans aucune donnée du document.
 - **Compte d'hébergement** : quiconque peut modifier le dépôt modifie le widget de tous les utilisateurs. Activez la double authentification et limitez les droits d'écriture.
@@ -284,5 +305,6 @@ ux-widget.js
 - **QPV 2024** : © ANCT, [Licence Ouverte 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/).
 - **Contours des communes et EPCI** : [API Découpage administratif](https://geo.api.gouv.fr), IGN / INSEE.
 - **Contours IRIS** : © IGN – INSEE, via la Géoplateforme.
+- **Circonscriptions législatives, secteurs de collège** : extraits de fichiers publiés sur data.gouv.fr, sous la licence indiquée sur leur page.
 - **Fond de carte** : © contributeurs [OpenStreetMap](https://www.openstreetmap.org/copyright).
 - **Icône AIA** : © 2023 Martine Peters, [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) — [Acronymes et icônes pour une utilisation transparente de l'IA](https://mpeters.uqo.ca/utilisation-transparente-de-lintelligence-artificielle/).

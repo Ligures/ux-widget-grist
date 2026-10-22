@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.1.15). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.1.17). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -44,7 +44,7 @@
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
-         qpvUrl, mapZone (communes|epci|iris), mapCommune, zoneColor,
+         qpvUrl, mapZone (communes|epci|iris|legis|college), mapZone2 (contours croisés), legisUrl, collegeUrl, mapCommune, zoneColor,
          zoneSum, zoneTable/zoneKey/zoneVal, mapLabelsOn
 
    RÈGLES À RESPECTER
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.1.15"; // voir CHANGELOG.md
+const VERSION = "0.9.1.17"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -2856,6 +2856,9 @@ const loadClip = () =>
   ));
 // zoneMode — Zonage demandé pour un bloc carte : "", "communes", "epci" ou "iris".
 const zoneMode = (b) => b.mapZone || (b.mapCommunes ? "communes" : "");
+// needsInsee — Le zonage (principal ou second) s'appuie-t-il sur le code INSEE des points ? (pas les circonscriptions)
+const needsInsee = (b) =>
+  [zoneMode(b), b.mapZone2 || ""].some((m) => m && !FILE_ZONES[m]);
 const QRAMP = ["#e8edff", "#bccaf6", "#8aa1ea", "#4f6fd6", "#1d3fb8"];
 // quantScale — Dégradé de bleus en 5 classes (quantiles) pour des valeurs numériques.
 function quantScale(vals, fmt) {
@@ -3003,6 +3006,69 @@ const polysOf = (g) => (g.type === "Polygon" ? [g.coordinates] : g.type === "Mul
 // inGeom — Point dans une géométrie (trous compris).
 const inGeom = (g, lng, lat) =>
   polysOf(g).some((pg) => inRing(lng, lat, pg[0]) && !pg.slice(1).some((h) => inRing(lng, lat, h)));
+/* ---------- Zonages lus dans un fichier GeoJSON (WGS84) déposé à côté du widget ----------
+   circonscriptions législatives et secteurs de collège, restreints à la région (voir README) ; le fichier est lu
+   une fois (cache). Code et nom de chaque zone sont reconnus d'après le nom des propriétés, variable selon les
+   éditions (codeCirconscription, nomCirconscription ; UAI / code_rne, nom du collège…). */
+const FILE_ZONES = {
+  legis: {
+    def: "circonscriptions-bretagne.geojson",
+    urlKey: "legisUrl",
+    label: "Circonscriptions législatives",
+    one: "circonscription",
+    code: [/^(id_?circo|code_?circ|codecirconscription|circo(nscription)?_?code|ref)$/i, /circ/i, /^code$/i, /^id$/i],
+    name: [/^(nom|lib(elle)?)_?circ/i, /^nom/i, /^lib/i],
+  },
+  college: {
+    def: "secteurs-colleges-bretagne.geojson",
+    urlKey: "collegeUrl",
+    label: "Secteurs de collège",
+    one: "secteur",
+    code: [/^(uai|code_?uai|code_?rne|rne|numero_?uai|uai_?college)$/i, /uai|rne/i, /^code$/i, /^id$/i],
+    name: [/^(nom|lib(elle)?|appellation)_?(college|etab|etablissement)/i, /college|etab/i, /^nom/i, /^lib/i, /appellation/i],
+  },
+};
+const zoneFileCache = {};
+function loadZoneFile(kind, url) {
+  const Z = FILE_ZONES[kind];
+  const u = new URL(String(url || "").trim() || Z.def, location.href);
+  if (u.origin !== location.origin && u.protocol !== "https:") return Promise.reject(new Error("adresse du fichier invalide"));
+  return (zoneFileCache[kind + " " + u.href] ??= fetch(u.href)
+    .then((r) => {
+      if (!r.ok) throw new Error(`fichier ${u.pathname.split("/").pop()} introuvable (HTTP ${r.status})`);
+      return r.json();
+    })
+    .then((fc) => {
+      const pick = (pr, res) => {
+        for (const re of res) {
+          const k = Object.keys(pr).find((x) => re.test(x) && pr[x] !== null && pr[x] !== "" && typeof pr[x] !== "object");
+          if (k) return pr[k];
+        }
+        return null;
+      };
+      return (fc.features || [])
+        .filter((f) => f.geometry)
+        .map((f, i) => {
+          const pr = f.properties || {};
+          const dep = kind === "legis" ? pick(pr, [/^code_?d[eé]p/i, /^dep/i, /d[eé]partement/i]) : null;
+          let code = pick(pr, Z.code);
+          if (code !== null && dep !== null && String(code).length <= 2) code = `${dep}${String(code).padStart(2, "0")}`; // n° seul : préfixé du département
+          const nom = pick(pr, Z.name);
+          let bb = [Infinity, Infinity, -Infinity, -Infinity];
+          for (const pg of polysOf(f.geometry))
+            for (const [x, y] of pg[0]) bb = [Math.min(bb[0], x), Math.min(bb[1], y), Math.max(bb[2], x), Math.max(bb[3], y)];
+          const key = String(code ?? f.id ?? i).toUpperCase();
+          const name = nom
+            ? String(nom) + (dep && !String(nom).includes(String(dep)) ? ` (${dep})` : "")
+            : `${Z.one[0].toUpperCase()}${Z.one.slice(1)} ${key}`;
+          return { f, bb, key, name };
+        });
+    })
+    .catch((e) => {
+      delete zoneFileCache[kind + " " + u.href];
+      throw e;
+    }));
+}
 /* Valeurs d'une table Grist reliées aux zones par un code (INSEE, SIREN d'EPCI, code IRIS) */
 async function zoneTableValues(b) {
   const t = [...S.meta.tables.values()].find((x) => x.tableId === b.zoneTable);
@@ -3061,8 +3127,10 @@ async function locateCommunes(pts) {
   }
 }
 // drawZones — Couche de zonage sous les points : communes, EPCI (fusionnés) ou IRIS, avec couleur et légende.
-async function drawZones(map, pts, comC, keepView, b, sumC) {
-  const mode = zoneMode(b);
+// opt.mode : zonage à dessiner (sinon celui du bloc) ; opt.outline : second zonage, en simples contours par-dessus
+async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
+  const mode = opt.mode || zoneMode(b),
+    outline = !!opt.outline;
   const note = (msg) => {
     const c = L.control({ position: "topright" });
     c.onAdd = () => {
@@ -3072,7 +3140,8 @@ async function drawZones(map, pts, comC, keepView, b, sumC) {
     };
     c.addTo(map);
   };
-  if (pts.some((p) => !p.code)) {
+  const fileZ = FILE_ZONES[mode]; // zonage lu dans un fichier (circonscriptions, secteurs de collège)
+  if (!fileZ && pts.some((p) => !p.code)) {
     if (comC)
       console.info(
         `[UX widget] carte : ${pts.filter((p) => !p.code).length} point(s) sans code INSEE lisible dans « ${comC.label || comC.colId} » (${comC.type}) — commune déduite de la position`,
@@ -3086,17 +3155,17 @@ async function drawZones(map, pts, comC, keepView, b, sumC) {
       if (!byCode.has(p.code)) byCode.set(p.code, []);
       byCode.get(p.code).push(p);
     }
-  if (!byCode.size) return note("Zonage : aucun code INSEE reconnu");
-  const how = b.zoneColor || "";
+  if (!byCode.size && !fileZ) return note("Zonage : aucun code INSEE reconnu");
+  const how = outline ? "" : b.zoneColor || "";
   try {
     const codes = [...byCode.keys()];
     const deps = [...new Set(codes.map(depOf))];
-    const [fcs, irisFeats, tv] = await Promise.all([
-      mode === "iris" ? [] : Promise.all(deps.map(fetchCommuneShapes)),
+    const [fcs, irisFeats, tv, fileFeats] = await Promise.all([
+      mode === "iris" || fileZ ? [] : Promise.all(deps.map(fetchCommuneShapes)),
       mode === "iris" ? fetchIris(codes) : [],
       how === "table" ? zoneTableValues(b) : null,
       mode === "epci" ? loadClip() : null,
-    ]);
+    ]).then(async (r) => [r[0], r[1], r[2], fileZ ? await loadZoneFile(mode, b[fileZ.urlKey]) : null]);
     if (!map._container?.isConnected) return;
     const all = fcs.flatMap((fc) => fc.features || []);
     const codeOf = (f) => String(f.properties?.code).toUpperCase();
@@ -3112,6 +3181,16 @@ async function drawZones(map, pts, comC, keepView, b, sumC) {
       }
       for (const z of zones.values()) for (const f of z.feats) z.pts.push(...(byCode.get(codeOf(f)) || []));
       for (const [k, z] of zones) if (!z.pts.length) zones.delete(k); // seulement les EPCI qui contiennent des points
+    } else if (fileZ) {
+      // zones qui contiennent au moins un point (test du point dans le polygone, après le rectangle englobant)
+      for (const c of fileFeats) {
+        const cand = pts.filter((p) => p.lng >= c.bb[0] && p.lng <= c.bb[2] && p.lat >= c.bb[1] && p.lat <= c.bb[3]);
+        if (!cand.length) continue;
+        const inside = cand.filter((p) => inGeom(c.f.geometry, p.lng, p.lat));
+        if (!inside.length) continue;
+        if (zones.has(c.key)) zones.get(c.key).feats.push(c.f), zones.get(c.key).pts.push(...inside); // zone en plusieurs morceaux
+        else zones.set(c.key, { key: c.key, name: c.name, feats: [c.f], pts: inside });
+      }
     } else if (mode === "iris") {
       for (const f of irisFeats) {
         const pr = f.properties || {},
@@ -3173,7 +3252,7 @@ async function drawZones(map, pts, comC, keepView, b, sumC) {
         ? z.value === null || z.value === ""
           ? "#C8C8C8"
           : scale.colorOf(z.value)
-        : mode === "epci"
+        : mode === "epci" || fileZ
           ? distinctColor(i)
           : mode === "iris"
             ? "#6A6AF4"
@@ -3194,20 +3273,22 @@ async function drawZones(map, pts, comC, keepView, b, sumC) {
     };
     const feats = ordered.map((z) => ({ type: "Feature", properties: z, geometry: geomOf(z) }));
     if (!map.getPane("zones")) map.createPane("zones").style.zIndex = 350; // sous les points
+    if (outline && !map.getPane("zones2")) map.createPane("zones2").style.zIndex = 355; // second zonage : au-dessus du premier
     const what = how === "table" && tv ? tv.label : how === "sum" && sumC ? sumC.label || sumC.colId : "";
     const layer = L.geoJSON(
       { type: "FeatureCollection", features: feats },
       {
-        pane: "zones",
-        style: (f) => ({
+        pane: outline ? "zones2" : "zones",
+        style: (f) => outline ? { color: "#161616", weight: mode === "iris" ? 1.2 : 2, opacity: 0.85, dashArray: "6 4", fill: false } : ({
           color: how ? "#1d3fb8" : f.properties.color,
-          weight: mode === "epci" ? 2.5 : mode === "iris" ? 1 : 1.5,
+          weight: mode === "epci" || fileZ ? 2.5 : mode === "iris" ? 1 : 1.5,
           opacity: 0.9,
           fillColor: f.properties.color,
           fillOpacity: how ? 0.55 : mode === "iris" ? 0.06 : 0.18,
         }),
         onEachFeature: (f, l) => {
           const z = f.properties;
+          if (outline) return l.bindTooltip(`<b>${esc(z.name)}</b>`, { sticky: true }); // contours : nom seulement
           l.bindTooltip(
             `<b>${esc(z.name)}</b>${mode === "iris" ? `<br><small>IRIS ${esc(z.key)}</small>` : ""}<br>${z.pts.length} point${z.pts.length > 1 ? "s" : ""}` +
               (what
@@ -3219,12 +3300,12 @@ async function drawZones(map, pts, comC, keepView, b, sumC) {
       },
     ).addTo(map);
     if (feats.length && mode !== "iris") map._uxExtend?.(layer.getBounds(), keepView); // cadrage : points + zones
-    if (scale?.items.length) {
+    if (scale?.items.length && !outline) {
       const c = L.control({ position: "topright" });
       c.onAdd = () => {
         const d = L.DomUtil.create("div", "map-legend");
         d.innerHTML =
-          `<b>${{ epci: "EPCI", iris: "IRIS", communes: "Communes" }[mode]} : ${esc(what || "nombre de points")}</b>` +
+          `<b>${fileZ ? fileZ.label : { epci: "EPCI", iris: "IRIS", communes: "Communes" }[mode]} : ${esc(what || "nombre de points")}</b>` +
           scale.items
             .map(([t, col]) => `<div><i style="background:${esc(col)};border-radius:2px"></i>${esc(t)}</div>`)
             .join("") +
@@ -3236,7 +3317,9 @@ async function drawZones(map, pts, comC, keepView, b, sumC) {
       };
       c.addTo(map);
     }
-    if (mode === "iris") {
+    if (fileZ) {
+      if (!zones.size) note(`${fileZ.label} : aucun point à l'intérieur des contours du fichier`);
+    } else if (mode === "iris") {
       const split = new Set(irisFeats.map((f) => String(f.properties?.code_insee).toUpperCase()));
       if (!irisFeats.length) note("IRIS : aucune commune découpée en IRIS parmi celles des points");
       else if (split.size < codes.length)
@@ -3248,7 +3331,7 @@ async function drawZones(map, pts, comC, keepView, b, sumC) {
       if (missing) note(`Zonage : ${missing} code(s) INSEE sans contour`);
     }
   } catch (e) {
-    note(`Contours indisponibles (${e.message || e})`);
+    note(`${fileZ ? fileZ.label : "Contours"} indisponibles (${e.message || e})`);
   }
 }
 // renderMap — Affiche un widget carte : points, couleurs, contours, QPV, zonage, légendes. Le dessin Leaflet est différé (jobs).
@@ -3272,7 +3355,7 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
   const ringC = b.mapRing && !qpvRing ? cols.find((c) => c.colId === b.mapRing) : null; // contour du point, couleurs choisies
   const ringRules = ringC ? (b.mapRules || []).filter((r) => r && r.v !== undefined) : [];
   const comC =
-    zoneMode(b) && b.mapCommune !== "__pos"
+    needsInsee(b) && b.mapCommune !== "__pos"
       ? (b.mapCommune && cols.find((c) => c.colId === b.mapCommune)) ||
         cols.find((c) => /insee|code.?com|cog|depcom/i.test(c.colId)) ||
         cols.find((c) => /^commune/i.test(c.colId) && ["Ref", "RefList"].includes(baseType(c)))
@@ -3432,6 +3515,9 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
       }
       const saved = S.mapViews[info.secId];
       if (zoneMode(b)) drawZones(map, pts, comC, saved && saved.key === key, b, sumC);
+      // second zonage, croisé avec le premier : simples contours en pointillés (ex. communes colorées + circonscriptions)
+      if (b.mapZone2 && b.mapZone2 !== zoneMode(b))
+        drawZones(map, pts, comC, true, b, sumC, { mode: b.mapZone2, outline: true });
       if (qpvErr) {
         const c = L.control({ position: "topright" });
         c.onAdd = () => {
@@ -5032,7 +5118,7 @@ function zoneTableHtml(b, i) {
     `<select data-f="${f}" data-i="${i}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(v) === String(cur) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
   const lab = (txt, ctrl, tip) => `<label title="${esc(tip)}"><span class="lt">${txt}</span> ${ctrl}</label>`;
   const code =
-    { communes: "code INSEE", epci: "SIREN de l'EPCI", iris: "code IRIS (9 caractères)" }[zoneMode(b)] || "code";
+    { communes: "code INSEE", epci: "SIREN de l'EPCI", iris: "code IRIS (9 caractères)", legis: "code de la circonscription (ex. 2901)", college: "UAI du collège" }[zoneMode(b)] || "code";
   return (
     lab(
       "Table",
@@ -5432,12 +5518,44 @@ ${
               ["communes", "communes"],
               ["epci", "EPCI (intercommunalités)"],
               ["iris", "IRIS (quartiers INSEE)"],
+              ["legis", "circonscriptions législatives"],
+              ["college", "secteurs de collège"],
             ],
             zoneMode(b),
           ),
-          "Dessine sous les points les communes qui en contiennent, les EPCI entiers (contours geo.api.gouv.fr, communes fusionnées), ou les IRIS des communes découpées en quartiers (service IGN, édition la plus récente).",
+          "Dessine sous les points les communes qui en contiennent, les EPCI entiers (contours geo.api.gouv.fr, communes fusionnées), les IRIS des communes découpées en quartiers (service IGN, édition la plus récente), ou les circonscriptions législatives et les secteurs de collège (fichiers GeoJSON déposés à côté du widget).",
         ) +
         (zoneMode(b)
+          ? L(
+              "Second zonage (contours)",
+              sel(
+                "mapZone2",
+                [
+                  ["", "aucun"],
+                  ...[
+                    ["communes", "communes"],
+                    ["epci", "EPCI"],
+                    ["iris", "IRIS"],
+                    ["legis", "circonscriptions législatives"],
+                    ["college", "secteurs de collège"],
+                  ].filter(([v]) => v !== zoneMode(b)),
+                ],
+                b.mapZone2 || "",
+              ),
+              "Croise deux découpages : le second est tracé en pointillés noirs par-dessus le premier (sans couleur de fond), par exemple les communes colorées et les circonscriptions législatives. Son nom s'affiche au survol du trait.",
+            )
+          : "") +
+        Object.entries(FILE_ZONES)
+          .filter(([k]) => [zoneMode(b), zoneMode(b) ? b.mapZone2 : ""].includes(k))
+          .map(([k, Z]) =>
+            L(
+              `Fichier : ${Z.label.toLowerCase()}`,
+              `<input type="text" data-zfile="${i}" data-zkey="${Z.urlKey}" value="${esc(b[Z.urlKey] || "")}" placeholder="${Z.def}" style="width:220px">`,
+              `Fichier GeoJSON (WGS84) déposé à côté du widget sur GitHub, restreint à la région (voir le README). Vide : ${Z.def}. Un fichier sur un autre site doit être autorisé dans la CSP de index.html.`,
+            ),
+          )
+          .join("") +
+        (needsInsee(b)
           ? L(
               "Code INSEE",
               sel(
@@ -5454,7 +5572,7 @@ ${
               sel(
                 "zoneColor",
                 [
-                  ["", zoneMode(b) === "epci" ? "une couleur par EPCI" : "couleur majoritaire des points"],
+                  ["", zoneMode(b) === "epci" ? "une couleur par EPCI" : FILE_ZONES[zoneMode(b)] ? `une couleur par ${FILE_ZONES[zoneMode(b)].one}` : "couleur majoritaire des points"],
                   ["count", "selon le nombre de points"],
                   ["sum", "selon la somme d'une colonne"],
                   ["table", "selon une table Grist (par code)"],
@@ -5713,6 +5831,7 @@ $("#panel").addEventListener("change", (ev) => {
       "qpvDist",
       "mapCommune",
       "mapZone",
+      "mapZone2",
       "zoneColor",
       "zoneSum",
       "zoneTable",
@@ -5819,6 +5938,10 @@ $("#panel").addEventListener("change", (ev) => {
   if (t.dataset.mqpv) {
     draft.blocks[Number(t.dataset.mqpv)].mapQpv = t.checked;
     renderConfig();
+    return;
+  }
+  if (t.dataset.zfile) {
+    draft.blocks[Number(t.dataset.zfile)][t.dataset.zkey] = t.value.trim();
     return;
   }
   if (t.dataset.qpvurl) {
