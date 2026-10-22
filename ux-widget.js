@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.2.1). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.2.2). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.2.1"; // voir CHANGELOG.md
+const VERSION = "0.9.2.2"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -4900,6 +4900,35 @@ function helpLoad(doc) {
       throw e;
     }));
 }
+// newsForUsers — Nouveautés vues par un utilisateur : seules les rubriques « Utilisateurs » de chaque version
+// (les rubriques « Administrateurs » et « Développeurs » sont retirées, puis les versions restées vides).
+function newsForUsers(body) {
+  const until = (el, stop) => {
+    const out = [];
+    for (let n = el.nextElementSibling; n && !stop(n); n = n.nextElementSibling) out.push(n);
+    return out;
+  };
+  for (const h3 of [...body.querySelectorAll("h3")])
+    if (/^(administrateurs|d[ée]veloppeurs)$/i.test(h3.textContent.trim())) {
+      until(h3, (n) => /^H[123]$/.test(n.tagName) || n.tagName === "HR").forEach((n) => n.remove());
+      h3.remove();
+    }
+  for (const h2 of [...body.querySelectorAll("h2")]) {
+    if (!/^\[/.test(h2.textContent.trim())) continue; // en-têtes de version « [0.9.2.2] — … »
+    const part = until(h2, (n) => n.tagName === "H2" || n.tagName === "HR");
+    if (!part.some((n) => n.tagName === "H3")) {
+      part.forEach((n) => n.remove());
+      h2.remove();
+    }
+  }
+  // l'en-tête du journal : la mention des trois rubriques ne concerne pas l'utilisateur
+  body.querySelectorAll("p").forEach((p) => {
+    if (/^Qui est concerné/.test(p.textContent.trim())) {
+      if (p.nextElementSibling?.tagName === "UL") p.nextElementSibling.remove();
+      p.remove();
+    } else if (/^Dans l'onglet Nouveautés/.test(p.textContent.trim())) p.remove();
+  });
+}
 // openHelp — Ouvre la fenêtre d'aide sur un onglet (et une ancre éventuelle).
 async function openHelp(tab = helpTab, anchor = "") {
   const docs = HELP_DOCS.filter((d) => !d.admin || S.isAdmin);
@@ -4914,6 +4943,7 @@ async function openHelp(tab = helpTab, anchor = "") {
   body.innerHTML = '<p class="msg">Chargement…</p>';
   try {
     body.innerHTML = await helpLoad(doc);
+    if (doc.id === "news" && !S.isAdmin) newsForUsers(body);
     body.querySelectorAll("h1, h2, h3, h4").forEach((h) => (h.id = slug(h.textContent)));
     body.querySelectorAll("a[href]").forEach((a) => {
       if (/^https?:/i.test(a.getAttribute("href"))) Object.assign(a, { target: "_blank", rel: "noopener" });
