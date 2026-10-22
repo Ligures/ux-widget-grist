@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.2.0). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.2.1). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.2.0"; // voir CHANGELOG.md
+const VERSION = "0.9.2.1"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -5430,7 +5430,6 @@ ${
           "Les listes portant le même identifiant gardent la même sélection d'une page à l'autre (comme le drop-down de Varamil).",
         )
       : ""))}
-</div>
   ${(() => {
     // couleurs des graphiques (natifs, ou avancés Plotly) : par catégorie (camembert, histogramme à une série)
     // ou par série (plusieurs séries, courbes)
@@ -5440,12 +5439,12 @@ ${
     const swatches = [...pieColorMapOf(b.pieColorMap).values()].slice(0, 12).map((c) => `<span class="pcs" style="background:${c}"></span>`).join("");
     const dflt = hexColor(b.pieColorDefault);
     return (
-      `<div class="mgrps"><div class="mgrp"><div class="mgrp-h" title="${isPie ? "Couleur de chaque part du camembert." : "Histogramme à une seule série : une couleur par barre (catégorie). Plusieurs séries, ou courbes : une couleur par série (valeur du regroupement ou nom de la colonne)."} Priorité : correspondance, puis colonne de codes, puis couleur de repli.">Couleurs du graphique</div>` +
+      `<div class="mgrp"><div class="mgrp-h" title="${isPie ? "Couleur de chaque part du camembert." : "Histogramme à une seule série : une couleur par barre (catégorie). Plusieurs séries, ou courbes : une couleur par série (valeur du regroupement ou nom de la colonne)."} Priorité : correspondance, puis colonne de codes, puis couleur de repli.">Couleurs du graphique</div>` +
       L("Colonne de codes", sel("pieColorCol", [["", "aucune"], ...colOpts(s)], b.pieColorCol || ""), "Colonne de la table contenant, pour chaque ligne, un code couleur hexadécimal (#000091), appliqué à la catégorie (ou à la série) de la ligne. Peut être une formule, par exemple $Reseau.Couleur.") +
       L("Correspondance", `<textarea data-pcm="${i}" rows="3" placeholder="Public = #000091&#10;Privé = #e1000f">${esc(b.pieColorMap || "")}</textarea>`, "Une catégorie ou une série par ligne : « Public = #000091 ». La casse est ignorée. Prioritaire sur la colonne de codes.") +
       (swatches ? `<div class="pcsl">${swatches}</div>` : "") +
       L("Couleur de repli", `<input type="text" data-pcd="${i}" value="${esc(b.pieColorDefault || "")}" placeholder="#c8c8c8" size="9">${dflt ? `<span class="pcs" style="background:${dflt}"></span>` : ""}`, "Couleur des catégories sans code. Vide : couleurs habituelles du widget.") +
-      `</div></div>`
+      `</div>`
     );
   })()}
   ${(() => {
@@ -5487,11 +5486,11 @@ ${
       }
       groups.push(`<div class="mgrp"><div class="mgrp-h" title="Boutons « Tous | valeurs » dans l'en-tête du bloc">${k === 2 ? "2ᵉ filtre rapide" : "Filtre rapide"}</div>${g}</div>`);
     }
-    return `<div class="mgrps">${groups.join("")}</div>`;
+    return groups.join("");
   })()}
   ${
     isMap
-      ? `<div class="mgrps"><div class="mgrp"><div class="mgrp-h" title="Ce qui s'affiche sur chaque point : son étiquette et sa couleur.">Points</div>` +
+      ? `<div class="mgrp"><div class="mgrp-h" title="Ce qui s'affiche sur chaque point : son étiquette et sa couleur.">Points</div>` +
         L(
           "Étiquette",
           sel(
@@ -5661,9 +5660,10 @@ ${
               "Colonne numérique additionnée pour chaque zone (par exemple l'effectif des écoles).",
             )
           : "") +
-        `</div></div>`
+        `</div>`
       : ""
   }
+</div>
 </div></li>`;
       })
       .join("") || '<li class="msg">Aucune vue retenue</li>';

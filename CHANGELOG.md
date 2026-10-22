@@ -16,6 +16,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.2.1] — Encadrés de réglages côte à côte — 2026-10-22
+
+### Modifié
+- **Configuration des vues** : tous les encadrés d'un bloc (Affichage, Tableau, Fiches, Édition, filtres, couleurs, cartes) partagent la même grille. Ils se placent côte à côte dès que la largeur le permet : 2 colonnes sur un écran courant, 3 sur un grand écran. Avant, les filtres, les couleurs et les réglages de carte commençaient chacun une nouvelle rangée.
+
 ## [0.9.2.0] — Configuration des vues réorganisée — 2026-10-22
 
 ### Modifié
