@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.2.3** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.2.4** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---
@@ -196,6 +196,14 @@ Les fichiers nationaux sont trop lourds pour être lus à chaque ouverture : on 
 5. Facultatif, pour alléger : `simplify 20% keep-shapes`, puis vérifier à l'écran que les contours restent fidèles.
 6. Exporter : `o format=geojson`, ou bouton **Export** → GeoJSON. Renommer le fichier `circonscriptions-bretagne.geojson` ou `secteurs-colleges-bretagne.geojson`.
 7. Déposer le fichier dans le dépôt GitHub, à côté de `index.html` (Add file → Upload files). Il est publié avec le widget.
+
+**Secteurs de collège à partir de la carte scolaire (adresses)** : la carte scolaire des collèges publics ([data.gouv.fr](https://www.data.gouv.fr/datasets/carte-scolaire-des-colleges-publics), ou un export Affelnet) ne contient pas de contours, mais des adresses rattachées à des collèges. L'outil `outils/secteurs-colleges.html` en construit le fichier de zonage :
+1. Ouvrir `outils/secteurs-colleges.html` dans le navigateur (depuis le site du widget, ou le fichier enregistré sur le poste).
+2. Choisir le CSV : le fichier national est accepté, seules les lignes des départements indiqués sont gardées.
+3. Vérifier les colonnes proposées (code INSEE de la commune, UAI du collège, nom du collège) et la liste des départements.
+4. **Construire le fichier**, puis télécharger `secteurs-colleges-bretagne.geojson` et le déposer à côté de `index.html`.
+
+Chaque secteur réunit les communes rattachées à un seul collège. Une commune découpée par rues entre plusieurs collèges forme une zone « partagée » à part. Le fichier CSV reste dans le navigateur : seuls les codes de département sont envoyés à geo.api.gouv.fr pour obtenir les contours des communes.
 
 Le widget reconnaît le code et le nom de chaque zone d'après le nom des champs : `codeCirconscription`, `nomCirconscription`, `codeDepartement` pour les circonscriptions ; `UAI` (ou `code_rne`) et le nom du collège pour les secteurs. Des noms très différents peuvent nécessiter un ajustement du widget.
 

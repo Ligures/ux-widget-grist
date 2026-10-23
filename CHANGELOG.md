@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.2.4] — Outil de construction des secteurs de collège — 2026-10-23
+
+### Administrateurs
+- *Nouveau* — **`outils/secteurs-colleges.html`** : construit `secteurs-colleges-bretagne.geojson` à partir du fichier d'adresses de la carte scolaire des collèges (CSV data.gouv.fr ou export Affelnet). Chaque secteur réunit les communes d'un seul collège ; une commune découpée par rues entre plusieurs collèges forme une zone « partagée » à part. Le résumé liste les communes partagées et celles sans contour (anciens codes de communes fusionnées). Mode d'emploi dans le README.
+
+### Développeurs
+- *Nouveau* — Outil autonome, hors du widget : CSV lu dans le navigateur, contours des communes demandés à geo.api.gouv.fr (codes de département seulement), fusion par polygon-clipping 0.15.7 (version figée, SRI), coordonnées arrondies à 5 décimales.
+
 ## [0.9.2.3] — Étiquettes des camemberts sur plusieurs lignes — 2026-10-22
 
 ### Utilisateurs
