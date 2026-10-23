@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.2.6** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.2.7** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---
@@ -205,6 +205,8 @@ Les fichiers nationaux sont trop lourds pour être lus à chaque ouverture : on 
 4. **Construire le fichier**, puis télécharger `secteurs-colleges-bretagne.geojson` et le déposer à côté de `index.html`.
 
 Chaque secteur réunit les communes rattachées à un seul collège. Une commune découpée par rues entre plusieurs collèges forme une zone « partagée » à part. Le fichier CSV reste dans le navigateur : seuls les codes de département sont envoyés à geo.api.gouv.fr pour obtenir les contours des communes.
+
+**Plusieurs fichiers** : l'option « Fichier : … » accepte plusieurs noms séparés par des virgules, par exemple `secteurs-colleges-bretagne.geojson, secteurs-colleges-22.geojson` pour compléter la carte scolaire nationale par un fichier départemental (les Côtes-d'Armor n'y figurent pas en 2026). Un collège présent dans deux fichiers, comme un collège dont le secteur couvre deux départements, ne forme qu'une zone.
 
 Le widget reconnaît le code et le nom de chaque zone d'après le nom des champs : `codeCirconscription`, `nomCirconscription`, `codeDepartement` pour les circonscriptions ; `UAI` (ou `code_rne`) et le nom du collège pour les secteurs. Des noms très différents peuvent nécessiter un ajustement du widget.
 

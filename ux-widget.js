@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.2.6). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.2.7). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.2.6"; // voir CHANGELOG.md
+const VERSION = "0.9.2.7"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3077,14 +3077,21 @@ const FILE_ZONES = {
     colKey: "collegeCol",
     label: "Secteurs de collège",
     one: "secteur",
-    code: [/^(uai|code_?uai|code_?rne|rne|numero_?uai|uai_?college)$/i, /uai|rne/i, /^code$/i, /^id$/i],
+    code: [/^(uai|code_?uai|code_?rne|rne|numero_?uai|uai_?college|identifiant_?(de_?l_?)?etab(lissement)?)$/i, /uai|rne/i, /^code$/i],
     name: [/^(nom|lib(elle)?|appellation)_?(college|etab|etablissement)/i, /college|etab/i, /^nom/i, /^lib/i, /appellation/i],
   },
 };
 const zoneFileCache = {};
+// Plusieurs fichiers peuvent être indiqués, séparés par des virgules (ex. un fichier par département) : leurs zones
+// sont réunies ; deux zones de même code (un collège dont le secteur couvre deux départements) n'en font qu'une.
 function loadZoneFile(kind, url) {
+  const list = String(url || "")
+    .split(/[,;]/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+  if (list.length > 1) return Promise.all(list.map((one) => loadZoneFile(kind, one))).then((all) => all.flat());
   const Z = FILE_ZONES[kind];
-  const u = new URL(String(url || "").trim() || Z.def, location.href);
+  const u = new URL(list[0] || Z.def, location.href);
   if (u.origin !== location.origin && u.protocol !== "https:") return Promise.reject(new Error("adresse du fichier invalide"));
   return (zoneFileCache[kind + " " + u.href] ??= fetch(u.href)
     .then((r) => {
@@ -5725,7 +5732,7 @@ ${
             L(
               `Fichier : ${Z.label.toLowerCase()}`,
               `<input type="text" data-zfile="${i}" data-zkey="${Z.urlKey}" value="${esc(b[Z.urlKey] || "")}" placeholder="${Z.def}" style="width:220px">`,
-              `Fichier GeoJSON (WGS84) déposé à côté du widget sur GitHub, restreint à la région (voir le README). Vide : ${Z.def}. Un fichier sur un autre site doit être autorisé dans la CSP de index.html.`,
+              `Fichier GeoJSON (WGS84) déposé à côté du widget sur GitHub, restreint à la région (voir le README). Plusieurs fichiers : les séparer par des virgules (ex. ${Z.def}, ${Z.def.replace("bretagne", "22")}). Vide : ${Z.def}. Un fichier sur un autre site doit être autorisé dans la CSP de index.html.`,
             ),
           )
           .join("") +

@@ -26,6 +26,16 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.2.7] — Plusieurs fichiers de zonage, secteurs des Côtes-d'Armor — 2026-10-23
+
+### Administrateurs
+- *Nouveau* — **Fichiers de zonage multiples** : l'option « Fichier : … » (circonscriptions, secteurs de collège) accepte plusieurs noms séparés par des virgules. Les zones sont réunies, et un collège présent dans deux fichiers ne forme qu'une zone.
+- *Nouveau* — **`secteurs-colleges-22.geojson`** : secteurs des 47 collèges publics des Côtes-d'Armor, à déposer à côté du widget et à ajouter à la suite de `secteurs-colleges-bretagne.geojson`.
+
+### Développeurs
+- *Amélioré* — UAI reconnu aussi dans un champ `identifiant_etablissement`. Le champ `id` n'est plus pris pour un code de collège.
+- *Amélioré* — Fichier du 22 normalisé : champs `uai`, `nom`, `commune` seuls (la géométrie en double et les coordonnées de contact ont été retirées), simplifié à 20 % avec mapshaper, coordonnées à 5 décimales (1,3 Mo au lieu de 24 Mo).
+
 ## [0.9.2.6] — Affichage des widgets Markdown — 2026-10-23
 
 ### Utilisateurs

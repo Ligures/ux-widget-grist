@@ -137,7 +137,7 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
 | Zonage | Communes, EPCI, IRIS, circonscriptions législatives ou secteurs de collège, dessinés sous les points |
 | Second zonage (contours) | Un autre découpage tracé en pointillés noirs par-dessus le premier, pour croiser deux fonds (ex. secteurs de collège colorés + circonscriptions législatives). Nom au survol du trait |
 | Rattachement : circonscriptions / secteurs de collège | « position des points » (défaut) : la zone dont le contour contient le point. Ou une colonne de code (ex. `2201`, UAI) : la zone désignée par vos données, même si le point est hors de son contour (commune partagée entre deux zones, commune nouvelle…) |
-| Fichier : circonscriptions / secteurs de collège | Fichier GeoJSON déposé à côté du widget. Vide : `circonscriptions-bretagne.geojson`, `secteurs-colleges-bretagne.geojson`. Préparation : voir le README |
+| Fichier : circonscriptions / secteurs de collège | Fichier GeoJSON déposé à côté du widget, ou plusieurs séparés par des virgules (ex. `secteurs-colleges-bretagne.geojson, secteurs-colleges-22.geojson`). Vide : `circonscriptions-bretagne.geojson`, `secteurs-colleges-bretagne.geojson`. Préparation : voir le README |
 | Code INSEE | Colonne du code commune ; ou « position des points » pour le déduire des coordonnées |
 | Couleur des zones | Une couleur par zone, aucune (contours seuls, sans fond), nombre de points, somme d'une colonne, ou valeur d'une table Grist reliée par code |
 
