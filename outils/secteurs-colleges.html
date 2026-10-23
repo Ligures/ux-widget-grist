@@ -1,1 +1,342 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Secteurs de collège</title>
+    <!--
+      Générateur du fichier de zonage « secteurs de collège » pour UX widget grist.
+      Entrée : le fichier d'adresses de la carte scolaire des collèges publics (CSV, data.gouv.fr / Affelnet),
+      lu dans le navigateur ; rien n'est envoyé ailleurs. Seuls les codes de département partent vers
+      geo.api.gouv.fr pour obtenir les contours des communes.
+      Sortie : secteurs-colleges-bretagne.geojson (WGS84), à déposer à côté du widget.
+      Un secteur = union des communes rattachées à un seul collège ; une commune rattachée à plusieurs
+      collèges (découpage par rues) forme une zone « partagée » à part.
+    -->
+    <style>
+      :root {
+        --bleu: #000091;
+        --muet: #666;
+        --bord: #ddd;
+        --fond: #f6f6f6;
+        --rouge: #ce0500;
+      }
+      body {
+        margin: 0;
+        font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--fond);
+        color: #161616;
+      }
+      main {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 20px 16px 40px;
+      }
+      h1 {
+        font-size: 20px;
+        color: var(--bleu);
+        margin: 0 0 4px;
+      }
+      section {
+        background: #fff;
+        border: 1px solid var(--bord);
+        border-left: 4px solid var(--bleu);
+        border-radius: 6px;
+        padding: 12px 14px;
+        margin: 14px 0;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 0 0 8px;
+        color: var(--bleu);
+      }
+      label {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: 4px 14px 6px 0;
+        font-size: 12px;
+        color: var(--muet);
+      }
+      select,
+      input[type="text"] {
+        font: inherit;
+        padding: 3px 6px;
+        min-width: 200px;
+      }
+      button {
+        font: inherit;
+        padding: 6px 14px;
+        border: 1px solid var(--bleu);
+        background: var(--bleu);
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button[disabled] {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .muet {
+        color: var(--muet);
+        font-size: 12px;
+      }
+      #log {
+        white-space: pre-wrap;
+        font: 12px/1.5 ui-monospace, Consolas, monospace;
+        background: #fafafa;
+        border: 1px solid var(--bord);
+        padding: 8px;
+        max-height: 320px;
+        overflow: auto;
+      }
+      .err {
+        color: var(--rouge);
+      }
+      table {
+        border-collapse: collapse;
+        font-size: 12px;
+        margin-top: 6px;
+      }
+      td,
+      th {
+        border: 1px solid var(--bord);
+        padding: 2px 6px;
+        text-align: left;
+      }
+      #dl {
+        display: inline-block;
+        margin-top: 8px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Secteurs de collège → fichier de zonage</h1>
+      <p class="muet">
+        Construit <code>secteurs-colleges-bretagne.geojson</code> pour UX widget grist à partir du fichier d'adresses de la carte
+        scolaire des collèges publics. Le fichier est lu dans votre navigateur ; seuls les codes de département sont envoyés à
+        geo.api.gouv.fr pour obtenir les contours des communes.
+      </p>
 
+      <section>
+        <h2>1. Fichier d'adresses (CSV)</h2>
+        <input type="file" id="file" accept=".csv,.txt,text/csv" />
+        <p class="muet" id="fileInfo">Le fichier national (environ 60 Mo) est accepté : seules les lignes des départements choisis sont gardées.</p>
+      </section>
+
+      <section>
+        <h2>2. Colonnes et départements</h2>
+        <label>Code INSEE de la commune <select id="cCom"></select></label>
+        <label>UAI du collège <select id="cUai"></select></label>
+        <label>Nom du collège (facultatif) <select id="cNom"></select></label>
+        <br />
+        <label>Départements (séparés par des virgules) <input type="text" id="deps" value="22,29,35,56" /></label>
+        <p class="muet" id="sample"></p>
+      </section>
+
+      <section>
+        <h2>3. Construction</h2>
+        <button id="go" disabled>Construire le fichier</button>
+        <a id="dl" hidden download="secteurs-colleges-bretagne.geojson">Télécharger secteurs-colleges-bretagne.geojson</a>
+        <div id="log" hidden></div>
+        <div id="summary"></div>
+      </section>
+    </main>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/polygon-clipping@0.15.7/dist/polygon-clipping.umd.min.js"
+      integrity="sha384-2gzcIyrtB96QDjrxsFcJ1O461CWiXJ8fiHgIkJLwTgy4WTktHXTOXt4dviXz9Y5Q"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      "use strict";
+      const $ = (s) => document.querySelector(s);
+      const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+      let csv = null; // { head: [], rows: [[]] }
+
+      const log = (msg, err = false) => {
+        const el = $("#log");
+        el.hidden = false;
+        el.insertAdjacentHTML("beforeend", `<div class="${err ? "err" : ""}">${esc(msg)}</div>`);
+        el.scrollTop = el.scrollHeight;
+      };
+
+      // parseCsv — Lecteur CSV : séparateur deviné sur la 1re ligne (; , ou tabulation), guillemets gérés.
+      function parseCsv(text) {
+        text = text.replace(/^﻿/, "");
+        const first = text.slice(0, text.indexOf("\n") + 1 || undefined);
+        const sep = [";", "\t", ","].sort((a, b) => first.split(b).length - first.split(a).length)[0];
+        const rows = [];
+        let row = [],
+          field = "",
+          q = false;
+        for (let i = 0; i < text.length; i++) {
+          const c = text[i];
+          if (q) {
+            if (c === '"') {
+              if (text[i + 1] === '"') (field += '"'), i++;
+              else q = false;
+            } else field += c;
+          } else if (c === '"') q = true;
+          else if (c === sep) row.push(field), (field = "");
+          else if (c === "\n") {
+            row.push(field.replace(/\r$/, ""));
+            rows.push(row);
+            (row = []), (field = "");
+          } else field += c;
+        }
+        if (field || row.length) row.push(field), rows.push(row);
+        return { head: rows.shift() || [], rows: rows.filter((r) => r.some((x) => x !== "")), sep };
+      }
+
+      const guess = (head, res) => {
+        for (const re of res) {
+          const i = head.findIndex((h) => re.test(h));
+          if (i >= 0) return i;
+        }
+        return -1;
+      };
+      function fillSelects() {
+        const opts = (sel, i, optional) =>
+          (sel.innerHTML =
+            (optional ? '<option value="-1">— aucune —</option>' : "") +
+            csv.head.map((h, k) => `<option value="${k}" ${k === i ? "selected" : ""}>${esc(h)}</option>`).join(""));
+        opts($("#cCom"), guess(csv.head, [/^(code_?insee|insee|code_?commune|depcom|com_?code|code_?com)$/i, /insee/i, /commune.*code|code.*commune/i]), false);
+        opts($("#cUai"), guess(csv.head, [/^(uai|code_?uai|code_?rne|rne|numero_?uai)$/i, /uai|rne/i, /code.*(etab|coll)/i]), false);
+        opts($("#cNom"), guess(csv.head, [/(nom|lib(ell?e)?|appellation).*(coll|etab)/i, /^(nom|appellation)/i]), true);
+        const ex = csv.rows.slice(0, 3).map((r) => csv.head.map((h, k) => `${h}=${r[k]}`).join(" · "));
+        $("#sample").innerHTML = `Séparateur « ${esc(csv.sep === "\t" ? "tabulation" : csv.sep)} », ${csv.rows.length.toLocaleString("fr-FR")} lignes. Exemples :<br>${ex.map(esc).join("<br>")}`;
+        $("#go").disabled = false;
+      }
+
+      $("#file").addEventListener("change", async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        $("#fileInfo").textContent = `Lecture de ${f.name} (${(f.size / 1e6).toFixed(1)} Mo)…`;
+        try {
+          csv = parseCsv(await f.text());
+          $("#fileInfo").textContent = `${f.name} : ${csv.head.length} colonnes, ${csv.rows.length.toLocaleString("fr-FR")} lignes.`;
+          fillSelects();
+        } catch (err) {
+          $("#fileInfo").innerHTML = `<span class="err">Lecture impossible : ${esc(err.message || err)}</span>`;
+        }
+      });
+
+      const depOf = (code) => (code.startsWith("97") ? code.slice(0, 3) : code.slice(0, 2));
+      const round = (g) => {
+        const r = (c) => (typeof c[0] === "number" ? [Math.round(c[0] * 1e5) / 1e5, Math.round(c[1] * 1e5) / 1e5] : c.map(r));
+        return { ...g, coordinates: r(g.coordinates) };
+      };
+      const polys = (g) => (g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : []);
+      function union(geoms) {
+        const list = geoms.map(polys);
+        try {
+          return { type: "MultiPolygon", coordinates: polygonClipping.union(...list) };
+        } catch {
+          return { type: "MultiPolygon", coordinates: list.flat() };
+        }
+      }
+
+      $("#go").addEventListener("click", async () => {
+        $("#go").disabled = true;
+        $("#dl").hidden = true;
+        $("#log").innerHTML = "";
+        $("#summary").innerHTML = "";
+        try {
+          if (!window.polygonClipping) throw new Error("bibliothèque polygon-clipping non chargée (connexion à cdn.jsdelivr.net ?)");
+          const iC = +$("#cCom").value,
+            iU = +$("#cUai").value,
+            iN = +$("#cNom").value;
+          const deps = $("#deps")
+            .value.split(/[,;\s]+/)
+            .map((d) => d.trim().replace(/^0(?=\d\d$)/, ""))
+            .filter(Boolean);
+          // 1. couples commune → collèges, limités aux départements choisis
+          const byCom = new Map(),
+            names = new Map();
+          let kept = 0;
+          for (const r of csv.rows) {
+            let com = String(r[iC] || "").trim().toUpperCase();
+            if (/^\d{4}$/.test(com)) com = "0" + com; // code INSEE lu comme un nombre (01001 → 1001)
+            const uai = String(r[iU] || "").trim().toUpperCase();
+            if (!com || !uai || !deps.includes(depOf(com))) continue;
+            kept++;
+            if (!byCom.has(com)) byCom.set(com, new Set());
+            byCom.get(com).add(uai);
+            if (iN >= 0 && r[iN] && !names.has(uai)) names.set(uai, String(r[iN]).trim());
+          }
+          log(`${kept.toLocaleString("fr-FR")} lignes retenues, ${byCom.size} communes, ${new Set([...byCom.values()].flatMap((s) => [...s])).size} collèges.`);
+          if (!byCom.size) throw new Error("aucune ligne pour ces départements : vérifier la colonne du code INSEE et la liste des départements");
+          const present = new Set([...byCom.keys()].map(depOf));
+          for (const d of deps) if (!present.has(d)) log(`Département ${d} : absent du fichier.`, true);
+          // 2. contours des communes (geo.api.gouv.fr)
+          const shapes = new Map();
+          for (const d of present) {
+            log(`Contours des communes du ${d}…`);
+            const r = await fetch(`https://geo.api.gouv.fr/departements/${d}/communes?format=geojson&geometry=contour&fields=nom,code`);
+            if (!r.ok) throw new Error(`geo.api.gouv.fr : HTTP ${r.status} pour le département ${d}`);
+            for (const f of (await r.json()).features || []) shapes.set(String(f.properties.code).toUpperCase(), f);
+          }
+          // 3. secteurs : communes d'un seul collège fusionnées ; communes de plusieurs collèges à part
+          const sectors = new Map(),
+            shared = [],
+            missing = [];
+          for (const [com, set] of byCom) {
+            const f = shapes.get(com);
+            if (!f) {
+              missing.push(com);
+              continue;
+            }
+            if (set.size === 1) {
+              const u = [...set][0];
+              if (!sectors.has(u)) sectors.set(u, []);
+              sectors.get(u).push(f);
+            } else shared.push([f, [...set].sort()]);
+          }
+          log(`Fusion des communes de ${sectors.size} secteurs…`);
+          const features = [];
+          let n = 0;
+          for (const [uai, fs] of sectors) {
+            features.push({
+              type: "Feature",
+              properties: {
+                uai,
+                nom: names.get(uai) || uai,
+                communes: fs.map((f) => f.properties.code).sort().join(";"),
+                partage: false,
+              },
+              geometry: round(union(fs.map((f) => f.geometry))),
+            });
+            if (++n % 25 === 0) await new Promise((r) => setTimeout(r)); // laisse respirer la page
+          }
+          for (const [f, uais] of shared)
+            features.push({
+              type: "Feature",
+              properties: {
+                uai: uais.join(";"),
+                nom: `${f.properties.nom} — partagée : ${uais.map((u) => names.get(u) || u).join(", ")}`,
+                communes: f.properties.code,
+                partage: true,
+              },
+              geometry: round(f.geometry),
+            });
+          const json = JSON.stringify({ type: "FeatureCollection", features });
+          const url = URL.createObjectURL(new Blob([json], { type: "application/geo+json" }));
+          Object.assign($("#dl"), { href: url, hidden: false });
+          log(`Terminé : ${(json.length / 1e6).toFixed(2)} Mo.`);
+          $("#summary").innerHTML =
+            `<table><tr><th>Secteurs (un collège)</th><td>${sectors.size}</td></tr>` +
+            `<tr><th>Communes partagées entre plusieurs collèges</th><td>${shared.length}${shared.length ? ` : ${shared.map(([f]) => esc(f.properties.nom)).join(", ")}` : ""}</td></tr>` +
+            `<tr><th>Communes sans contour</th><td>${missing.length}${missing.length ? ` : ${esc(missing.join(", "))}` : ""}</td></tr></table>` +
+            `<p class="muet">Une commune partagée est découpée par rues dans la carte scolaire : elle forme une zone à part, rattachée à tous ses collèges. Une commune « sans contour » a souvent fusionné dans une commune nouvelle : la carte scolaire porte encore l'ancien code.</p>`;
+        } catch (err) {
+          log(`Erreur : ${err.message || err}`, true);
+        } finally {
+          $("#go").disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
