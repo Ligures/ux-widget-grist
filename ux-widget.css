@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.2.4).
+/* UX widget grist — feuilles de style (version 0.9.2.6).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -679,6 +679,15 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* description de la vue (ⓘ après le titre) : le titre ne prend plus toute la place, l'icône le suit */
+.bh h2:has(+ .secinfo) {
+  flex: 0 1 auto;
+}
+.bh .secinfo {
+  margin: 0 auto 0 4px;
+  font-size: 12px;
+  flex: none;
+}
 .bh .tog {
   border: 0;
   background: none;
@@ -1243,6 +1252,33 @@ td.num {
 }
 .pcsl {
   margin: 2px 0 4px;
+}
+.mdview {
+  padding: 4px 6px;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.mdview > :first-child {
+  margin-top: 0;
+}
+.mdview > :last-child {
+  margin-bottom: 0;
+}
+.mdview h1 {
+  font-size: 1.5em;
+}
+.mdview h2 {
+  font-size: 1.3em;
+}
+.mdview h3 {
+  font-size: 1.15em;
+}
+.mdview img {
+  max-width: 100%;
+}
+.mdview table {
+  width: auto;
+  font-size: inherit;
 }
 .rowbtns {
   display: flex;

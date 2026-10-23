@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.2.4). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.2.6). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.2.4"; // voir CHANGELOG.md
+const VERSION = "0.9.2.6"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -88,6 +88,7 @@ const KIND_ICONS = {
   map: '<path d="M12 21s-6-5.3-6-11a6 6 0 0 1 12 0c0 5.7-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/>',
   select: '<rect x="3" y="7" width="18" height="10" rx="2"/><path d="M14 11l2 2 2-2"/>',
   form: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 13h3M13 13h3M8 17h8"/>',
+  text: '<path d="M4 5h16M4 10h16M4 15h10M4 20h7"/>',
   widget: '<path d="M10 4h4v3a2 2 0 1 0 4 0V4h2v6h-3a2 2 0 1 0 0 4h3v6h-6v-3a2 2 0 1 0-4 0v3H4v-6h3a2 2 0 1 0 0-4H4V4z"/>',
 };
 // viewKind — Type d'une vue : [clé d'icône, libellé] (tableau, fiche, graphique en barres / secteurs…, carte, liste de sélection…).
@@ -105,6 +106,7 @@ function viewKind(s, b) {
     t = `Graphique (${{ pie: "secteurs", donut: "anneau", line: "courbe", area: "aires", scatter: "nuage de points", kaplan_meier: "courbe" }[ct] || "barres"})`;
   } else if (s.parentKey === "custom") {
     if (isMapSection(s)) [k, t] = ["map", "Carte"];
+    else if (isMarkdownSection(s)) [k, t] = ["text", "Texte (Markdown)"];
     else {
       const data = advChartSpec(s)?.data;
       if (data) [k, t] = [data.some((x) => x?.type === "pie") ? "pie" : "bar", "Graphique avancé"];
@@ -875,7 +877,10 @@ function blockStyle(b, kind) {
 function initialFold(b, info) {
   if (b.startFold === "fold") return true;
   if (b.startFold === "open") return false;
-  return info.kind === "chart" || (info.kind === "custom" && !isMapSection(info.sec) && !isSelector(b));
+  return (
+    info.kind === "chart" ||
+    (info.kind === "custom" && !isMapSection(info.sec) && !isMarkdownSection(info.sec) && !isSelector(b))
+  );
 }
 /* ---------- Filtre rapide (un par bloc) ----------
    Chaque bloc peut recevoir, dans son en-tête, un sélecteur « Tous | valeur 1 | valeur 2… » sur un champ
@@ -1064,7 +1069,7 @@ function blockShell(b, info, badge, extraHead = "") {
   el.setAttribute("style", blockStyle(b, info.kind));
   el.dataset.sec = b.id;
   el.innerHTML = `<div class="bh"><button class="tog" data-tog="${b.id}" title="Replier / déplier">${S.collapsed[b.id] ? "▸" : "▾"}</button>
-    <h2>${esc(info.title)}</h2>${extraHead}<span class="badge"></span>
+    <h2>${esc(info.title)}</h2>${secDescMark(info)}${extraHead}<span class="badge"></span>
     <button class="max" data-max="${b.id}" title="${S.maxed === b.id ? "Réduire (Échap)" : "Plein écran"}">${S.maxed === b.id ? "✕" : "⛶"}</button></div><div class="bb"></div>`;
   if (S.layoutMode) {
     el.draggable = true;
@@ -1077,6 +1082,12 @@ function blockShell(b, info, badge, extraHead = "") {
   return el;
 }
 
+// secDescMark — ⓘ après le titre d'un bloc quand la vue Grist a une description (« Description du widget »),
+// affichée au survol (infobulle commune #tip, comme les descriptions de colonnes).
+const secDescMark = (info) => {
+  const d = String(info.sec?.description || "").trim();
+  return d ? `<span class="info secinfo" data-desc="${esc(d)}" tabindex="0" aria-label="${esc(d)}">ⓘ</span>` : "";
+};
 // tableClasses — Classes CSS d'un tableau selon les options de la vue (lignes alternées, bordures…).
 function tableClasses(info) {
   const o = info.opts; // valeurs par défaut de Grist : quadrillage horizontal et vertical, pas de zébrures
@@ -2613,6 +2624,46 @@ function mapSpec(sec) {
 }
 // isMapSection — Vrai si la vue est un widget carte.
 const isMapSection = (sec) => !!mapSpec(sec);
+/* ---------- Widget Markdown de Grist : affichage seul (pas d'édition), taille du texte réglable ---------- */
+// mdSpec — Colonne « Content » du widget Markdown (mapping par colId ou numéro de colonne), sinon null.
+function mdSpec(sec) {
+  const cv = parseJSON(parseJSON(sec?.options).customView, null);
+  if (!cv || !/markdown/i.test(cv.url || "")) return null;
+  const v = (parseJSON(cv.columnsMapping, {}) || {}).Content;
+  return { content: Array.isArray(v) ? v[0] : v };
+}
+const isMarkdownSection = (sec) => !!mdSpec(sec);
+const MD_SIZES = [
+  ["", "normale (13 px)"],
+  [11, "petite (11 px)"],
+  [12, "12 px"],
+  [14, "14 px"],
+  [16, "grande (16 px)"],
+  [18, "18 px"],
+  [20, "très grande (20 px)"],
+  [24, "24 px"],
+];
+// renderMarkdown — Texte Markdown de la ligne sélectionnée (comme le widget Grist), mis en forme par marked puis
+// nettoyé par DOMPurify. Les liens s'ouvrent dans un nouvel onglet.
+async function renderMarkdown(info, rows, body, selId, b) {
+  const cols = S.meta.colsByTable.get(info.sec.tableRef) || [];
+  const col =
+    colByKey(cols, mdSpec(info.sec)?.content) ||
+    info.fields.find((f) => ["Text", "Any"].includes(baseType(f.col)))?.col ||
+    cols.find((c) => baseType(c) === "Text" && !c.colId.startsWith("gristHelper_"));
+  const row = rows.find((r) => r.id === selId) || rows[0];
+  if (!col || !row) {
+    body.innerHTML = `<div class="msg">${col ? "Aucun texte à afficher" : "Widget Markdown : colonne du texte introuvable"}</div>`;
+    return;
+  }
+  await Promise.all([
+    window.marked ? null : loadLib(LIBS.marked, "marked"),
+    window.DOMPurify ? null : loadLib(LIBS.purify, "DOMPurify"),
+  ]);
+  const size = Number(b.mdSize) || 0;
+  body.innerHTML = `<div class="mdview"${size ? ` style="font-size:${size}px"` : ""}>${DOMPurify.sanitize(marked.parse(String(row[col.colId] ?? "")))}</div>`;
+  body.querySelectorAll(".mdview a[href]").forEach((a) => Object.assign(a, { target: "_blank", rel: "noopener" }));
+}
 /* Le mapping d'un widget personnalisé est stocké par numéro de colonne (colRef) ou par colId */
 const colByKey = (cols, k) =>
   k == null || k === ""
@@ -4167,7 +4218,9 @@ async function render() {
           info.kind === "chart"
             ? KIND.chart
             : info.kind === "custom"
-              ? "Graphique avancé"
+              ? isMarkdownSection(info.sec)
+                ? "Texte"
+                : "Graphique avancé"
               : `${rows.length} ligne${rows.length > 1 ? "s" : ""}`;
         const el = blockShell(b, info, badge, qfCtl + search);
         const body = el.querySelector(".bb");
@@ -4179,6 +4232,7 @@ async function render() {
         else if (info.kind === "chart") renderChart(info, rows, body, jobs);
         else if (info.kind === "custom" && isMapSection(info.sec))
           await renderMap(info, rows, body, jobs, selId, b);
+        else if (info.kind === "custom" && isMarkdownSection(info.sec)) await renderMarkdown(info, rows, body, selId, b);
         else if (info.kind === "custom") await renderAdvChart(info, rows, body, jobs);
         if (blockAddable(b, info)) body.insertAdjacentHTML("beforeend", addBtn(b));
         frag.append(el);
@@ -5405,7 +5459,7 @@ ${
     sel(
       "startFold",
       [
-        ["", s.parentKey === "chart" || (s.parentKey === "custom" && !isMap) ? "auto (replié)" : "auto (déplié)"],
+        ["", s.parentKey === "chart" || (s.parentKey === "custom" && !isMap && !isMarkdownSection(s)) ? "auto (replié)" : "auto (déplié)"],
         ["fold", "replié"],
         ["open", "déplié"],
       ],
@@ -5446,6 +5500,7 @@ ${
         )
       : ""),(["single", "detail"].includes(s.parentKey) ? C(`data-nolab="${i}"`, b.hideLabels, "Masquer les noms des champs", "Pour ce bloc, n'affiche que les valeurs : les noms des champs restent visibles au survol d'une valeur.") : ""),(["single", "detail"].includes(s.parentKey) ? C(`data-sempty="${i}"`, b.showEmpty, "Afficher les champs vides", "Pour ce bloc seulement, montre aussi les champs sans valeur (sinon masqués selon l'option générale).") : "")].join(""))}
   ${G("Édition", "Modification des données depuis la page (droits Grist respectés).", [(isFiche ? C(`data-edit="${i}"`, b.editable, "Édition des champs", "Permet de modifier les valeurs directement dans la page (double-clic). Les règles d'accès de Grist s'appliquent : une modification interdite est refusée ; les lecteurs restent en lecture seule.") : ""),(["record", "detail"].includes(s.parentKey) ? C(`data-addr="${i}"`, b.addable, "Ajout et suppression de lignes", "Avec « Édition des champs », affiche en bas du bloc « + Ajouter une ligne » et « − Supprimer la ligne » (ligne sélectionnée, après confirmation). Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Les règles d'accès de Grist s'appliquent (droits de création et de suppression).") : "")].join(""))}
+  ${G("Texte (Markdown)", "Widget Markdown de Grist : affiché sans possibilité de modification.", s.parentKey === "custom" && isMarkdownSection(s) ? L("Taille du texte", sel("mdSize", MD_SIZES, b.mdSize || ""), "Taille des caractères du texte affiché (les titres restent proportionnés).") : "")}
   ${G("Liste de sélection", "La vue est affichée comme une liste déroulante dans l'en-tête de la page.", (isSelector(b)
       ? L(
           "Colonne affichée",
@@ -5508,7 +5563,7 @@ ${
   })()}
   ${(() => {
     // filtres rapides du bloc (0.9.0.2) : un encadré par filtre — champ, valeur à l'ouverture, valeurs exclues
-    if (!(["record", "detail", "chart", "custom"].includes(s.parentKey) || (s.parentKey === "single" && b.asList)) || isSelector(b)) return "";
+    if (!(["record", "detail", "chart", "custom"].includes(s.parentKey) || (s.parentKey === "single" && b.asList)) || isSelector(b) || isMarkdownSection(s)) return "";
     const all = (m.colsByTable.get(s.tableRef) || []).filter((c) => !c.colId.startsWith("gristHelper_") && c.colId !== "manualSort");
     const shown = new Set((getInfo(b.id)?.fields || []).map((f) => f.col?.colId));
     const inView = byLabel(all.filter((c) => shown.has(c.colId))), others = byLabel(all.filter((c) => !shown.has(c.colId)));
@@ -5926,6 +5981,7 @@ $("#panel").addEventListener("change", (ev) => {
       "qfDefault2",
       "qfField2",
       "pieColorCol",
+      "mdSize",
     ].includes(t.dataset.f)
       ? t.value
       : Number(t.value) || 0;

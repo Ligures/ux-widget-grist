@@ -26,6 +26,26 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.2.6] — Affichage des widgets Markdown — 2026-10-23
+
+### Utilisateurs
+- *Nouveau* — **Widgets Markdown** de Grist affichés dans la page : titres, gras, listes, liens (ouverts dans un nouvel onglet), images. Le texte est celui de la ligne sélectionnée, comme dans Grist. Lecture seule : pas d'édition depuis le widget.
+
+### Administrateurs
+- *Nouveau* — Encadré **Texte (Markdown)** dans les réglages du bloc : **taille du texte** (11 à 24 px ; normale : 13 px), titres proportionnés (`mdSize`). Ces blocs sont dépliés par défaut à l'ouverture et ont leur icône dans la configuration.
+
+### Développeurs
+- *Sécurité* — Markdown mis en forme par marked puis nettoyé par DOMPurify, comme l'aide : scripts et gestionnaires d'événements retirés.
+- *Nouveau* — Détection par l'adresse du widget (`markdown`) ; colonne lue dans le mapping `Content`, sinon le premier champ texte.
+
+## [0.9.2.5] — Description des vues au survol — 2026-10-23
+
+### Utilisateurs
+- *Nouveau* — **Description des vues** : quand une vue a une description dans Grist (« Description du widget »), un ⓘ suit son titre. Le texte s'affiche au survol, comme les descriptions de colonnes, alors que Grist demande un clic.
+
+### Développeurs
+- *Nouveau* — Champ `description` de `_grist_Views_section` lu et affiché dans l'infobulle commune (`#tip`) ; masqué à l'impression comme les autres ⓘ.
+
 ## [0.9.2.4] — Outil de construction des secteurs de collège — 2026-10-23
 
 ### Administrateurs

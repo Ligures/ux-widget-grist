@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.2.4** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.2.6** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---
@@ -39,6 +39,7 @@ Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), 
 | Graphique | Graphiques natifs (barres, lignes, secteurs, aires…) avec Chart.js |
 | Graphique avancé | Widget Plotly de Grist, sources de données comprises |
 | Carte | Widget carte de Grist avec Leaflet, voir [Cartes et zonages](#cartes-et-zonages) |
+| Markdown | Texte mis en forme de la ligne sélectionnée, en lecture seule, taille du texte réglable |
 | Liste déroulante | Liste de sélection dans l'en-tête, qui pilote les autres blocs |
 
 **Comportements repris de Grist**
@@ -242,9 +243,9 @@ Toutes sont chargées depuis un CDN, en version figée, avec empreinte d'intégr
 | Chart.js | 4.4.1 | Graphiques natifs | Au démarrage |
 | Leaflet | 1.9.4 | Cartes | À la première carte |
 | Plotly | 2.35.2 | Graphiques avancés | Au premier graphique avancé |
-| DOMPurify | 3.2.6 | Nettoyage du HTML des étiquettes | Si une étiquette contient du HTML |
+| DOMPurify | 3.2.6 | Nettoyage du HTML (étiquettes, aide, Markdown) | Si une étiquette contient du HTML, à l'aide, au premier widget Markdown |
 | polygon-clipping | 0.15.7 | Fusion des communes en EPCI | Avec le zonage EPCI |
-| marked | 12.0.2 | Mise en forme de l'aide (Markdown) | À la première ouverture de l'aide |
+| marked | 12.0.2 | Mise en forme de l'aide et des widgets Markdown | À la première ouverture de l'aide ou au premier widget Markdown |
 
 Police : Marianne (style État), chargée depuis le paquet `@gouvfr/dsfr` 1.14.4 ; police du système en style neutre.
 
