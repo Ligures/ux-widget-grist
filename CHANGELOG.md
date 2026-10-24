@@ -26,6 +26,22 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.2.9] — Choix du zonage étiqueté au survol — 2026-10-24
+
+### Utilisateurs
+- *Amélioré* — Cartes à deux zonages : selon le réglage de l'administrateur, le nom du second zonage (par exemple le secteur de collège) s'affiche partout à l'intérieur de ses contours, et plus seulement sur le trait.
+
+### Administrateurs
+- *Nouveau* — **« Étiquette au survol »** (avec un second zonage) : *zonage principal* (par défaut) ou *second zonage*. Dans le second cas, toute la surface du second zonage réagit au survol et le zonage principal n'a plus d'étiquette (`zoneHover`).
+
+## [0.9.2.8] — Second zonage plus facile à survoler — 2026-10-24
+
+### Utilisateurs
+- *Amélioré* — **Cartes, second zonage (pointillés)** : le nom de la zone s'affiche dès que la souris passe à moins de 8 px environ du trait, et non plus seulement sur le trait lui-même.
+
+### Développeurs
+- *Amélioré* — Un trait transparent de 16 px double le pointillé et porte l'infobulle.
+
 ## [0.9.2.7] — Plusieurs fichiers de zonage, secteurs des Côtes-d'Armor — 2026-10-23
 
 ### Administrateurs

@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.2.7). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.2.9). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -44,7 +44,7 @@
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
-         qpvUrl, mapZone (communes|epci|iris|legis|college), mapZone2 (contours croisés), legisUrl, collegeUrl, legisCol, collegeCol, mapCommune, zoneColor,
+         qpvUrl, mapZone (communes|epci|iris|legis|college), mapZone2 (contours croisés), zoneHover, legisUrl, collegeUrl, legisCol, collegeCol, mapCommune, zoneColor,
          zoneSum, zoneTable/zoneKey/zoneVal, mapLabelsOn
 
    RÈGLES À RESPECTER
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.2.7"; // voir CHANGELOG.md
+const VERSION = "0.9.2.9"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3217,6 +3217,8 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
     }
   if (!byCode.size && !fileZ) return note("Zonage : aucun code INSEE reconnu");
   const noFill = !outline && b.zoneColor === "none"; // contours seuls, sans couleur de fond
+  // étiquette au survol : celle du zonage principal (par défaut) ou celle du second zonage, au choix
+  const hoverSecond = !!b.mapZone2 && b.mapZone2 !== zoneMode(b) && b.zoneHover === "second";
   const how = outline || noFill ? "" : b.zoneColor || "";
   try {
     const codes = [...byCode.keys()];
@@ -3345,6 +3347,7 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
       { type: "FeatureCollection", features: feats },
       {
         pane: outline ? "zones2" : "zones",
+        interactive: !outline && !hoverSecond, // seul le calque qui porte l'étiquette réagit au survol
         style: (f) =>
           outline
             ? { color: "#161616", weight: mode === "iris" ? 1.2 : 2, opacity: 0.85, dashArray: "6 4", fill: false }
@@ -3359,7 +3362,7 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
         }),
         onEachFeature: (f, l) => {
           const z = f.properties;
-          if (outline) return l.bindTooltip(`<b>${esc(z.name)}</b>`, { sticky: true }); // contours : nom seulement
+          if (outline || hoverSecond) return; // contours : infobulle portée par un calque invisible (ci-dessous)
           l.bindTooltip(
             `<b>${esc(z.name)}</b>${mode === "iris" ? `<br><small>IRIS ${esc(z.key)}</small>` : ""}<br>${z.pts.length} point${z.pts.length > 1 ? "s" : ""}` +
               (what
@@ -3370,6 +3373,18 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
         },
       },
     ).addTo(map);
+    // second zonage : le pointillé est fin, difficile à viser ; un trait transparent de 16 px le double et porte le
+    // nom de la zone au survol
+    if (outline)
+      L.geoJSON(
+        { type: "FeatureCollection", features: feats },
+        {
+          pane: "zones2",
+          // étiquette du second zonage choisie : toute sa surface réagit au survol (fond transparent)
+          style: { color: "#000", weight: 16, opacity: 0, fill: hoverSecond, fillOpacity: 0 },
+          onEachFeature: (f, l) => l.bindTooltip(`<b>${esc(f.properties.name)}</b>`, { sticky: true }),
+        },
+      ).addTo(map);
     if (feats.length && mode !== "iris") map._uxExtend?.(layer.getBounds(), keepView); // cadrage : points + zones
     if (scale?.items.length && !outline) {
       const c = L.control({ position: "topright" });
@@ -5719,7 +5734,21 @@ ${
                 b.mapZone2 || "",
               ),
               "Croise deux découpages : le second est tracé en pointillés noirs par-dessus le premier (sans couleur de fond), par exemple les communes colorées et les circonscriptions législatives. Son nom s'affiche au survol du trait.",
-            )
+            ) +
+            (b.mapZone2 && b.mapZone2 !== zoneMode(b)
+              ? L(
+                  "Étiquette au survol",
+                  sel(
+                    "zoneHover",
+                    [
+                      ["", "zonage principal"],
+                      ["second", "second zonage"],
+                    ],
+                    b.zoneHover || "",
+                  ),
+                  "Zonage dont le nom s'affiche quand on survole la carte. « second zonage » : son nom s'affiche partout à l'intérieur de ses contours, et le zonage principal n'a plus d'étiquette.",
+                )
+              : "")
           : "") +
         Object.entries(FILE_ZONES)
           .filter(([k]) => [zoneMode(b), zoneMode(b) ? b.mapZone2 : ""].includes(k))
@@ -5973,6 +6002,7 @@ $("#panel").addEventListener("change", (ev) => {
       "mapCommune",
       "mapZone",
       "mapZone2",
+      "zoneHover",
       "legisCol",
       "collegeCol",
       "zoneColor",
