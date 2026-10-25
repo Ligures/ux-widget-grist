@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.3). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.4). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.3"; // voir CHANGELOG.md
+const VERSION = "0.9.3.4"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -6006,6 +6006,7 @@ ${
   .map(
     (x, i) => `<div class="mn">
   <input type="text" data-mnlabel="${i}" value="${esc(x.label || "")}" placeholder="Libellé" title="Texte du lien dans le menu (vide : nom de la page)" style="width:120px">
+  <span class="mnico">${icoPreview(x.icon)}</span><input type="text" data-mnicon="${i}" value="${esc(x.icon || "")}" placeholder="Icône (code SVG)" title="Facultatif : collez le code d'une icône SVG (ouvrir le fichier .svg dans un éditeur de texte, tout copier). Elle s'affiche devant le libellé, dans la couleur du lien." style="width:110px">
   <input type="text" data-mntip="${i}" value="${esc(x.tip || "")}" placeholder="Infobulle" title="Texte affiché au survol du lien (facultatif)" style="width:180px">
   <select data-mnview="${i}" title="Page Grist ouverte par ce lien. En mode « Changer de page dans le widget », elle est facultative : le lien affiche simplement la configuration choisie.">${draftNav.inWidget ? `<option value="0" ${!m.pages.some((pg) => pg.viewId === x.viewId) ? "selected" : ""}>— ce widget —</option>` : ""}${m.pages.map((pg) => `<option value="${pg.viewId}" ${pg.viewId === x.viewId ? "selected" : ""}>${esc(pg.name)}</option>`).join("")}</select>
   <select data-mncfg="${i}" title="Configuration affichée sur cette page (sert à surligner la page courante et au changement de page dans le widget)"><option value="">— config —</option>${(
@@ -6130,6 +6131,13 @@ $("#panel").addEventListener("change", (ev) => {
   if (t.id === "cMnInWidget") {
     draftNav.inWidget = t.checked;
     renderConfig(); // la page Grist devient facultative (option « ce widget »)
+    return;
+  }
+  if (t.dataset.mnicon) {
+    const v = t.value.trim();
+    draftNav.items[Number(t.dataset.mnicon)].icon = v || undefined;
+    const pv = t.previousElementSibling;
+    if (pv) pv.innerHTML = icoPreview(v);
     return;
   }
   if (t.dataset.mntip) {
@@ -6537,6 +6545,46 @@ function viewReadable(vid) {
 }
 S.navAccess = {};
 // renderNav — Affiche le menu des pages (masque celles que l'utilisateur ne peut pas lire).
+// safeSvg — Icône SVG collée par l'administrateur (menu), nettoyée : seules les formes simples et leurs attributs
+//   de dessin sont gardées (ni script, ni lien, ni style, ni image externe) ; les couleurs deviennent currentColor
+//   pour suivre celle du lien (bleu sur la page courante). Résultat mis en cache.
+const SVG_TAGS = new Set(["svg", "g", "path", "circle", "ellipse", "rect", "line", "polyline", "polygon"]);
+const SVG_ATTRS = new Set(["viewbox", "d", "cx", "cy", "r", "rx", "ry", "x", "y", "x1", "y1", "x2", "y2", "width", "height", "points", "transform", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "fill-rule", "clip-rule", "opacity", "fill-opacity", "stroke-opacity"]);
+const svgCache = new Map();
+function safeSvg(src) {
+  src = String(src || "").trim();
+  if (!src.startsWith("<svg")) return "";
+  if (svgCache.has(src)) return svgCache.get(src);
+  let out = "";
+  try {
+    const doc = new DOMParser().parseFromString(src, "image/svg+xml");
+    const root = doc.documentElement;
+    if (root.nodeName === "svg" && !doc.querySelector("parsererror")) {
+      const clean = (el) => {
+        for (const c of [...el.children]) (SVG_TAGS.has(c.nodeName) ? clean(c) : c.remove());
+        for (const a of [...el.attributes]) {
+          const n = a.name.toLowerCase(), v = a.value;
+          if (!SVG_ATTRS.has(n) || /url\(|javascript:|[<>]/i.test(v)) el.removeAttribute(a.name);
+          else if ((n === "fill" || n === "stroke") && !/^(none|currentcolor)$/i.test(v)) el.setAttribute(n, "currentColor");
+        }
+      };
+      clean(root);
+      for (const n of [...root.childNodes]) if (n.nodeType === 3) n.remove();
+      if (!root.getAttribute("viewBox")) root.setAttribute("viewBox", `0 0 ${parseFloat(root.getAttribute("width")) || 24} ${parseFloat(root.getAttribute("height")) || 24}`);
+      root.removeAttribute("width");
+      root.removeAttribute("height");
+      root.setAttribute("class", "nico");
+      root.setAttribute("aria-hidden", "true");
+      out = new XMLSerializer().serializeToString(root);
+    }
+  } catch (e) {
+    out = "";
+  }
+  svgCache.set(src, out);
+  return out;
+}
+// icoPreview — Aperçu de l'icône dans la configuration du menu (« ? » rouge : code non reconnu).
+const icoPreview = (v) => safeSvg(v) || (v ? '<span style="color:var(--rouge)" title="Code SVG non reconnu">?</span>' : "");
 function renderNav() {
   const nav = $("#pnav"),
     n = S.nav || { items: [] };
@@ -6577,7 +6625,7 @@ function renderNav() {
       const url = page && safeBase(n.url) ? pageUrl(safeBase(n.url), x.viewId, n.singlePage && !n.inWidget) : ""; // lien Grist (clic du milieu)
       // infobulle : celle saisie dans la configuration, sinon l'adresse (sauf navigation dans le widget)
       const tip = String(x.tip || "").trim() || (n.inWidget ? "" : url);
-      return `<a href="${url ? esc(url) : "#"}"${tip ? ` title="${esc(tip)}"` : ""} target="_top"${n.inWidget && x.cfg ? ` data-gocfg="${esc(x.cfg)}"` : ""} class="${x.cfg && x.cfg === S.cfg.name ? "cur" : ""}">${esc(x.label || (page ? S.meta.pageOfView.get(x.viewId) : x.cfg) || "Page")}</a>`;
+      return `<a href="${url ? esc(url) : "#"}"${tip ? ` title="${esc(tip)}"` : ""} target="_top"${n.inWidget && x.cfg ? ` data-gocfg="${esc(x.cfg)}"` : ""} class="${x.cfg && x.cfg === S.cfg.name ? "cur" : ""}">${safeSvg(x.icon)}<span class="nlab">${esc(x.label || (page ? S.meta.pageOfView.get(x.viewId) : x.cfg) || "Page")}</span></a>`;
     });
   if (!links.length) {
     nav.replaceChildren();
@@ -6585,7 +6633,7 @@ function renderNav() {
   }
   // sur smartphone, les pages sont regroupées derrière un bouton (à gauche, icône de pages et nom de la page
   // courante) — distinct du menu ☰ des actions, à droite
-  const cur = /class="cur">([^<]*)<\/a>$/.exec(links.find((l) => l.includes('class="cur"')) || "")?.[1];
+  const cur = /<span class="nlab">([^<]*)<\/span><\/a>$/.exec(links.find((l) => l.includes('class="cur"')) || "")?.[1];
   nav.innerHTML = `<button type="button" class="pnav-tog" aria-expanded="false" aria-controls="pnavList" title="Changer de page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h9l3 3v12H8zM4 7v14h12" /></svg><span>${cur || "Pages"}</span><span class="qf-caret">▾</span></button><span class="pnav-list" id="pnavList">${links.join("")}</span>`;
 }
 // hostView — Page Grist qui contient ce widget, pour un lien « — ce widget — » : de préférence celle dont le

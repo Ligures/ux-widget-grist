@@ -26,6 +26,17 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.4] — Icônes du menu des pages — 2026-10-25
+
+### Utilisateurs
+- *Nouveau* — **Menu des pages** : une icône peut précéder le nom de la page.
+
+### Administrateurs
+- *Nouveau* — **Configuration → Menu des pages** : champ « Icône (code SVG) » pour chaque lien, avec aperçu. Coller le code d'un fichier .svg ; l'icône prend la couleur du lien.
+
+### Développeurs
+- *Sécurité* — Le SVG collé est nettoyé (`safeSvg`) : formes simples et attributs de dessin seulement, couleurs remplacées par `currentColor`. Stocké dans `nav.items[].icon`.
+
 ## [0.9.3.3] — Largeur du message d'accueil — 2026-10-25
 
 ### Utilisateurs

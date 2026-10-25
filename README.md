@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.3.3** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.3.4** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---

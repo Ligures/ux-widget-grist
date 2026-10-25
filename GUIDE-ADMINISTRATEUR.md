@@ -183,6 +183,7 @@ Section **5. Navigation entre pages**. Ce réglage est commun à toutes les conf
 - **Page d'accueil** : page affichée à l'ouverture, pour tous les utilisateurs. Avec « Changer de page dans le widget », elle s'impose ; sinon, elle sert quand le widget n'a pas de configuration enregistrée. Si le widget ne sait pas quelle configuration afficher, seul un administrateur se voit poser la question, et sa réponse devient la page d'accueil ; les utilisateurs ne sont jamais interrogés.
 - **Ouvrir les pages en mode page unique** : les liens ouvrent Grist sans ses menus. Proposé seulement sans « Changer de page dans le widget » ; sinon, utiliser le bouton **Plein écran** de la barre d'outils, réservé aux administrateurs.
 - **Pour chaque lien** :
+  - icône (facultative) : code d'un fichier SVG collé dans le champ « Icône (code SVG) » — ouvrir le fichier .svg dans un éditeur de texte (Bloc-notes…), tout sélectionner, copier. L'aperçu s'affiche à gauche du champ (« ? » rouge : code non reconnu). L'icône prend la couleur du lien ; scripts, styles et images externes sont retirés ;
   - libellé ;
   - infobulle (facultative) : texte affiché au survol du lien ; sans infobulle, le survol montre l'adresse de la page, sauf avec « Changer de page dans le widget » ;
   - page Grist, ou **— ce widget —** ;
