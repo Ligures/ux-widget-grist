@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.5). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.6). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.5"; // voir CHANGELOG.md
+const VERSION = "0.9.3.6"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -6572,7 +6572,14 @@ function safeSvg(src) {
           if (cls) for (const el of root.querySelectorAll("*")) if (el.classList?.contains(cls)) el.setAttribute("style", `${body};${el.getAttribute("style") || ""}`);
         }
       const clean = (el) => {
-        for (const c of [...el.children]) (SVG_TAGS.has(c.nodeName) ? clean(c) : c.remove());
+        for (const c of [...el.children]) {
+          // conteneurs sans dessin propre (<switch> des icônes Streamline Carbon, <a>) : remplacés par leur contenu
+          if (c.nodeName === "switch" || c.nodeName === "a") {
+            c.replaceWith(...c.childNodes);
+            return clean(el);
+          }
+          SVG_TAGS.has(c.nodeName) ? clean(c) : c.remove();
+        }
         // style="fill:#000;stroke-width:1.5" → attributs (le style lui-même n'est pas gardé)
         for (const d of String(el.getAttribute("style") || "").split(";")) {
           const [k, ...v] = d.split(":");

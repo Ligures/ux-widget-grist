@@ -26,6 +26,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.6] — Icônes SVG avec <switch> — 2026-10-26
+
+### Administrateurs
+- *Corrigé* — **Icônes du menu** : les icônes dont le dessin est rangé dans un bloc `<switch>` (Streamline Carbon…) s'affichent ; elles étaient vidées par le nettoyage.
+
 ## [0.9.3.5] — Icônes SVG téléchargées, style neutre bordeaux — 2026-10-25
 
 ### Utilisateurs
