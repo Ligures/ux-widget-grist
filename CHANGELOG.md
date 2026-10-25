@@ -26,6 +26,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.3] — Largeur du message d'accueil — 2026-10-25
+
+### Utilisateurs
+- *Amélioré* — **Message d'accueil** : la fenêtre occupe 60 % de la largeur sur grand écran, et 90 % sur écran étroit (900 px ou moins).
+
 ## [0.9.3.2] — Nombre de lignes des tableaux — 2026-10-25
 
 ### Utilisateurs
