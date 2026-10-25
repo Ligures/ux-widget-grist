@@ -18,7 +18,7 @@ Chaque ligne commence par la nature du changement : *Nouveau*, *Amélioré*, *Co
 **Numérotation** : le widget est en développement, donc en version 0.
 - Le **dixième** (`0.X`) marque une évolution majeure.
 - Le chiffre suivant (`0.X.Y`) marque une évolution secondaire ou un ensemble de corrections. Il peut dépasser 9 : 0.8.9 est suivie de 0.8.10, puis 0.8.11…
-- Depuis 0.8.10, un quatrième chiffre (`0.X.Y.Z`) change à chaque livraison intermédiaire : 0.9.2.1, 0.9.2.2… jusqu'au palier suivant.
+- Depuis 0.8.10, un quatrième chiffre (`0.X.Y.Z`) change à chaque livraison intermédiaire : 0.9.3.1, 0.9.3.2… jusqu'au palier suivant.
 - **Regroupement** : le palier en cours garde le détail de chaque livraison. Au passage au palier suivant, ses livraisons sont regroupées en une seule entrée (par exemple 0.9.1.0 à 0.9.1.19 dans « 0.9.1 »), qui ne garde que le résultat final.
 - La version 1.0 sera la première version stable.
 
@@ -26,92 +26,44 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
-## [0.9.2.9] — Choix du zonage étiqueté au survol — 2026-10-24
+## [0.9.3.0] — Message d'accueil — 2026-10-25
+
+Palier 0.9.3 ; les livraisons 0.9.2.0 à 0.9.2.9 sont regroupées dans « 0.9.2 » ci-dessous.
 
 ### Utilisateurs
-- *Amélioré* — Cartes à deux zonages : selon le réglage de l'administrateur, le nom du second zonage (par exemple le secteur de collège) s'affiche partout à l'intérieur de ses contours, et plus seulement sur le trait.
+- *Nouveau* — **Message d'accueil** à l'ouverture du widget, quand l'administrateur en a rédigé un. La case **« Ne plus afficher ce message »** le masque lors des visites suivantes (mémorisé dans le navigateur) ; il revient si l'administrateur modifie le texte.
 
 ### Administrateurs
-- *Nouveau* — **« Étiquette au survol »** (avec un second zonage) : *zonage principal* (par défaut) ou *second zonage*. Dans le second cas, toute la surface du second zonage réagit au survol et le zonage principal n'a plus d'étiquette (`zoneHover`).
+- *Nouveau* — Section **Message d'accueil** de la configuration : texte en Markdown, commun à toutes les pages, et bouton **Aperçu**. Vide : pas de message. Enregistré avec la navigation (ligne `_Navigation` de `W_Composition`).
+- *Amélioré* — `index.html` contient la nouvelle fenêtre : à déposer avec `ux-widget.js`.
 
-## [0.9.2.8] — Second zonage plus facile à survoler — 2026-10-24
+### Développeurs
+- *Sécurité* — Message mis en forme par marked puis nettoyé par DOMPurify ; liens ouverts dans un nouvel onglet.
+- *Nouveau* — « Ne plus afficher » mémorise l'empreinte du texte (`localStorage`, clé `uxwg_welcome_<document>`), d'où le retour du message après modification.
+
+## [0.9.2] — Configuration réorganisée, journal par public, Markdown, secteurs de collège — 2026-10-22 → 2026-10-24
+
+Regroupe les livraisons 0.9.2.0 à 0.9.2.9.
 
 ### Utilisateurs
-- *Amélioré* — **Cartes, second zonage (pointillés)** : le nom de la zone s'affiche dès que la souris passe à moins de 8 px environ du trait, et non plus seulement sur le trait lui-même.
-
-### Développeurs
-- *Amélioré* — Un trait transparent de 16 px double le pointillé et porte l'infobulle.
-
-## [0.9.2.7] — Plusieurs fichiers de zonage, secteurs des Côtes-d'Armor — 2026-10-23
-
-### Administrateurs
-- *Nouveau* — **Fichiers de zonage multiples** : l'option « Fichier : … » (circonscriptions, secteurs de collège) accepte plusieurs noms séparés par des virgules. Les zones sont réunies, et un collège présent dans deux fichiers ne forme qu'une zone.
-- *Nouveau* — **`secteurs-colleges-22.geojson`** : secteurs des 47 collèges publics des Côtes-d'Armor, à déposer à côté du widget et à ajouter à la suite de `secteurs-colleges-bretagne.geojson`.
-
-### Développeurs
-- *Amélioré* — UAI reconnu aussi dans un champ `identifiant_etablissement`. Le champ `id` n'est plus pris pour un code de collège.
-- *Amélioré* — Fichier du 22 normalisé : champs `uai`, `nom`, `commune` seuls (la géométrie en double et les coordonnées de contact ont été retirées), simplifié à 20 % avec mapshaper, coordonnées à 5 décimales (1,3 Mo au lieu de 24 Mo).
-
-## [0.9.2.6] — Affichage des widgets Markdown — 2026-10-23
-
-### Utilisateurs
-- *Nouveau* — **Widgets Markdown** de Grist affichés dans la page : titres, gras, listes, liens (ouverts dans un nouvel onglet), images. Le texte est celui de la ligne sélectionnée, comme dans Grist. Lecture seule : pas d'édition depuis le widget.
+- *Nouveau* — **Widgets Markdown** de Grist affichés dans la page (texte de la ligne sélectionnée, lecture seule).
+- *Nouveau* — **Description des vues** : un ⓘ suit le titre d'un bloc dont la vue a une description dans Grist ; le texte s'affiche au survol.
+- *Corrigé* — **Camemberts** : les étiquettes extérieures de plusieurs mots passent à la ligne et ne sont plus coupées ; la légende redondante n'est plus affichée.
+- *Amélioré* — **Cartes à deux zonages** : le nom du second zonage s'affiche près de son trait pointillé, ou partout à l'intérieur de ses contours selon le réglage.
+- *Amélioré* — Onglet *Nouveautés* : seuls les changements qui concernent les utilisateurs y figurent.
 
 ### Administrateurs
-- *Nouveau* — Encadré **Texte (Markdown)** dans les réglages du bloc : **taille du texte** (11 à 24 px ; normale : 13 px), titres proportionnés (`mdSize`). Ces blocs sont dépliés par défaut à l'ouverture et ont leur icône dans la configuration.
+- *Amélioré* — **Configuration des vues** : réglages rangés dans des encadrés titrés, dans le même ordre pour toutes les vues (Affichage, puis Tableau, Fiches, Édition, Liste de sélection, Texte, Couleurs, Filtres, cartes), côte à côte quand la place le permet ; blocs repliés par défaut.
+- *Nouveau* — **Taille du texte** des widgets Markdown (`mdSize`).
+- *Nouveau* — **Secteurs de collège** : outil `outils/secteurs-colleges.html`, qui construit le fichier de zonage à partir de la carte scolaire (adresses) ; fichier `secteurs-colleges-22.geojson` des Côtes-d'Armor ; l'option « Fichier : … » accepte plusieurs fichiers séparés par des virgules.
+- *Nouveau* — **« Étiquette au survol »** pour les cartes à deux zonages : zonage principal ou second zonage (`zoneHover`).
+- *Amélioré* — **Journal des modifications** organisé en trois rubriques (Utilisateurs, Administrateurs, Développeurs), et regroupement des livraisons à chaque changement de palier.
 
 ### Développeurs
-- *Sécurité* — Markdown mis en forme par marked puis nettoyé par DOMPurify, comme l'aide : scripts et gestionnaires d'événements retirés.
-- *Nouveau* — Détection par l'adresse du widget (`markdown`) ; colonne lue dans le mapping `Content`, sinon le premier champ texte.
-
-## [0.9.2.5] — Description des vues au survol — 2026-10-23
-
-### Utilisateurs
-- *Nouveau* — **Description des vues** : quand une vue a une description dans Grist (« Description du widget »), un ⓘ suit son titre. Le texte s'affiche au survol, comme les descriptions de colonnes, alors que Grist demande un clic.
-
-### Développeurs
-- *Nouveau* — Champ `description` de `_grist_Views_section` lu et affiché dans l'infobulle commune (`#tip`) ; masqué à l'impression comme les autres ⓘ.
-
-## [0.9.2.4] — Outil de construction des secteurs de collège — 2026-10-23
-
-### Administrateurs
-- *Nouveau* — **`outils/secteurs-colleges.html`** : construit `secteurs-colleges-bretagne.geojson` à partir du fichier d'adresses de la carte scolaire des collèges (CSV data.gouv.fr ou export Affelnet). Chaque secteur réunit les communes d'un seul collège ; une commune découpée par rues entre plusieurs collèges forme une zone « partagée » à part. Le résumé liste les communes partagées et celles sans contour (anciens codes de communes fusionnées). Mode d'emploi dans le README.
-
-### Développeurs
-- *Nouveau* — Outil autonome, hors du widget : CSV lu dans le navigateur, contours des communes demandés à geo.api.gouv.fr (codes de département seulement), fusion par polygon-clipping 0.15.7 (version figée, SRI), coordonnées arrondies à 5 décimales.
-
-## [0.9.2.3] — Étiquettes des camemberts sur plusieurs lignes — 2026-10-22
-
-### Utilisateurs
-- *Corrigé* — **Camemberts avec étiquettes à l'extérieur** : les noms de plusieurs mots passent à la ligne (environ 14 caractères par ligne) et ne sont plus coupés au bord du bloc.
-- *Amélioré* — Quand les parts portent déjà leur nom, la légende, redondante et qui recouvrait les étiquettes, n'est plus affichée, sauf si le graphique la demande explicitement. Le camembert gagne de la place.
-
-### Administrateurs
-- *Amélioré* — **Journal des modifications** : les livraisons des paliers terminés sont regroupées (0.8.10, 0.8.11, 0.9.0, 0.9.1), seul le palier en cours (0.9.2) garde le détail.
-
-### Développeurs
-- *Amélioré* — Graphiques avancés de type *pie* : `automargin` activé ; le nom des parts passe par `text` (coupé avec `<br>`) au lieu de `label`, si bien que `labels` reste intact pour les couleurs et la légende.
-
-## [0.9.2.2] — Journal des modifications par public — 2026-10-22
-
-### Administrateurs
-- *Amélioré* — **Journal des modifications** réécrit en trois rubriques : Utilisateurs, Administrateurs, Développeurs. Dans l'onglet *Nouveautés*, les utilisateurs ne voient plus que ce qui les concerne.
-
-### Développeurs
-- *Amélioré* — L'onglet *Nouveautés* retire, pour un non-administrateur, les rubriques « Administrateurs » et « Développeurs », ainsi que les versions qui n'ont rien d'autre.
-
-## [0.9.2.1] — Encadrés de réglages côte à côte — 2026-10-22
-
-### Administrateurs
-- *Amélioré* — **Configuration des vues** : tous les encadrés d'un bloc (Affichage, Tableau, Fiches, Édition, filtres, couleurs, cartes) partagent la même grille. Ils se placent côte à côte dès que la largeur le permet : 2 colonnes sur un écran courant, 3 sur un grand écran.
-
-## [0.9.2.0] — Configuration des vues réorganisée — 2026-10-22
-
-### Administrateurs
-- *Amélioré* — **« Vues retenues »** : les réglages de chaque bloc sont rangés dans des encadrés titrés, dans le même ordre pour toutes les vues.
-  - **Affichage**, commun à toutes les vues : taille, état à l'ouverture, « À la ligne », « Figer à l'écran », « Liste de sélection ».
-  - Puis les encadrés propres au type de vue, s'il y a lieu : **Tableau**, **Fiches**, **Édition**, **Liste de sélection**, **Couleurs du graphique**, **Filtre rapide**, et les encadrés des cartes.
-- *Amélioré* — **Blocs repliés par défaut** à l'ouverture de la configuration : restent visibles le titre, les flèches, la largeur, la colonne et le nombre de lignes. **Tout déplier** ouvre tous les blocs ; une vue que l'on vient d'ajouter s'ouvre dépliée.
+- *Sécurité* — Markdown des widgets nettoyé par DOMPurify, comme l'aide.
+- *Amélioré* — UAI reconnu dans `identifiant_etablissement` ; plusieurs fichiers de zonage réunis, zones de même code fusionnées.
+- *Amélioré* — Second zonage : trait transparent de 16 px pour le survol ; camemberts avancés : `automargin`, noms des parts via `text`.
+- *Nouveau* — Description des vues lue dans `_grist_Views_section.description`.
 
 ## [0.9.1] — Couleurs des graphiques, cartes enrichies, configuration plus lisible — 2026-10-18 → 2026-10-22
 

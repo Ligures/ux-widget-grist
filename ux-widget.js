@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.2.9). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.0). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.2.9"; // voir CHANGELOG.md
+const VERSION = "0.9.3.0"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -5034,6 +5034,63 @@ function newsForUsers(body) {
     } else if (/^Dans l'onglet Nouveautés/.test(p.textContent.trim())) p.remove();
   });
 }
+/* ---------- Message d'accueil (0.9.3) ----------
+   Texte Markdown réglé par l'administrateur (S.nav.welcome, ligne _Navigation de W_Composition), affiché au
+   démarrage. « Ne plus afficher » mémorise, dans le navigateur, l'empreinte du texte : un texte modifié s'affiche
+   de nouveau. */
+const welcomeKey = () => `uxwg_welcome_${S.docKey || "doc"}`;
+const textHash = (t) => {
+  let h = 0;
+  for (let i = 0; i < t.length; i++) h = (Math.imul(31, h) + t.charCodeAt(i)) | 0;
+  return String(h >>> 0);
+};
+// showWelcome — Affiche le message (force : aperçu depuis la configuration, même s'il a été masqué).
+async function showWelcome(force = false, text = S.nav?.welcome || "") {
+  text = String(text || "").trim();
+  if (!text) return force && status("Message d'accueil vide");
+  const hash = textHash(text);
+  let seen = null;
+  try {
+    seen = localStorage.getItem(welcomeKey());
+  } catch {
+    /* stockage indisponible : le message s'affiche à chaque fois */
+  }
+  if (!force && seen === hash) return;
+  try {
+    await Promise.all([
+      window.marked ? null : loadLib(LIBS.marked, "marked"),
+      window.DOMPurify ? null : loadLib(LIBS.purify, "DOMPurify"),
+    ]);
+  } catch {
+    return; // bibliothèques indisponibles : pas de message plutôt qu'un texte brut
+  }
+  const box = $("#welcome");
+  if (!box) return; // index.html antérieur à 0.9.3
+  box.querySelector(".wbody").innerHTML = DOMPurify.sanitize(marked.parse(text));
+  box.querySelectorAll(".wbody a[href]").forEach((a) => Object.assign(a, { target: "_blank", rel: "noopener" }));
+  $("#wNoMore").checked = seen === hash;
+  box.dataset.hash = hash;
+  box.hidden = false;
+  $("#wClose").focus();
+}
+function closeWelcome() {
+  const box = $("#welcome");
+  if (!box || box.hidden) return;
+  try {
+    if ($("#wNoMore").checked) localStorage.setItem(welcomeKey(), box.dataset.hash);
+    else localStorage.removeItem(welcomeKey());
+  } catch {
+    /* stockage indisponible */
+  }
+  box.hidden = true;
+}
+$("#wClose")?.addEventListener("click", closeWelcome); // (absent d'un index.html antérieur à 0.9.3)
+$("#welcome")?.addEventListener("click", (ev) => {
+  if (ev.target.id === "welcome") closeWelcome(); // clic sur le fond
+});
+document.addEventListener("keydown", (ev) => {
+  if (ev.key === "Escape" && $("#welcome") && !$("#welcome").hidden) closeWelcome();
+});
 // openHelp — Ouvre la fenêtre d'aide sur un onglet (et une ancre éventuelle).
 async function openHelp(tab = helpTab, anchor = "") {
   const docs = HELP_DOCS.filter((d) => !d.admin || S.isAdmin);
@@ -5908,6 +5965,10 @@ ${C('id="cHideBlocks"', draft.hideEmptyBlocks, "Masquer les blocs sans données"
 ${L("Hauteur des graphiques (px)", `<input type="number" id="cChartH" min="100" step="20" value="${draft.chartHeight || 260}" style="width:80px">`, "Hauteur par défaut des graphiques d'une ligne.")}
 ${L("Hauteur maximale des tableaux (px)", `<input type="number" id="cMaxH" min="120" step="20" value="${draft.tableMaxHeight}" style="width:80px">`, "Au-delà, le tableau défile à l'intérieur de son bloc (en-têtes fixes).")}
     </section>
+    <section class="cs adv"><h4>Message d'accueil <small>— affiché au démarrage, à tous les utilisateurs</small></h4>
+${L("Texte (Markdown)", `<textarea id="cWelcome" rows="6" style="width:100%" placeholder="## Bienvenue&#10;Ce tableau de bord présente…">${esc(draftNav.welcome || "")}</textarea>`, "Texte en Markdown (titres #, gras **, listes -, liens [texte](https://…)) affiché dans une fenêtre à l'ouverture du widget. Chaque personne peut cocher « Ne plus afficher ce message » ; si le texte est modifié, il s'affiche à nouveau à tous. Vide : pas de message.")}
+<button class="icon-btn" id="cWelcomePrev" title="Afficher le message tel que le verront les utilisateurs">Aperçu</button>
+    </section>
     <section class="cs adv"><h4>5. Navigation entre pages <small>— menu commun à toutes les configurations</small></h4>
 ${L("Adresse du document", `<input type="text" id="cMnUrl" value="${esc(draftNav.url)}" placeholder="https://…/o/organisation/document" style="width:100%">`, "Adresse de base du document Grist (https uniquement), utilisée pour construire les liens vers les pages.")}
 ${L(
@@ -6160,6 +6221,7 @@ $("#panel").addEventListener("change", (ev) => {
   if (t.id === "cShowAfter") draftShowAfter = t.checked;
   if (t.id === "cTheme") draftNav.theme = t.value;
   if (t.id === "cMnHome") draftNav.home = t.value;
+  if (t.id === "cWelcome") draftNav.welcome = t.value;
   if (t.dataset.fml) draft.forms[Number(t.dataset.fml)].label = t.value.trim();
   if (t.dataset.fmt) draft.forms[Number(t.dataset.fmt)].tip = t.value.trim();
   if (t.dataset.fmtab) draft.forms[Number(t.dataset.fmtab)].tab = t.checked;
@@ -6183,6 +6245,10 @@ $("#panel").addEventListener("click", async (ev) => {
     [draft.blocks[i], draft.blocks[j]] = [draft.blocks[j], draft.blocks[i]];
     renderConfig();
   };
+  if (t.id === "cWelcomePrev") {
+    draftNav.welcome = $("#cWelcome")?.value ?? draftNav.welcome;
+    return showWelcome(true, draftNav.welcome);
+  }
   if (t.dataset.fold) {
     const id = Number(t.dataset.fold);
     cfgOpen.has(id) ? cfgOpen.delete(id) : cfgOpen.add(id);
@@ -6346,6 +6412,7 @@ async function readNav() {
       items: Array.isArray(n.items) ? n.items : [],
       theme: n.theme === "neutre" || n.theme === "dsfr" ? n.theme : "", // "" : pas encore choisi
       home: n.home || "", // configuration ouverte à l'arrivée (mode « changer de page dans le widget »)
+      welcome: typeof n.welcome === "string" ? n.welcome : "", // message d'accueil (Markdown)
     };
   } catch {
     return { url: "", items: [] };
@@ -6664,6 +6731,7 @@ async function init() {
     if (hit) S.cfg = { ...DEFAULTS, ...hit.cfg, name: hit.name };
     S.ready = true;
     await render();
+    showWelcome(); // message d'accueil, s'il y en a un et s'il n'a pas été masqué
     const tot = S.fetchLog.reduce((x, [, ms]) => x + ms, 0);
     console.info(
       `[UX widget] premier chargement : ${S.fetchLog.length} lectures de tables, ${tot} ms cumulés — les plus longues : ` +

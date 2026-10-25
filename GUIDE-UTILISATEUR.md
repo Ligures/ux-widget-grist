@@ -73,7 +73,8 @@ Chaque vue s'affiche dans un **bloc**, avec un titre et quelques commandes :
 
 - **Trier** : cliquer sur le nom d'une colonne. Un deuxième clic inverse l'ordre, un troisième revient à l'ordre d'origine.
 - **Filtrer une colonne** : bouton de filtre de l'en-tête, puis cocher les valeurs à garder.
-- **Description d'une colonne** : survoler le ⓘ.
+- **Message d'accueil** : s'il s'affiche à l'ouverture, cocher **Ne plus afficher ce message** avant de fermer pour ne plus le voir (il reviendra si son texte change).
+- **Description d'une colonne ou d'une vue** : survoler le ⓘ (en-tête de colonne, ou à côté du titre du bloc).
 - **Fiche liée** : le petit lien à côté d'une valeur ouvre la fiche de l'élément référencé.
 - **Fiche seule** : les flèches ◀ ▶ (ou celles du clavier) passent d'un enregistrement à l'autre.
 - **Modifier une valeur**, si le bloc l'autorise et si vos droits le permettent : double-clic sur la cellule, saisie, puis Entrée pour valider ou Échap pour annuler.

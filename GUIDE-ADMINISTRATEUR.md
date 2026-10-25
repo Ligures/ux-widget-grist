@@ -17,6 +17,7 @@ Ce guide s'adresse aux **administrateurs**, qui composent les pages. Il n'est af
    - [Listes de sélection](#listes-de-sélection)
    - [Cartes : réglages](#cartes--réglages)
    - [Graphiques : couleurs](#graphiques--couleurs)
+   - [Message d'accueil](#message-daccueil)
    - [Menu de navigation](#menu-de-navigation)
    - [Apparence](#apparence)
    - [Enregistrer](#enregistrer)
@@ -166,6 +167,12 @@ Sans réglage, les couleurs suivent la palette du widget dans l'ordre d'appariti
 | Couleur de repli | Couleur des catégories sans code. Vide : couleurs habituelles du widget |
 
 Priorité : correspondance, puis colonne de codes, puis couleur de repli. Un code invalide est ignoré. Les réglages sont enregistrés avec la page dans `W_Composition`.
+
+### Message d'accueil
+
+Section **Message d'accueil** de la configuration : un texte en Markdown (titres `##`, gras `**…**`, listes `-`, liens `[texte](https://…)`) affiché dans une fenêtre à l'ouverture du widget, pour tous les utilisateurs et sur toutes les pages. Le bouton **Aperçu** le montre tel qu'il apparaîtra.
+
+Chaque personne peut cocher **Ne plus afficher ce message** : le choix est mémorisé dans son navigateur. Si le texte est modifié, le message s'affiche à nouveau à tous. Laisser le texte vide supprime le message.
 
 ### Menu de navigation
 
