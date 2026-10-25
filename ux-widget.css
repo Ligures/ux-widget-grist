@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.3.4).
+/* UX widget grist — feuilles de style (version 0.9.3.5).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -35,9 +35,10 @@
 /* Apparence « neutre » (0.8.9) : pour les structures qui ne sont pas des services de l'État, sans la police
    Marianne ni le bleu France, réservés par les conditions d'utilisation du DSFR */
 html.neutre {
-  --bleu: #1f4e8c;
-  --bleu-clair: #dde7f3;
-  --bleu-hover: #eef3f9;
+  /* rouge bordeaux (0.9.3.5) : se distingue du DSFR au premier coup d'œil (variables --bleu gardées par commodité) */
+  --bleu: #8c1c2c;
+  --bleu-clair: #f4dfe2;
+  --bleu-hover: #fbf0f2;
 }
 html.neutre body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;

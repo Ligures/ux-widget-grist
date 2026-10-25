@@ -26,6 +26,17 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.5] — Icônes SVG téléchargées, style neutre bordeaux — 2026-10-25
+
+### Utilisateurs
+- *Amélioré* — **Style neutre** : la couleur principale passe du bleu au rouge bordeaux, pour le distinguer du style État (DSFR) d'un coup d'œil.
+
+### Administrateurs
+- *Corrigé* — **Icônes du menu** : les fichiers SVG téléchargés tels quels s'affichent, même quand ils commencent par `<?xml …?>` ou un commentaire, ou quand leurs couleurs sont données dans un style (`style="…"`, `<style>` à classes, comme chez Streamline).
+
+### Développeurs
+- *Amélioré* — `safeSvg` reporte les déclarations `style` et les règles de classes simples en attributs avant nettoyage ; `NEUTRAL_BLUE` et `html.neutre` passent à `#8c1c2c`.
+
 ## [0.9.3.4] — Icônes du menu des pages — 2026-10-25
 
 ### Utilisateurs

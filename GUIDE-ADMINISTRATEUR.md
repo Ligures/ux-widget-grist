@@ -194,7 +194,7 @@ Section **5. Navigation entre pages**. Ce réglage est commun à toutes les conf
 
 Section **4. Affichage**, **Apparence (tout le document)** :
 - **Style État (DSFR)** : police Marianne et bleu France. Réservé aux **services de l'État** par les conditions d'utilisation du Système de design de l'État.
-- **Style neutre** : police du système et bleu neutre, pour toute autre structure (collectivité, association, entreprise…).
+- **Style neutre** : police du système et rouge bordeaux (couleur distincte du bleu de l'État, repérable d'un coup d'œil), pour toute autre structure (collectivité, association, entreprise…).
 
 Sans choix, le widget s'affiche en style État. Le choix vaut pour toutes les pages du document ; il n'est jamais proposé aux utilisateurs.
 

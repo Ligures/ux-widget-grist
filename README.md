@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.3.4** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.3.5** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---
@@ -256,7 +256,7 @@ Police : Marianne (style État), chargée depuis le paquet `@gouvfr/dsfr` 1.14.4
 Le widget est **inspiré** du Système de design de l'État (DSFR), sans en être une implémentation officielle : il ne charge ni le CSS ni le JavaScript du DSFR.
 
 - **Style État (DSFR)** : police Marianne, bleu France (`#000091`). Le DSFR et la police Marianne sont réservés aux services de l'État par leurs [conditions d'utilisation](https://www.systeme-de-design.gouv.fr/composants-et-modeles).
-- **Style neutre** : police du système, bleu neutre (`#1f4e8c`). À utiliser par toute autre structure (collectivité, association, entreprise…).
+- **Style neutre** : police du système, rouge bordeaux (`#8c1c2c`). À utiliser par toute autre structure (collectivité, association, entreprise…).
 
 Le choix est commun au document ; il est enregistré dans la ligne `_Navigation` de `W_Composition` (`nav.theme`). Sans choix enregistré, le widget s'affiche en style État.
 

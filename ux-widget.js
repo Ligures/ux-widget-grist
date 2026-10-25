@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.4). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.5). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.4"; // voir CHANGELOG.md
+const VERSION = "0.9.3.5"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -124,7 +124,7 @@ function kindTitle(s, b) {
   return `${kindIcon(s, b)}<b class="ctype">${esc(viewKind(s, b)[1])}</b> <span class="ctitle">${esc(getInfo(s.id)?.title || `#${s.id}`)}</span>`;
 }
 const DEFAULT_WIDTH = { record: 6, single: 2, detail: 6, chart: 3, custom: 3 };
-// BRAND — couleur principale des graphiques et cartes : bleu France (DSFR) ou bleu neutre (voir applyTheme)
+// BRAND — couleur principale des graphiques et cartes : bleu France (DSFR) ou rouge bordeaux du style neutre (voir applyTheme)
 const BRAND = { c: "#000091" };
 const PALETTE = [
   "#000091",
@@ -5975,7 +5975,7 @@ ${
 ${L(
   "Apparence (tout le document)",
   `<select id="cTheme"><option value="dsfr" ${draftNav.theme !== "neutre" ? "selected" : ""}>Style État (DSFR) — services de l'État</option><option value="neutre" ${draftNav.theme === "neutre" ? "selected" : ""}>Style neutre — autres structures</option></select>`,
-  "Style État : police Marianne et bleu France, réservés aux services de l'État par les conditions d'utilisation du DSFR. Style neutre : police du système et bleu neutre, pour toute autre structure. Commun à toutes les pages du document.",
+  "Style État : police Marianne et bleu France, réservés aux services de l'État par les conditions d'utilisation du DSFR. Style neutre : police du système et rouge bordeaux, pour toute autre structure. Commun à toutes les pages du document.",
 )}
 ${C('id="cHideFields"', draft.hideEmptyFields, "Masquer les champs vides dans les fiches", "Les champs sans valeur ne sont pas affichés dans les fiches (sauf en édition, ou si le bloc demande à les afficher).")}
 ${C('id="cHideBlocks"', draft.hideEmptyBlocks, "Masquer les blocs sans données", "Un bloc sans aucune ligne à afficher (par exemple après filtrage) disparaît de la page.")}
@@ -6420,7 +6420,7 @@ const NAV_NAME = "_Navigation";
 /* ---------- Apparence : DSFR (services de l'État) ou neutre ----------
    Choix commun au document, rangé avec le menu commun (ligne _Navigation de W_Composition, nav.theme).
    Non choisi : apparence DSFR. Le choix se fait dans la configuration (section Affichage), par un administrateur. */
-const NEUTRAL_BLUE = "#1f4e8c";
+const NEUTRAL_BLUE = "#8c1c2c"; // rouge bordeaux (0.9.3.5) : distinct du bleu DSFR au premier coup d'œil
 function applyTheme(theme) {
   const neutre = theme === "neutre";
   document.documentElement.classList.toggle("neutre", neutre);
@@ -6553,15 +6553,32 @@ const SVG_ATTRS = new Set(["viewbox", "d", "cx", "cy", "r", "rx", "ry", "x", "y"
 const svgCache = new Map();
 function safeSvg(src) {
   src = String(src || "").trim();
-  if (!src.startsWith("<svg")) return "";
+  // les fichiers téléchargés commencent souvent par <?xml …?>, un commentaire ou un DOCTYPE : on part de <svg
+  const at = src.search(/<svg[\s>]/i);
+  if (at < 0) return "";
+  src = src.slice(at);
   if (svgCache.has(src)) return svgCache.get(src);
   let out = "";
   try {
     const doc = new DOMParser().parseFromString(src, "image/svg+xml");
     const root = doc.documentElement;
-    if (root.nodeName === "svg" && !doc.querySelector("parsererror")) {
+    if (root.nodeName.toLowerCase() === "svg" && !doc.querySelector("parsererror")) {
+      // icônes « à classes » (Streamline Ultimate…) : <style>.a{fill:none;stroke:#000}</style> + class="a" →
+      //   les déclarations des classes simples sont recopiées dans le style de chaque élément, avant nettoyage
+      const css = [...doc.getElementsByTagName("style")].map((x) => x.textContent).join("\n");
+      for (const [, sel, body] of css.matchAll(/([^{}]+)\{([^}]*)\}/g))
+        for (const one of sel.split(",")) {
+          const cls = /^\s*\.([\w-]+)\s*$/.exec(one)?.[1];
+          if (cls) for (const el of root.querySelectorAll("*")) if (el.classList?.contains(cls)) el.setAttribute("style", `${body};${el.getAttribute("style") || ""}`);
+        }
       const clean = (el) => {
         for (const c of [...el.children]) (SVG_TAGS.has(c.nodeName) ? clean(c) : c.remove());
+        // style="fill:#000;stroke-width:1.5" → attributs (le style lui-même n'est pas gardé)
+        for (const d of String(el.getAttribute("style") || "").split(";")) {
+          const [k, ...v] = d.split(":");
+          const n = String(k || "").trim().toLowerCase();
+          if (SVG_ATTRS.has(n) && !el.hasAttribute(n)) el.setAttribute(n, v.join(":").trim());
+        }
         for (const a of [...el.attributes]) {
           const n = a.name.toLowerCase(), v = a.value;
           if (!SVG_ATTRS.has(n) || /url\(|javascript:|[<>]/i.test(v)) el.removeAttribute(a.name);
@@ -6570,6 +6587,7 @@ function safeSvg(src) {
       };
       clean(root);
       for (const n of [...root.childNodes]) if (n.nodeType === 3) n.remove();
+      if (!root.hasAttribute("fill")) root.setAttribute("fill", "currentColor"); // noir par défaut → couleur du lien
       if (!root.getAttribute("viewBox")) root.setAttribute("viewBox", `0 0 ${parseFloat(root.getAttribute("width")) || 24} ${parseFloat(root.getAttribute("height")) || 24}`);
       root.removeAttribute("width");
       root.removeAttribute("height");
