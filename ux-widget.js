@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.0). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.1). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.0"; // voir CHANGELOG.md
+const VERSION = "0.9.3.1"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -5098,9 +5098,14 @@ async function openHelp(tab = helpTab, anchor = "") {
   helpTab = doc.id;
   $("#help").hidden = false;
   $("#helpTitle").textContent = `Aide — UX widget grist ${VERSION} · Ligures`;
-  $("#help .htabs").innerHTML = docs
-    .map((d) => `<button role="tab" data-htab="${d.id}" class="${d.id === doc.id ? "on" : ""}" aria-selected="${d.id === doc.id}">${esc(d.label)}</button>`)
-    .join("");
+  $("#help .htabs").innerHTML =
+    docs
+      .map((d) => `<button role="tab" data-htab="${d.id}" class="${d.id === doc.id ? "on" : ""}" aria-selected="${d.id === doc.id}">${esc(d.label)}</button>`)
+      .join("") +
+    // message d'accueil : le revoir à tout moment (même après « Ne plus afficher »)
+    (String(S.nav?.welcome || "").trim() && $("#welcome")
+      ? `<button data-hwelcome="1" title="Afficher de nouveau le message d'accueil">Message d'accueil</button>`
+      : "");
   const body = $("#help .hbody");
   body.innerHTML = '<p class="msg">Chargement…</p>';
   try {
@@ -5124,6 +5129,10 @@ $("#btnHelp").addEventListener("click", () => openHelp("guide")); // le guide d'
 $("#helpClose").addEventListener("click", closeHelp);
 $("#help").addEventListener("click", (ev) => {
   if (ev.target.id === "help") return closeHelp(); // clic sur le fond
+  if (ev.target.closest("[data-hwelcome]")) {
+    closeHelp();
+    return showWelcome(true);
+  }
   const t = ev.target.closest("[data-htab]");
   if (t) return openHelp(t.dataset.htab);
   const a = ev.target.closest("a[href]");

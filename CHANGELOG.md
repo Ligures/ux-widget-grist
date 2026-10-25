@@ -26,6 +26,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.1] — Revoir le message d'accueil depuis l'aide — 2026-10-25
+
+### Utilisateurs
+- *Nouveau* — **Aide → « Message d'accueil »** : un bouton, à côté des onglets de l'aide, réaffiche le message d'accueil, même après avoir coché « Ne plus afficher ce message ». La case reste cochée : le message ne revient pas au démarrage suivant. Le bouton n'apparaît que si un message est défini.
+
 ## [0.9.3.0] — Message d'accueil — 2026-10-25
 
 Palier 0.9.3 ; les livraisons 0.9.2.0 à 0.9.2.9 sont regroupées dans « 0.9.2 » ci-dessous.
