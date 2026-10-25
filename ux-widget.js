@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.1). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.2). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -40,7 +40,7 @@
  hideEmptyBlocks, tableMaxHeight, chartHeight, dataTable }
      Bloc (blocks[i]) : id = identifiant de la vue Grist (_grist_Views_section)
  Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold
- Tableaux/fiches : colWidths, asList, cardW, editable, addable, showEmpty, hideLabels
+ Tableaux/fiches : colWidths, rowCount, asList, cardW, editable, addable, showEmpty, hideLabels
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.1"; // voir CHANGELOG.md
+const VERSION = "0.9.3.2"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -1634,7 +1634,9 @@ function renderTable(info, rows, body, selId, jobs = []) {
     ? `<colgroup>${ws.map((w) => `<col style="width:${w || 100}px">`).join("")}</colgroup>`
     : "";
   const tStyle = useGrist ? ` style="table-layout:fixed;width:${ws.reduce((a, w) => a + (w || 100), 0)}px"` : "";
-  body.innerHTML = `<div class="tbl-wrap" style="--tmh:${S.cfg.tableMaxHeight}px;max-height:var(--h, var(--tmh))"><table class="${tableClasses(info)}"${useGrist ? ' data-locked="1"' : ""}${fit ? ' data-fit="1"' : ""}${tStyle} data-frozen="${Math.max(0, Number(info.opts.numFrozen) || 0)}">${colgroup}<thead><tr>${head}</tr></thead><tbody>${lines}</tbody></table></div>`;
+  body.innerHTML = `<div class="tbl-wrap" style="--tmh:${S.cfg.tableMaxHeight}px;max-height:var(--h, var(--tmh))"><table class="${tableClasses(info)}"${useGrist ? ' data-locked="1"' : ""}${fit ? ' data-fit="1"' : ""}${tStyle} data-frozen="${Math.max(0, Number(info.opts.numFrozen) || 0)}">${colgroup}<thead><tr>${head}</tr></thead><tbody>${lines}</tbody></table></div>` +
+    // nombre de lignes, en bas à droite comme dans Grist (mis à jour par la recherche du bloc)
+    (blk.rowCount === false ? "" : `<div class="rowcount" data-total="${rows.length}">${rowCountText(rows.length)}</div>`);
   if (rows.length > FIRST)
     jobs.push(() => {
       // le reste est ajouté par paquets, sans bloquer l'affichage
@@ -4348,10 +4350,16 @@ function scheduleRender() {
 // applySearch — Filtre les lignes affichées d'un bloc selon le champ « Filtrer… ».
 function applySearch(secId) {
   const q = (S.search[secId] || "").toLowerCase().trim();
+  let shown = 0;
   document.querySelectorAll(`[data-sec="${secId}"] tbody tr, [data-sec="${secId}"] .mini`).forEach((tr) => {
     tr.hidden = !!q && !tr.dataset.text.includes(q);
+    if (!tr.hidden) shown++;
   });
+  const rc = document.querySelector(`[data-sec="${secId}"] .rowcount`);
+  if (rc) rc.textContent = q ? `${shown.toLocaleString("fr-FR")} sur ${rowCountText(Number(rc.dataset.total))}` : rowCountText(Number(rc.dataset.total));
 }
+// rowCountText — « 1 ligne », « 686 lignes ».
+const rowCountText = (n) => `${n.toLocaleString("fr-FR")} ligne${n > 1 ? "s" : ""}`;
 // hasRenderedDependents — Vrai si d'autres blocs affichés dépendent de la sélection de cette vue.
 function hasRenderedDependents(secId) {
   return S.cfg.blocks.some((b) => {
@@ -5555,7 +5563,7 @@ ${
     ),
     "État du bloc à l'ouverture de la page. Un bloc replié n'affiche que son titre ; un clic sur le titre le déplie.",
   )),(C(`data-nl="${i}"`, b.newLine, "À la ligne", "Le bloc commence une nouvelle rangée, même s'il reste de la place à droite du bloc précédent.")),(C(`data-stk="${i}"`, b.sticky, "Figer à l'écran", "Le bloc reste visible pendant que l'on fait défiler un bloc voisin plus long.")),(C(`data-asel="${i}"`, isSelector(b), "Liste de sélection", "Affiche cette vue sous forme de liste déroulante dans l'en-tête : choisir une valeur pilote les blocs liés, comme un sélecteur."))].join(""))}
-  ${G("Tableau", "Réglages propres aux tableaux.", (s.parentKey === "record"
+  ${G("Tableau", "Réglages propres aux tableaux.", (s.parentKey === "record" ? C(`data-rowcount="${i}"`, b.rowCount !== false, "Nombre de lignes", "Affiche en bas à droite du tableau le nombre de lignes (avec la recherche du bloc : « 12 sur 686 lignes »).") : "") + (s.parentKey === "record"
       ? L(
           "Largeur des colonnes",
           sel(
@@ -6146,6 +6154,10 @@ $("#panel").addEventListener("change", (ev) => {
   }
   if (t.dataset.edit) {
     draft.blocks[Number(t.dataset.edit)].editable = t.checked;
+    return;
+  }
+  if (t.dataset.rowcount) {
+    draft.blocks[Number(t.dataset.rowcount)].rowCount = t.checked;
     return;
   }
   if (t.dataset.nolab) {

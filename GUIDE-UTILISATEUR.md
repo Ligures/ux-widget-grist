@@ -73,6 +73,7 @@ Chaque vue s'affiche dans un **bloc**, avec un titre et quelques commandes :
 
 - **Trier** : cliquer sur le nom d'une colonne. Un deuxième clic inverse l'ordre, un troisième revient à l'ordre d'origine.
 - **Filtrer une colonne** : bouton de filtre de l'en-tête, puis cocher les valeurs à garder.
+- **Nombre de lignes** : en bas à droite de chaque tableau ; avec la recherche du bloc, « 12 sur 686 lignes ».
 - **Message d'accueil** : s'il s'affiche à l'ouverture, cocher **Ne plus afficher ce message** avant de fermer pour ne plus le voir (il reviendra si son texte change). Pour le relire, ouvrir l'**Aide** puis **Message d'accueil**.
 - **Description d'une colonne ou d'une vue** : survoler le ⓘ (en-tête de colonne, ou à côté du titre du bloc).
 - **Fiche liée** : le petit lien à côté d'une valeur ouvre la fiche de l'élément référencé.

@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.2] — Nombre de lignes des tableaux — 2026-10-25
+
+### Utilisateurs
+- *Nouveau* — **Nombre de lignes** en bas à droite de chaque tableau (« 686 lignes »). Avec la recherche du bloc, il indique les lignes trouvées : « 12 sur 686 lignes ». Il tient compte des liaisons, des filtres rapides et des filtres de colonnes.
+
+### Administrateurs
+- *Nouveau* — Encadré **Tableau** : case **Nombre de lignes**, cochée par défaut (`rowCount`).
+
 ## [0.9.3.1] — Revoir le message d'accueil depuis l'aide — 2026-10-25
 
 ### Utilisateurs
