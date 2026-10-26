@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.7] — Distancier routier — 2026-10-26
+
+### Administrateurs
+- *Nouveau* — **Distancier routier** (`outils/distancier.html`, widget personnalisé à accès complet) : distances par la route (IGN) de chaque école vers ses 5 écoles les plus proches par la route et vers son collège de secteur, ajoutées à `REF_DISTANCES`. Ne calcule que les paires manquantes ; arrêt et reprise sans perte. Voir le guide administrateur.
+
+### Développeurs
+- *Nouveau* — Recherche exacte des N plus proches par la route avec arrêt anticipé (distance routière ≥ distance à vol d'oiseau), réutilisation du sens inverse, débit limité à 4 appels/s, écritures `BulkAddRecord` par lots de 25. Paramètres dans les options de la vue (`grist.setOption`).
+
 ## [0.9.3.6] — Icônes SVG avec <switch> — 2026-10-26
 
 ### Administrateurs

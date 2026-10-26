@@ -21,6 +21,7 @@ Ce guide s'adresse aux **administrateurs**, qui composent les pages. Il n'est af
    - [Menu de navigation](#menu-de-navigation)
    - [Apparence](#apparence)
    - [Enregistrer](#enregistrer)
+   - [Distancier routier](#distancier-routier)
 2. [Questions fréquentes](#2-questions-fréquentes)
 
 ---
@@ -201,6 +202,32 @@ Sans choix, le widget s'affiche en style État. Le choix vaut pour toutes les pa
 ### Enregistrer
 
 **Enregistrer** applique la configuration et l'écrit dans la table `W_Composition` du document. Les filtres rapides reviennent alors à leur valeur à l'ouverture.
+
+
+### Distancier routier
+
+Outil séparé, à installer dans une page d'administration : vue **Widget personnalisé**, adresse `https://ligures.github.io/ux-widget-grist/outils/distancier.html`, accès **complet**.
+
+1. Créer la table des distances (`REF_DISTANCES`) : `Depart`, `Arrivee` (références à `REF_ETAB`), `Km`, `Minutes` (numériques), `Statut` (texte), `Calcule_le` (date).
+2. Vérifier les **Paramètres** (noms de tables et de colonnes). Le bandeau indique le nombre d'écoles localisées et de distances déjà connues.
+3. Faire un essai : « Écoles à traiter » = 5, puis **Calculer les distances manquantes**. Contrôler quelques lignes dans `REF_DISTANCES`.
+4. Remettre 0 (toutes les écoles) et relancer. Laisser l'onglet ouvert : compter environ 10 à 15 minutes pour un département. **Arrêter** est sans risque : on reprend où l'on en était.
+
+Les distances calculées ne bougent plus. Après le déplacement d'une école (nouvelles coordonnées), supprimer ses lignes dans `REF_DISTANCES` (en départ et en arrivée), puis relancer. Après l'ajout d'une école, relancer simplement.
+
+Formules à placer dans `REF_ETAB` :
+- 5 écoles les plus proches par la route (Liste de références vers `REF_ETAB`) :
+  ```python
+  lignes = [d for d in REF_DISTANCES.lookupRecords(Depart=$id)
+            if d.Km is not None and "Ecole" in (d.Arrivee.Type_etablissement or "")]
+  return [d.Arrivee for d in sorted(lignes, key=lambda d: d.Km)[:5]]
+  ```
+- distance et durée vers le collège de secteur (Numérique) :
+  ```python
+  d = REF_DISTANCES.lookupOne(Depart=$id, Arrivee=$UAI_College)
+  return d.Km if d else None
+  ```
+  (même formule avec `d.Minutes` pour la durée).
 
 ---
 

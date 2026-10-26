@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.3.6** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.3.7** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---
@@ -210,6 +210,18 @@ Chaque secteur réunit les communes rattachées à un seul collège. Une commune
 
 Le widget reconnaît le code et le nom de chaque zone d'après le nom des champs : `codeCirconscription`, `nomCirconscription`, `codeDepartement` pour les circonscriptions ; `UAI` (ou `code_rne`) et le nom du collège pour les secteurs. Des noms très différents peuvent nécessiter un ajustement du widget.
 
+
+### Distancier routier (`outils/distancier.html`)
+
+Widget personnalisé Grist séparé, pour les administrateurs : il calcule les distances par la route (service d'itinéraire de l'IGN, `data.geopf.fr`) de chaque école vers ses N écoles les plus proches **par la route** et vers son collège de secteur, et les ajoute à une table de distances.
+
+- **Installation** : ajouter une vue « Widget personnalisé », adresse `https://ligures.github.io/ux-widget-grist/outils/distancier.html`, accès **complet**.
+- **Table des distances** (par défaut `REF_DISTANCES`) : `Depart` et `Arrivee` (références à la table des établissements), `Km`, `Minutes` (numériques), `Statut` (texte : `ok`, `retour`, `sans itinéraire`), `Calcule_le` (date).
+- **Paramètres** (enregistrés avec la vue) : table et colonnes des établissements (par défaut `REF_ETAB`, `latitude`, `longitude`, `Type_etablissement` contenant « Ecole », `UAI_College`), nombre N (5), itinéraire le plus rapide ou le plus court, garde-fou de 40 candidates par école.
+- **Méthode exacte** : la distance routière n'est jamais inférieure à la distance à vol d'oiseau. Les candidates sont essayées par distance à vol d'oiseau croissante, et le calcul s'arrête dès que la N-ième meilleure distance routière est inférieure à la distance à vol d'oiseau de la suivante. Un estuaire ou une rade fait simplement essayer plus de candidates. En moyenne, 8 à 10 paires par école au lieu de toutes.
+- **Économie d'appels** : une paire déjà dans la table n'est jamais redemandée ; une paire connue dans l'autre sens est recopiée (`retour`). Relancer ne calcule que ce qui manque (nouvelle école, école déplacée dont on a supprimé les lignes).
+- **Débit** : 4 appels par seconde au plus (l'IGN en accepte 5 par adresse IP). Écritures par lots de 25 lignes : un arrêt ou une erreur ne perd rien.
+- **Îles** : sans itinéraire vers les 3 écoles les plus proches, l'école est signalée et passée.
 ---
 
 ## Sécurité et confidentialité
