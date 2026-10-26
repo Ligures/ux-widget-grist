@@ -26,6 +26,15 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.8] — Distancier : diagnostic des échecs — 2026-10-26
+
+### Administrateurs
+- *Corrigé* — **Distancier routier** : les échecs ne sont plus enregistrés dans la table des distances, et ceux d'un calcul précédent sont supprimés au lancement pour être recalculés. Si le service refuse toutes les demandes, le calcul s'arrête après 3 écoles en affichant sa réponse, au lieu de signaler chaque école comme une île.
+- *Nouveau* — Bouton **Tester un appel** : un seul appel à l'IGN, avec l'adresse et la réponse brute.
+
+### Développeurs
+- *Corrigé* — Coordonnées passées avec des virgules littérales (`start=lon,lat`) et non encodées en `%2C`. Code HTTP et début de la réponse journalisés pour les 3 premiers échecs.
+
 ## [0.9.3.7] — Distancier routier — 2026-10-26
 
 ### Administrateurs
