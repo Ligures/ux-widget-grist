@@ -177,6 +177,7 @@
           <label>Écoles à traiter <input type="number" id="limit" min="0" value="0" title="0 : toutes. Un petit nombre permet de faire un essai." /></label>
           <button id="go" disabled>Calculer les distances manquantes</button>
           <button id="stop" class="sec" disabled>Arrêter</button>
+          <button id="test" class="sec" title="Un seul appel à l'IGN (première école → l'école la plus proche à vol d'oiseau), avec la réponse brute">Tester un appel</button>
         </p>
         <progress id="prog" value="0" max="1" hidden></progress>
         <div id="stats"></div>
@@ -269,9 +270,15 @@
         const ecoles = etabs.filter((e) => e.ecole && geo(e));
         const dst = await grist.docApi.fetchTable(opt.dst);
         for (const c of ["Depart", "Arrivee", "Km", "Minutes", "Statut", "Calcule_le"]) colKey(dst, c);
-        const known = new Map();
-        for (const r of rows(dst)) known.set(`${r.Depart}>${r.Arrivee}`, { km: r.Km ?? null, min: r.Minutes ?? null, statut: r.Statut });
-        return { etabs, ecoles, byId, geo, known, sansGeo: etabs.filter((e) => e.ecole && !geo(e)).length };
+        const known = new Map(),
+          failIds = [];
+        for (const r of rows(dst)) {
+          // échecs : jamais conservés (une panne du service ne doit pas bloquer la paire) — ceux d'une version
+          // précédente sont supprimés au lancement
+          if (r.Km === null || r.Km === undefined || r.Km === "") failIds.push(r.id);
+          else known.set(`${r.Depart}>${r.Arrivee}`, { km: r.Km, min: r.Minutes ?? null, statut: r.Statut });
+        }
+        return { etabs, ecoles, byId, geo, known, failIds, sansGeo: etabs.filter((e) => e.ecole && !geo(e)).length };
       }
       async function prepare() {
         if (running) return;
@@ -294,18 +301,13 @@
       // ---------- appel IGN (débit limité, nouvelles tentatives) ----------
       let lastCall = 0,
         calls = 0;
+      // ignUrl — virgules des coordonnées laissées telles quelles (URLSearchParams les encoderait en %2C)
+      const ignUrl = (a, b) =>
+        `${IGN}?resource=bdtopo-osrm&profile=car&optimization=${encodeURIComponent(opt.optim)}` +
+        `&start=${a.lon},${a.lat}&end=${b.lon},${b.lat}` +
+        `&distanceUnit=kilometer&timeUnit=minute&getSteps=false&getBbox=false`;
       async function ign(a, b) {
-        const q = new URLSearchParams({
-          resource: "bdtopo-osrm",
-          profile: "car",
-          optimization: opt.optim,
-          start: `${a.lon},${a.lat}`,
-          end: `${b.lon},${b.lat}`,
-          distanceUnit: "kilometer",
-          timeUnit: "minute",
-          getSteps: "false",
-          getBbox: "false",
-        });
+        const url = ignUrl(a, b);
         for (let essai = 0; essai < 4; essai++) {
           const wait = lastCall + MIN_GAP - Date.now();
           if (wait > 0) await sleep(wait);
@@ -313,7 +315,7 @@
           calls++;
           let res;
           try {
-            res = await fetch(`${IGN}?${q}`);
+            res = await fetch(url);
           } catch (e) {
             await sleep(1500 * (essai + 1)); // réseau : on réessaie
             continue;
@@ -322,11 +324,18 @@
             await sleep(2000 * (essai + 1));
             continue;
           }
-          if (!res.ok) return { km: null, min: null, statut: "sans itinéraire" };
-          const j = await res.json();
+          const txt = await res.text();
+          const why = (m) => ({ km: null, min: null, statut: "sans itinéraire", why: `${m} — ${txt.replace(/\s+/g, " ").slice(0, 300)}` });
+          if (!res.ok) return why(`HTTP ${res.status}`);
+          let j;
+          try {
+            j = JSON.parse(txt);
+          } catch {
+            return why("réponse illisible");
+          }
           const km = Number(j.distance),
             min = Number(j.duration);
-          if (!Number.isFinite(km)) return { km: null, min: null, statut: "sans itinéraire" };
+          if (!Number.isFinite(km)) return why("réponse sans distance");
           return { km: Math.round(km * 100) / 100, min: Number.isFinite(min) ? Math.round(min) : null, statut: "ok" };
         }
         throw new Error("le service d'itinéraire ne répond pas (plusieurs essais)");
@@ -366,15 +375,22 @@
         if (D.known.has(k)) return D.known.get(k);
         let r;
         const rev = D.known.get(`${b.id}>${a.id}`);
-        if (rev && rev.statut !== "retour") {
-          r = { km: rev.km, min: rev.min, statut: rev.km === null ? "sans itinéraire" : "retour" };
+        if (rev && rev.km !== null && rev.statut !== "retour") {
+          r = { km: rev.km, min: rev.min, statut: "retour" };
           S.copied++;
+        } else if (rev && rev.km === null) {
+          r = rev; // échec dans l'autre sens pendant ce calcul : pas de nouvel appel
         } else {
           r = await ign(a, b);
-          r.km === null ? S.fail++ : S.fetched++;
+          if (r.km === null) {
+            S.fail++;
+            S.lastWhy = r.why;
+            if (S.fail <= 3) log(`Échec #${a.id} → #${b.id} : ${r.why}`, "err");
+          } else S.fetched++;
         }
         D.known.set(k, r);
-        pending.push({ a: a.id, b: b.id, ...r });
+        if (r.km === null) return r; // échec : gardé en mémoire pour ce calcul, jamais écrit dans la table
+        pending.push({ a: a.id, b: b.id, km: r.km, min: r.min, statut: r.statut });
         if (pending.length >= FLUSH) await flush();
         return r;
       }
@@ -399,7 +415,7 @@
         $("#stop").disabled = false;
         $("#prog").hidden = false;
         $("#log").replaceChildren();
-        Object.assign(S, { done: 0, fetched: 0, copied: 0, fail: 0, written: 0, t0: Date.now() });
+        Object.assign(S, { done: 0, fetched: 0, copied: 0, fail: 0, written: 0, t0: Date.now(), lastWhy: "" });
         calls = 0;
         try {
           D = await load();
@@ -407,6 +423,10 @@
             MAXC = Math.max(N, Number(opt.maxc) || 40);
           const limit = Number($("#limit").value) || 0;
           const todo = limit ? D.ecoles.slice(0, limit) : D.ecoles;
+          if (D.failIds.length) {
+            await grist.docApi.applyUserActions([["BulkRemoveRecord", opt.dst, D.failIds]]);
+            log(`${D.failIds.length} lignes « sans itinéraire » d'un calcul précédent supprimées : elles seront recalculées.`);
+          }
           S.total = todo.length;
           stats();
           for (const e of todo) {
@@ -428,13 +448,14 @@
                 break;
               }
               const r = await route(e, c.o);
+              if (r.km === null && !S.fetched && S.fail >= 9) break; // tout échoue : l'arrêt général suit
               tried++;
               if (r.km === null) fails++;
               else {
                 found.push(r.km);
                 found.sort((x, y) => x - y);
               }
-              if (!found.length && fails >= 3) {
+              if (!found.length && fails >= 3 && S.fetched) {
                 log(`École #${e.id} : aucun itinéraire vers les 3 écoles les plus proches (île ?) — ignorée.`, "err");
                 break;
               }
@@ -444,6 +465,8 @@
             if (!stopAsked && D.geo(col)) await route(e, col);
             S.done++;
             stats();
+            // le service refuse tout : inutile de continuer
+            if (S.done >= 3 && !S.fetched && !S.copied && S.fail) throw new Error(`aucun itinéraire obtenu pour les ${S.done} premières écoles. Dernière réponse du service : ${S.lastWhy}`);
           }
           await flush();
           log(
@@ -462,6 +485,22 @@
         prepare();
       }
       $("#go").addEventListener("click", run);
+      $("#test").addEventListener("click", async () => {
+        if (running) return;
+        try {
+          D = await load();
+          const a = D.ecoles[0];
+          if (!a) return log("Aucune école localisée.", "err");
+          const b = D.ecoles.filter((o) => o.id !== a.id).sort((x, y) => crow(a, x) - crow(a, y))[0];
+          log(`Test : école #${a.id} (lat ${a.lat}, lon ${a.lon}) → école #${b.id} (lat ${b.lat}, lon ${b.lon}), ${crow(a, b).toFixed(2)} km à vol d'oiseau`);
+          log(ignUrl(a, b));
+          const res = await fetch(ignUrl(a, b));
+          const txt = await res.text();
+          log(`HTTP ${res.status} : ${txt.replace(/\s+/g, " ").slice(0, 600)}`, res.ok ? "ok" : "err");
+        } catch (e) {
+          log(`Test impossible : ${e.message || e} (blocage réseau ou politique de sécurité ?)`, "err");
+        }
+      });
       $("#stop").addEventListener("click", () => {
         stopAsked = true;
         $("#stop").disabled = true;
