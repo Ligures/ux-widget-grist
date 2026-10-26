@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://docs.getgrist.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://data.geopf.fr; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'"
+    />
+    <title>Distancier routier</title>
+    <!--
+      Distancier routier — widget personnalisé Grist (outil d'administration de UX widget grist).
+      À installer comme vue « Widget personnalisé » avec l'accès complet au document.
+
+      Calcule les distances par la route (service d'itinéraire IGN, data.geopf.fr) :
+        · de chaque école vers les N écoles les plus proches PAR LA ROUTE (résultat exact, voir ci-dessous) ;
+        · de chaque école vers son collège de secteur.
+      Résultats ajoutés dans la table des distances (Depart, Arrivee, Km, Minutes, Statut, Calcule_le).
+      Seules les paires absentes de cette table sont demandées à l'IGN : relancer ne recalcule rien.
+
+      Méthode exacte : la distance routière n'est jamais inférieure à la distance à vol d'oiseau. Les écoles
+      candidates sont prises par distance à vol d'oiseau croissante ; on s'arrête dès que la N-ième meilleure
+      distance routière trouvée est inférieure ou égale à la distance à vol d'oiseau de la candidate suivante.
+      Une paire déjà calculée dans l'autre sens (B → A) est recopiée (Statut « retour ») sans appel.
+      Débit : l'IGN accepte 5 requêtes par seconde et par adresse IP ; l'outil en fait 4 au plus.
+    -->
+    <style>
+      :root {
+        --bleu: #000091;
+        --muet: #666;
+        --bord: #ddd;
+        --fond: #f6f6f6;
+        --rouge: #ce0500;
+        --vert: #18753c;
+      }
+      body {
+        margin: 0;
+        font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--fond);
+        color: #161616;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 14px 16px 30px;
+      }
+      h1 {
+        font-size: 18px;
+        color: var(--bleu);
+        margin: 0 0 4px;
+      }
+      section,
+      details {
+        background: #fff;
+        border: 1px solid var(--bord);
+        border-left: 4px solid var(--bleu);
+        border-radius: 6px;
+        padding: 10px 14px;
+        margin: 12px 0;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--bleu);
+      }
+      label {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: 6px 14px 4px 0;
+        font-size: 12px;
+        color: var(--muet);
+      }
+      input,
+      select {
+        font: inherit;
+        padding: 3px 6px;
+      }
+      input[type="text"] {
+        width: 170px;
+      }
+      input[type="number"] {
+        width: 80px;
+      }
+      button {
+        font: inherit;
+        padding: 6px 14px;
+        border: 1px solid var(--bleu);
+        background: var(--bleu);
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button.sec {
+        background: #fff;
+        color: var(--bleu);
+      }
+      button[disabled] {
+        opacity: 0.45;
+        cursor: default;
+      }
+      .muet {
+        color: var(--muet);
+        font-size: 12px;
+      }
+      .err {
+        color: var(--rouge);
+      }
+      .ok {
+        color: var(--vert);
+      }
+      progress {
+        width: 100%;
+        height: 14px;
+        margin: 8px 0 2px;
+      }
+      #stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+        font-size: 13px;
+      }
+      #stats b {
+        font-variant-numeric: tabular-nums;
+      }
+      #log {
+        white-space: pre-wrap;
+        font: 12px/1.5 ui-monospace, Consolas, monospace;
+        background: #fafafa;
+        border: 1px solid var(--bord);
+        padding: 8px;
+        max-height: 260px;
+        overflow: auto;
+        margin-top: 8px;
+      }
+      #log:empty {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Distancier routier</h1>
+      <p class="muet">
+        Distances par la route (service d'itinéraire de l'IGN) de chaque école vers ses écoles les plus proches et vers son collège
+        de secteur. Seules les paires manquantes sont calculées ; les résultats sont ajoutés à la table des distances.
+      </p>
+
+      <details id="params">
+        <summary>Paramètres</summary>
+        <div>
+          <label>Table des établissements <input type="text" data-opt="src" /></label>
+          <label>Latitude <input type="text" data-opt="lat" /></label>
+          <label>Longitude <input type="text" data-opt="lon" /></label>
+          <label>Type d'établissement <input type="text" data-opt="type" /></label>
+          <label>Valeur « école » <input type="text" data-opt="ecole" /></label>
+          <label>Collège de secteur (référence) <input type="text" data-opt="college" /></label>
+        </div>
+        <div>
+          <label>Table des distances <input type="text" data-opt="dst" /></label>
+          <label>Écoles les plus proches <input type="number" min="1" max="20" data-opt="n" /></label>
+          <label
+            >Itinéraire
+            <select data-opt="optim">
+              <option value="fastest">le plus rapide</option>
+              <option value="shortest">le plus court</option>
+            </select></label
+          >
+          <label title="Garde-fou : nombre maximal d'écoles candidates essayées pour une école">Candidates au plus <input type="number" min="5" max="200" data-opt="maxc" /></label>
+        </div>
+        <p class="muet">Les noms de colonnes ignorent la casse. Les paramètres sont enregistrés avec la vue (accès complet requis).</p>
+      </details>
+
+      <section>
+        <div id="info" class="muet">Chargement…</div>
+        <p>
+          <label>Écoles à traiter <input type="number" id="limit" min="0" value="0" title="0 : toutes. Un petit nombre permet de faire un essai." /></label>
+          <button id="go" disabled>Calculer les distances manquantes</button>
+          <button id="stop" class="sec" disabled>Arrêter</button>
+          <button id="test" class="sec" title="Un seul appel à l'IGN (première école → l'école la plus proche à vol d'oiseau), avec la réponse brute">Tester un appel</button>
+        </p>
+        <progress id="prog" value="0" max="1" hidden></progress>
+        <div id="stats"></div>
+        <div id="log"></div>
+      </section>
+    </main>
+
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <script>
+      "use strict";
+      const IGN = "https://data.geopf.fr/navigation/itineraire";
+      const MIN_GAP = 250; // ms entre deux appels : 4 par seconde au plus (limite IGN : 5)
+      const FLUSH = 25; // lignes écrites par lot
+      const DEFAULTS = {
+        src: "REF_ETAB",
+        lat: "latitude",
+        lon: "longitude",
+        type: "Type_etablissement",
+        ecole: "Ecole",
+        college: "UAI_College",
+        dst: "REF_DISTANCES",
+        n: 5,
+        optim: "fastest",
+        maxc: 40,
+      };
+      let opt = { ...DEFAULTS };
+      let running = false,
+        stopAsked = false;
+      const $ = (s) => document.querySelector(s);
+
+      // ---------- paramètres (options de la vue) ----------
+      function showOpts() {
+        for (const el of document.querySelectorAll("[data-opt]")) el.value = opt[el.dataset.opt];
+      }
+      document.addEventListener("change", (ev) => {
+        const k = ev.target.dataset?.opt;
+        if (!k) return;
+        const v = ev.target.type === "number" ? Number(ev.target.value) || DEFAULTS[k] : ev.target.value.trim() || DEFAULTS[k];
+        opt[k] = v;
+        grist.setOption(k, v).catch(() => {});
+        prepare();
+      });
+
+      // ---------- utilitaires ----------
+      const rows = (t) => (t.id || []).map((id, i) => Object.fromEntries(Object.keys(t).map((k) => [k, t[k][i]])));
+      // colKey — nom réel d'une colonne, sans tenir compte de la casse
+      function colKey(t, name) {
+        const k = Object.keys(t).find((c) => c.toLowerCase() === String(name).toLowerCase());
+        if (!k) throw new Error(`Colonne « ${name} » introuvable`);
+        return k;
+      }
+      const num = (v) => (v === null || v === undefined || v === "" ? NaN : Number(String(v).replace(",", ".")));
+      const hasVal = (v, x) => (Array.isArray(v) ? v.includes(x) : String(v ?? "").includes(x));
+      function crow(a, b) {
+        const R = Math.PI / 180,
+          dLat = (b.lat - a.lat) * R,
+          dLon = (b.lon - a.lon) * R;
+        const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * R) * Math.cos(b.lat * R) * Math.sin(dLon / 2) ** 2;
+        return 2 * 6371 * Math.asin(Math.sqrt(h));
+      }
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const fmtDur = (s) => (s < 90 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
+      function log(msg, cls) {
+        const l = $("#log"),
+          d = document.createElement("div");
+        d.textContent = msg;
+        if (cls) d.className = cls;
+        l.append(d);
+        while (l.children.length > 300) l.firstChild.remove();
+        l.scrollTop = l.scrollHeight;
+      }
+
+      // ---------- lecture des données ----------
+      let D = null; // { ecoles, byId, known, cols }
+      async function load() {
+        const src = await grist.docApi.fetchTable(opt.src);
+        const kLat = colKey(src, opt.lat),
+          kLon = colKey(src, opt.lon),
+          kType = colKey(src, opt.type),
+          kCol = colKey(src, opt.college);
+        const etabs = rows(src).map((r) => ({
+          id: r.id,
+          lat: num(r[kLat]),
+          lon: num(r[kLon]),
+          ecole: hasVal(r[kType], opt.ecole),
+          college: r[kCol] || 0,
+        }));
+        const byId = new Map(etabs.map((e) => [e.id, e]));
+        const geo = (e) => e && Number.isFinite(e.lat) && Number.isFinite(e.lon);
+        const ecoles = etabs.filter((e) => e.ecole && geo(e));
+        const dst = await grist.docApi.fetchTable(opt.dst);
+        for (const c of ["Depart", "Arrivee", "Km", "Minutes", "Statut", "Calcule_le"]) colKey(dst, c);
+        const known = new Map(),
+          failIds = [];
+        for (const r of rows(dst)) {
+          // échecs : jamais conservés (une panne du service ne doit pas bloquer la paire) — ceux d'une version
+          // précédente sont supprimés au lancement
+          if (r.Km === null || r.Km === undefined || r.Km === "") failIds.push(r.id);
+          else known.set(`${r.Depart}>${r.Arrivee}`, { km: r.Km, min: r.Minutes ?? null, statut: r.Statut });
+        }
+        return { etabs, ecoles, byId, geo, known, failIds, sansGeo: etabs.filter((e) => e.ecole && !geo(e)).length };
+      }
+      async function prepare() {
+        if (running) return;
+        $("#go").disabled = true;
+        try {
+          D = await load();
+          const withCol = D.ecoles.filter((e) => D.geo(D.byId.get(e.college))).length;
+          $("#info").innerHTML =
+            `<b>${D.ecoles.length}</b> écoles localisées${D.sansGeo ? ` (${D.sansGeo} sans coordonnées, ignorées)` : ""}, ` +
+            `dont <b>${withCol}</b> avec un collège de secteur localisé · <b>${D.known.size}</b> distances déjà dans ${opt.dst}.`;
+          $("#info").className = "muet";
+          $("#go").disabled = !D.ecoles.length;
+        } catch (e) {
+          $("#info").textContent = `Impossible de lire les tables : ${e.message || e}. Vérifiez les paramètres et l'accès complet du widget.`;
+          $("#info").className = "err";
+          $("#params").open = true;
+        }
+      }
+
+      // ---------- appel IGN (débit limité, nouvelles tentatives) ----------
+      let lastCall = 0,
+        calls = 0;
+      // ignUrl — virgules des coordonnées laissées telles quelles (URLSearchParams les encoderait en %2C)
+      const ignUrl = (a, b) =>
+        `${IGN}?resource=bdtopo-osrm&profile=car&optimization=${encodeURIComponent(opt.optim)}` +
+        `&start=${a.lon},${a.lat}&end=${b.lon},${b.lat}` +
+        `&distanceUnit=kilometer&timeUnit=minute&getSteps=false&getBbox=false`;
+      async function ign(a, b) {
+        const url = ignUrl(a, b);
+        for (let essai = 0; essai < 4; essai++) {
+          const wait = lastCall + MIN_GAP - Date.now();
+          if (wait > 0) await sleep(wait);
+          lastCall = Date.now();
+          calls++;
+          let res;
+          try {
+            res = await fetch(url);
+          } catch (e) {
+            await sleep(1500 * (essai + 1)); // réseau : on réessaie
+            continue;
+          }
+          if (res.status === 429 || res.status >= 500) {
+            await sleep(2000 * (essai + 1));
+            continue;
+          }
+          const txt = await res.text();
+          const why = (m) => ({ km: null, min: null, statut: "sans itinéraire", why: `${m} — ${txt.replace(/\s+/g, " ").slice(0, 300)}` });
+          if (!res.ok) return why(`HTTP ${res.status}`);
+          let j;
+          try {
+            j = JSON.parse(txt);
+          } catch {
+            return why("réponse illisible");
+          }
+          const km = Number(j.distance),
+            min = Number(j.duration);
+          if (!Number.isFinite(km)) return why("réponse sans distance");
+          return { km: Math.round(km * 100) / 100, min: Number.isFinite(min) ? Math.round(min) : null, statut: "ok" };
+        }
+        throw new Error("le service d'itinéraire ne répond pas (plusieurs essais)");
+      }
+
+      // ---------- écriture par lots ----------
+      let pending = [];
+      const today = () => {
+        const d = new Date();
+        return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 1000; // colonne Date de Grist : secondes UTC
+      };
+      async function flush() {
+        if (!pending.length) return;
+        const batch = pending;
+        pending = [];
+        await grist.docApi.applyUserActions([
+          [
+            "BulkAddRecord",
+            opt.dst,
+            batch.map(() => null),
+            {
+              Depart: batch.map((x) => x.a),
+              Arrivee: batch.map((x) => x.b),
+              Km: batch.map((x) => x.km),
+              Minutes: batch.map((x) => x.min),
+              Statut: batch.map((x) => x.statut),
+              Calcule_le: batch.map(() => today()),
+            },
+          ],
+        ]);
+        S.written += batch.length;
+      }
+
+      // route — distance a → b : déjà connue, recopiée du sens inverse, ou demandée à l'IGN
+      async function route(a, b) {
+        const k = `${a.id}>${b.id}`;
+        if (D.known.has(k)) return D.known.get(k);
+        let r;
+        const rev = D.known.get(`${b.id}>${a.id}`);
+        if (rev && rev.km !== null && rev.statut !== "retour") {
+          r = { km: rev.km, min: rev.min, statut: "retour" };
+          S.copied++;
+        } else if (rev && rev.km === null) {
+          r = rev; // échec dans l'autre sens pendant ce calcul : pas de nouvel appel
+        } else {
+          r = await ign(a, b);
+          if (r.km === null) {
+            S.fail++;
+            S.lastWhy = r.why;
+            if (S.fail <= 3) log(`Échec #${a.id} → #${b.id} : ${r.why}`, "err");
+          } else S.fetched++;
+        }
+        D.known.set(k, r);
+        if (r.km === null) return r; // échec : gardé en mémoire pour ce calcul, jamais écrit dans la table
+        pending.push({ a: a.id, b: b.id, km: r.km, min: r.min, statut: r.statut });
+        if (pending.length >= FLUSH) await flush();
+        return r;
+      }
+
+      // ---------- calcul ----------
+      const S = { done: 0, fetched: 0, copied: 0, fail: 0, written: 0, t0: 0, total: 0 };
+      function stats() {
+        const el = (Date.now() - S.t0) / 1000,
+          left = S.done ? (el / S.done) * (S.total - S.done) : 0;
+        $("#prog").max = S.total;
+        $("#prog").value = S.done;
+        $("#stats").innerHTML =
+          `<span>Écoles : <b>${S.done}</b> / ${S.total}</span><span>Appels IGN : <b>${calls}</b></span>` +
+          `<span>Recopiées (sens inverse) : <b>${S.copied}</b></span><span>Sans itinéraire : <b>${S.fail}</b></span>` +
+          `<span>Lignes ajoutées : <b>${S.written}</b></span>` +
+          (running && S.done ? `<span>Reste environ <b>${fmtDur(left)}</b></span>` : "");
+      }
+      async function run() {
+        running = true;
+        stopAsked = false;
+        $("#go").disabled = true;
+        $("#stop").disabled = false;
+        $("#prog").hidden = false;
+        $("#log").replaceChildren();
+        Object.assign(S, { done: 0, fetched: 0, copied: 0, fail: 0, written: 0, t0: Date.now(), lastWhy: "" });
+        calls = 0;
+        try {
+          D = await load();
+          const N = Math.max(1, Number(opt.n) || 5),
+            MAXC = Math.max(N, Number(opt.maxc) || 40);
+          const limit = Number($("#limit").value) || 0;
+          const todo = limit ? D.ecoles.slice(0, limit) : D.ecoles;
+          if (D.failIds.length) {
+            await grist.docApi.applyUserActions([["BulkRemoveRecord", opt.dst, D.failIds]]);
+            log(`${D.failIds.length} lignes « sans itinéraire » d'un calcul précédent supprimées : elles seront recalculées.`);
+          }
+          S.total = todo.length;
+          stats();
+          for (const e of todo) {
+            if (stopAsked) break;
+            // candidates par distance à vol d'oiseau croissante
+            const cands = D.ecoles
+              .filter((o) => o.id !== e.id)
+              .map((o) => ({ o, d: crow(e, o) }))
+              .sort((x, y) => x.d - y.d);
+            const found = [];
+            let tried = 0,
+              fails = 0;
+            for (const c of cands) {
+              if (stopAsked) break;
+              // arrêt exact : la N-ième meilleure distance routière ne peut plus être battue
+              if (found.length >= N && found[N - 1] <= c.d) break;
+              if (tried >= MAXC) {
+                log(`École #${e.id} : arrêt après ${MAXC} candidates (garde-fou) — résultat peut-être incomplet.`, "err");
+                break;
+              }
+              const r = await route(e, c.o);
+              if (r.km === null && !S.fetched && S.fail >= 9) break; // tout échoue : l'arrêt général suit
+              tried++;
+              if (r.km === null) fails++;
+              else {
+                found.push(r.km);
+                found.sort((x, y) => x - y);
+              }
+              if (!found.length && fails >= 3 && S.fetched) {
+                log(`École #${e.id} : aucun itinéraire vers les 3 écoles les plus proches (île ?) — ignorée.`, "err");
+                break;
+              }
+            }
+            // collège de secteur
+            const col = D.byId.get(e.college);
+            if (!stopAsked && D.geo(col)) await route(e, col);
+            S.done++;
+            stats();
+            // le service refuse tout : inutile de continuer
+            if (S.done >= 3 && !S.fetched && !S.copied && S.fail) throw new Error(`aucun itinéraire obtenu pour les ${S.done} premières écoles. Dernière réponse du service : ${S.lastWhy}`);
+          }
+          await flush();
+          log(
+            stopAsked ? `Arrêté. ${S.written} lignes ajoutées ; relancez pour continuer.` : `Terminé : ${S.written} lignes ajoutées.`,
+            stopAsked ? "" : "ok",
+          );
+        } catch (e) {
+          try {
+            await flush();
+          } catch {}
+          log(`Erreur : ${e.message || e}. Les distances déjà calculées sont enregistrées ; relancez pour reprendre.`, "err");
+        }
+        running = false;
+        $("#stop").disabled = true;
+        stats();
+        prepare();
+      }
+      $("#go").addEventListener("click", run);
+      $("#test").addEventListener("click", async () => {
+        if (running) return;
+        try {
+          D = await load();
+          const a = D.ecoles[0];
+          if (!a) return log("Aucune école localisée.", "err");
+          const b = D.ecoles.filter((o) => o.id !== a.id).sort((x, y) => crow(a, x) - crow(a, y))[0];
+          log(`Test : école #${a.id} (lat ${a.lat}, lon ${a.lon}) → école #${b.id} (lat ${b.lat}, lon ${b.lon}), ${crow(a, b).toFixed(2)} km à vol d'oiseau`);
+          log(ignUrl(a, b));
+          const res = await fetch(ignUrl(a, b));
+          const txt = await res.text();
+          log(`HTTP ${res.status} : ${txt.replace(/\s+/g, " ").slice(0, 600)}`, res.ok ? "ok" : "err");
+        } catch (e) {
+          log(`Test impossible : ${e.message || e} (blocage réseau ou politique de sécurité ?)`, "err");
+        }
+      });
+      $("#stop").addEventListener("click", () => {
+        stopAsked = true;
+        $("#stop").disabled = true;
+        log("Arrêt demandé…");
+      });
+      window.addEventListener("beforeunload", (ev) => {
+        if (running) ev.preventDefault();
+      });
+
+      // ---------- démarrage ----------
+      grist.ready({ requiredAccess: "full" });
+      let optsSeen = false;
+      grist.onOptions((o) => {
+        optsSeen = true;
+        opt = { ...DEFAULTS, ...(o || {}) };
+        showOpts();
+        prepare();
+      });
+      setTimeout(() => {
+        if (!optsSeen) {
+          showOpts();
+          prepare();
+        }
+      }, 1500); // vue sans options enregistrées : valeurs par défaut
+    </script>
+  </body>
+</html>
