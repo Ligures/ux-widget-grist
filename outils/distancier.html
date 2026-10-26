@@ -147,7 +147,7 @@
     <main>
       <h1>Distancier routier</h1>
       <p class="muet">
-        Distances par la route (service d'itinéraire de l'IGN) de chaque école vers ses écoles les plus proches et vers son collège
+        Distances par la route (Metric-OSRM de l'Insee, ou service d'itinéraire de l'IGN) de chaque école vers ses écoles les plus proches et vers son collège
         de secteur. Seules les paires manquantes sont calculées ; les résultats sont ajoutés à la table des distances.
       </p>
 
@@ -159,7 +159,10 @@
           <label>Longitude <input type="text" data-opt="lon" /></label>
           <label>Type d'établissement <input type="text" data-opt="type" /></label>
           <label>Valeur « école » <input type="text" data-opt="ecole" /></label>
-          <label>Collège de secteur (référence) <input type="text" data-opt="college" /></label>
+          <label title="Ne garder que les écoles dont cette colonne contient la valeur ci-contre (départs et arrivées). Vide : toutes les écoles.">Restreindre à : colonne <input type="text" data-opt="filtCol" /></label>
+          <label>… contenant <input type="text" data-opt="filtVal" /></label>
+          <label title="Référence vers la table des établissements, ou code UAI en texte">Collège de secteur <input type="text" data-opt="college" /></label>
+          <label title="Colonne du code UAI, utilisée si la colonne du collège contient un code plutôt qu'une référence">Code UAI <input type="text" data-opt="uai" /></label>
         </div>
         <div>
           <label>Table des distances <input type="text" data-opt="dst" /></label>
@@ -225,6 +228,9 @@
         type: "Type_etablissement",
         ecole: "Ecole",
         college: "UAI_College",
+        filtCol: "Statut_public_prive", // restriction facultative (vide : toutes les écoles)
+        filtVal: "Public",
+        uai: "UAI", // si la colonne du collège contient un code UAI (texte) plutôt qu'une référence
         dst: "REF_DISTANCES",
         n: 5,
         optim: "fastest",
@@ -248,7 +254,8 @@
       document.addEventListener("change", (ev) => {
         const k = ev.target.dataset?.opt;
         if (!k) return;
-        const v = ev.target.type === "number" ? Number(ev.target.value) || DEFAULTS[k] : ev.target.value.trim() || DEFAULTS[k];
+        const v =
+          ev.target.type === "number" ? Number(ev.target.value) || DEFAULTS[k] : k === "filtCol" ? ev.target.value.trim() : ev.target.value.trim() || DEFAULTS[k];
         opt[k] = v;
         grist.setOption(k, v).catch(() => {});
         prepare();
@@ -271,6 +278,7 @@
         const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * R) * Math.cos(b.lat * R) * Math.sin(dLon / 2) ** 2;
         return 2 * 6371 * Math.asin(Math.sqrt(h));
       }
+      const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
       const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       const fmtDur = (s) => (s < 90 ? `${Math.round(s)} s` : `${Math.round(s / 60)} min`);
       function log(msg, cls) {
@@ -290,15 +298,25 @@
         const kLat = colKey(src, opt.lat),
           kLon = colKey(src, opt.lon),
           kType = colKey(src, opt.type),
-          kCol = colKey(src, opt.college);
+          kCol = colKey(src, opt.college),
+          kFilt = String(opt.filtCol || "").trim() ? colKey(src, opt.filtCol) : null; // restriction (ex. publiques)
         const etabs = rows(src).map((r) => ({
           id: r.id,
           lat: num(r[kLat]),
           lon: num(r[kLon]),
-          ecole: hasVal(r[kType], opt.ecole),
-          college: r[kCol] || 0,
+          ecole: hasVal(r[kType], opt.ecole) && (!kFilt || hasVal(r[kFilt], opt.filtVal)),
+          colRaw: r[kCol],
         }));
         const byId = new Map(etabs.map((e) => [e.id, e]));
+        // collège : référence (numéro de ligne) ou code UAI en texte
+        const kUai = Object.keys(src).find((c) => c.toLowerCase() === String(opt.uai).toLowerCase());
+        const byUai = kUai ? new Map(rows(src).map((r) => [String(r[kUai] || "").trim().toUpperCase(), r.id])) : new Map();
+        for (const e of etabs) {
+          let v = e.colRaw;
+          if (Array.isArray(v)) v = v[0] === "L" ? v[1] : v[0]; // liste de références
+          e.college = typeof v === "number" ? v : byUai.get(String(v || "").trim().toUpperCase()) || 0;
+          e.colSet = !!v;
+        }
         const geo = (e) => e && Number.isFinite(e.lat) && Number.isFinite(e.lon);
         const ecoles = etabs.filter((e) => e.ecole && geo(e));
         const dst = await grist.docApi.fetchTable(opt.dst);
@@ -318,10 +336,18 @@
         $("#go").disabled = true;
         try {
           D = await load();
-          const withCol = D.ecoles.filter((e) => D.geo(D.byId.get(e.college))).length;
+          const withCol = D.ecoles.filter((e) => D.geo(D.byId.get(e.college))).length,
+            colSet = D.ecoles.filter((e) => e.colSet).length,
+            colFound = D.ecoles.filter((e) => D.byId.has(e.college)).length;
+          const colNote =
+            withCol === colSet
+              ? ""
+              : ` <span class="err">— collège renseigné pour ${colSet} écoles, retrouvé pour ${colFound}, localisé (coordonnées) pour ${withCol}${
+                  colSet && !colFound ? ` : exemple de valeur lue « ${esc(String(D.ecoles.find((e) => e.colSet).colRaw))} »` : ""
+                }</span>`;
           $("#info").innerHTML =
-            `<b>${D.ecoles.length}</b> écoles localisées${D.sansGeo ? ` (${D.sansGeo} sans coordonnées, ignorées)` : ""}, ` +
-            `dont <b>${withCol}</b> avec un collège de secteur localisé · <b>${D.known.size}</b> distances déjà dans ${opt.dst}.`;
+            `<b>${D.ecoles.length}</b> écoles${String(opt.filtCol || "").trim() ? ` (${esc(opt.filtCol)} contenant « ${esc(opt.filtVal)} »)` : ""} localisées${D.sansGeo ? ` (${D.sansGeo} sans coordonnées, ignorées)` : ""}, ` +
+            `dont <b>${withCol}</b> avec un collège de secteur localisé · <b>${D.known.size}</b> distances déjà dans ${opt.dst}.${colNote}`;
           $("#info").className = "muet";
           $("#go").disabled = !D.ecoles.length;
         } catch (e) {
