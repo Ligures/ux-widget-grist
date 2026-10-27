@@ -26,6 +26,17 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.13] — Parties repliables dans le message d'accueil — 2026-10-27
+
+### Utilisateurs
+- *Nouveau* — **Message d'accueil** : certaines parties peuvent être repliées ; un clic sur leur titre les affiche.
+
+### Administrateurs
+- *Nouveau* — **Message d'accueil** : une ligne `+++ Titre` ouvre une partie repliable (`+++! Titre` : dépliée au départ), une ligne `+++` la ferme. Voir le guide administrateur.
+
+### Développeurs
+- *Nouveau* — `mdFolds` convertit ces blocs en `<details><summary>` avant `marked` ; DOMPurify garde l'attribut `open`.
+
 ## [0.9.3.12] — Diagnostic des widgets personnalisés non reconnus — 2026-10-27
 
 ### Administrateurs

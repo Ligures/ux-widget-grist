@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.12). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.13). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.12"; // voir CHANGELOG.md
+const VERSION = "0.9.3.13"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -5062,6 +5062,27 @@ const textHash = (t) => {
   return String(h >>> 0);
 };
 // showWelcome — Affiche le message (force : aperçu depuis la configuration, même s'il a été masqué).
+// mdFolds — Parties repliables du message d'accueil : une ligne « +++ Titre » ouvre une partie repliée (« +++! Titre » :
+//   dépliée au départ), une ligne « +++ » seule la ferme ; parties imbriquables, fermeture implicite en fin de texte.
+//   Converti en <details><summary> avant Markdown ; le contenu reste du Markdown (lignes vides autour).
+function mdFolds(text) {
+  let open = 0;
+  const out = String(text)
+    .split("\n")
+    .map((line) => {
+      const m = /^\s*\+\+\+(!?)\s*(.*?)\s*$/.exec(line);
+      if (!m) return line;
+      if (!m[2]) {
+        if (!open) return line;
+        open--;
+        return "\n</details>\n";
+      }
+      open++;
+      return `\n<details${m[1] ? " open" : ""}><summary>${marked.parseInline(m[2])}</summary>\n`;
+    });
+  while (open-- > 0) out.push("\n</details>\n");
+  return out.join("\n");
+}
 async function showWelcome(force = false, text = S.nav?.welcome || "") {
   text = String(text || "").trim();
   if (!text) return force && status("Message d'accueil vide");
@@ -5083,7 +5104,7 @@ async function showWelcome(force = false, text = S.nav?.welcome || "") {
   }
   const box = $("#welcome");
   if (!box) return; // index.html antérieur à 0.9.3
-  box.querySelector(".wbody").innerHTML = DOMPurify.sanitize(marked.parse(text));
+  box.querySelector(".wbody").innerHTML = DOMPurify.sanitize(marked.parse(mdFolds(text)), { ADD_ATTR: ["open"] });
   box.querySelectorAll(".wbody a[href]").forEach((a) => Object.assign(a, { target: "_blank", rel: "noopener" }));
   $("#wNoMore").checked = seen === hash;
   box.dataset.hash = hash;
@@ -5992,7 +6013,7 @@ ${L("Hauteur des graphiques (px)", `<input type="number" id="cChartH" min="100" 
 ${L("Hauteur maximale des tableaux (px)", `<input type="number" id="cMaxH" min="120" step="20" value="${draft.tableMaxHeight}" style="width:80px">`, "Au-delà, le tableau défile à l'intérieur de son bloc (en-têtes fixes).")}
     </section>
     <section class="cs adv"><h4>Message d'accueil <small>— affiché au démarrage, à tous les utilisateurs</small></h4>
-${L("Texte (Markdown)", `<textarea id="cWelcome" rows="6" style="width:100%" placeholder="## Bienvenue&#10;Ce tableau de bord présente…">${esc(draftNav.welcome || "")}</textarea>`, "Texte en Markdown (titres #, gras **, listes -, liens [texte](https://…)) affiché dans une fenêtre à l'ouverture du widget. Chaque personne peut cocher « Ne plus afficher ce message » ; si le texte est modifié, il s'affiche à nouveau à tous. Vide : pas de message.")}
+${L("Texte (Markdown)", `<textarea id="cWelcome" rows="6" style="width:100%" placeholder="## Bienvenue&#10;Ce tableau de bord présente…&#10;&#10;+++ En savoir plus&#10;Texte replié, affiché au clic sur le titre.&#10;+++">${esc(draftNav.welcome || "")}</textarea>`, "Texte en Markdown (titres #, gras **, listes -, liens [texte](https://…)) affiché dans une fenêtre à l'ouverture du widget. Partie repliable : une ligne « +++ Titre » (ou « +++! Titre » pour qu'elle soit dépliée au départ), le texte, puis une ligne « +++ ». Chaque personne peut cocher « Ne plus afficher ce message » ; si le texte est modifié, il s'affiche à nouveau à tous. Vide : pas de message.")}
 <button class="icon-btn" id="cWelcomePrev" title="Afficher le message tel que le verront les utilisateurs">Aperçu</button>
     </section>
     <section class="cs adv"><h4>5. Navigation entre pages <small>— menu commun à toutes les configurations</small></h4>

@@ -173,6 +173,17 @@ Priorité : correspondance, puis colonne de codes, puis couleur de repli. Un cod
 
 Section **Message d'accueil** de la configuration : un texte en Markdown (titres `##`, gras `**…**`, listes `-`, liens `[texte](https://…)`) affiché dans une fenêtre à l'ouverture du widget, pour tous les utilisateurs et sur toutes les pages. Le bouton **Aperçu** le montre tel qu'il apparaîtra.
 
+**Parties repliables** : une ligne `+++ Titre` ouvre une partie repliée, affichée au clic sur son titre ; une ligne `+++` seule la ferme. Avec `+++! Titre`, la partie est dépliée au départ. Le contenu reste du Markdown, et les parties peuvent s'imbriquer.
+
+```
+## Bienvenue
+Ce tableau de bord présente la carte scolaire.
+
++++ Comment filtrer ?
+Choisir une circonscription dans la liste en haut de la page.
++++
+```
+
 Chaque personne peut cocher **Ne plus afficher ce message** : le choix est mémorisé dans son navigateur. Si le texte est modifié, le message s'affiche à nouveau à tous. Laisser le texte vide supprime le message.
 
 ### Menu de navigation
@@ -211,7 +222,7 @@ Outil séparé, à installer dans une page d'administration : vue **Widget perso
 1. Créer la table des distances (`REF_DISTANCES`) : `Depart`, `Arrivee` (références à `REF_ETAB`), `Km`, `Minutes` (numériques), `Statut` (texte), `Calcule_le` (date).
 2. Vérifier les **Paramètres** (noms de tables et de colonnes). Le bandeau indique le nombre d'écoles localisées et de distances déjà connues.
 3. Faire un essai : « Écoles à traiter » = 5, puis **Calculer les distances manquantes**. Contrôler quelques lignes dans `REF_DISTANCES`.
-4. Remettre 0 (toutes les écoles) et relancer. Laisser l'onglet ouvert : compter environ 10 à 15 minutes pour un département. **Arrêter** est sans risque : on reprend où l'on en était.
+4. Remettre 0 (toutes les écoles) et relancer. Laisser l'onglet ouvert : compter environ 1 heure pour un département (l'IGN accepte 1 appel par seconde). **Arrêter** est sans risque : on reprend où l'on en était.
 
 Les distances calculées ne bougent plus. Après le déplacement d'une école (nouvelles coordonnées), supprimer ses lignes dans `REF_DISTANCES` (en départ et en arrivée), puis relancer. Après l'ajout d'une école, relancer simplement.
 

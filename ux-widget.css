@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.3.12).
+/* UX widget grist — feuilles de style (version 0.9.3.13).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1466,6 +1466,29 @@ dd[data-kind="sel"][data-ed] {
   padding: 8px 22px 12px;
   line-height: 1.55;
   font-size: 14px;
+}
+/* parties repliables (« +++ Titre » … « +++ ») */
+#welcome .wbody details {
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  margin: 8px 0;
+  padding: 0 10px;
+}
+#welcome .wbody details[open] {
+  padding-bottom: 6px;
+}
+#welcome .wbody summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--bleu);
+  padding: 6px 0;
+}
+#welcome .wbody summary > p {
+  display: inline;
+  margin: 0;
+}
+#welcome .wbody details details {
+  border-style: dashed;
 }
 #welcome .wfoot {
   display: flex;
