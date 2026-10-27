@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.13). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.14). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.13"; // voir CHANGELOG.md
+const VERSION = "0.9.3.14"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -2483,7 +2483,7 @@ function renderChart(info, rows, body, jobs) {
         label: s.label,
         data: labels.map((l) => sums.get(l)),
         backgroundColor: catCols || (type === "area" ? c + "55" : c),
-        borderColor: pie ? "#fff" : catCols || c,
+        borderColor: pie ? cssVar("--carte") || "#fff" : catCols || c,
         fill: type === "area",
         tension: 0.2,
         pointRadius: type === "line" ? 2 : 0,
@@ -2497,6 +2497,9 @@ function renderChart(info, rows, body, jobs) {
       type
     ] || "bar";
   jobs.push(() => {
+    // couleurs des textes et des grilles : celles du thème (clair ou sombre)
+    const tc = cssVar("--texte2") || "#3a3a3a",
+      gc = cssVar("--bord-doux") || "#eee";
     S.charts.push(
       new Chart(canvas, {
         type: chartType,
@@ -2510,14 +2513,14 @@ function renderChart(info, rows, body, jobs) {
             legend: {
               display: pie || data.datasets.length > 1,
               position: "bottom",
-              labels: { boxWidth: 10, font: { size: 11 } },
+              labels: { boxWidth: 10, font: { size: 11 }, color: tc },
             },
           },
           scales: pie
             ? {}
             : {
-                x: { stacked, ticks: { font: { size: 11 } } },
-                y: { stacked, beginAtZero: true, ticks: { font: { size: 11 } } },
+                x: { stacked, ticks: { font: { size: 11 }, color: tc }, grid: { color: gc }, border: { color: gc } },
+                y: { stacked, beginAtZero: true, ticks: { font: { size: 11 }, color: tc }, grid: { color: gc }, border: { color: gc } },
               },
         },
       }),
@@ -4042,10 +4045,18 @@ async function renderAdvChart(info, rows, body, jobs) {
     ...JSON.parse(JSON.stringify(spec.layout || {})),
     autosize: true,
     margin: { l: 45, r: 10, t: spec.layout?.title ? 34 : 10, b: 40 },
-    font: { family: "Marianne, Arial, sans-serif", size: 11 },
-    paper_bgcolor: "#fff",
-    plot_bgcolor: "#fff",
+    font: { family: "Marianne, Arial, sans-serif", size: 11, color: cssVar("--texte2") || "#3a3a3a" },
+    paper_bgcolor: cssVar("--carte") || "#fff",
+    plot_bgcolor: cssVar("--carte") || "#fff",
   };
+  // axes : grilles et traits aux couleurs du thème, sauf réglage explicite du graphique
+  for (const k of ["xaxis", "yaxis", ...Object.keys(layout).filter((x) => /^[xy]axis\d+$/.test(x))]) {
+    const ax = (layout[k] = { ...(layout[k] || {}) });
+    ax.gridcolor ??= cssVar("--bord-doux") || "#eee";
+    ax.zerolinecolor ??= cssVar("--bord") || "#ddd";
+    ax.linecolor ??= cssVar("--bord") || "#ddd";
+  }
+  if (layout.legend) layout.legend = { ...layout.legend, bgcolor: layout.legend.bgcolor ?? "rgba(0,0,0,0)" };
   delete layout.width;
   // camemberts : quand les parts portent déjà leur nom, la légende fait double emploi et recouvrait les étiquettes
   // placées à l'extérieur : elle est masquée (sauf si la légende est explicitement demandée dans le graphique)
@@ -4947,6 +4958,48 @@ function markPrintBig() {
   });
 }
 window.addEventListener("beforeprint", markPrintBig); // impression lancée par Ctrl+P
+// chartColors — Couleurs des textes, grilles et fonds des graphiques : celles du thème, ou claires (impression en
+//   mode sombre : la page imprimée est toujours claire, les graphiques déjà dessinés sont mis à jour)
+function chartColors(light) {
+  const v = light
+    ? { t: "#3a3a3a", g: "#eee", c: "#fff" }
+    : { t: cssVar("--texte2"), g: cssVar("--bord-doux"), c: cssVar("--carte") };
+  if (window.Chart) {
+    for (const ch of S.charts || []) {
+      try {
+        const o = ch.options;
+        if (o.plugins?.legend?.labels) o.plugins.legend.labels.color = v.t;
+        for (const sc of Object.values(o.scales || {})) {
+          if (sc.ticks) sc.ticks.color = v.t;
+          if (sc.grid) sc.grid.color = v.g;
+          if (sc.border) sc.border.color = v.g;
+        }
+        ch.update("none");
+      } catch {
+        /* graphique déjà retiré */
+      }
+    }
+  }
+  if (window.Plotly)
+    document.querySelectorAll(".plot-box").forEach((el) => {
+      try {
+        Plotly.relayout(el, { "font.color": v.t, paper_bgcolor: v.c, plot_bgcolor: v.c, "xaxis.gridcolor": v.g, "yaxis.gridcolor": v.g });
+      } catch {
+        /* graphique non dessiné */
+      }
+    });
+}
+let printLight = false;
+window.addEventListener("beforeprint", () => {
+  if (!isDark()) return;
+  printLight = true;
+  chartColors(true);
+});
+window.addEventListener("afterprint", () => {
+  if (!printLight) return;
+  printLight = false;
+  chartColors(false);
+});
 $("#btnPrint").addEventListener("click", () => printPage());
 // Plein écran : la page Grist qui contient ce widget, en mode page unique (sans les menus de Grist), nouvel onglet
 $("#btnSingle").addEventListener("click", async () => {
@@ -6007,6 +6060,17 @@ ${L(
   `<select id="cTheme"><option value="dsfr" ${draftNav.theme !== "neutre" ? "selected" : ""}>Style État (DSFR) — services de l'État</option><option value="neutre" ${draftNav.theme === "neutre" ? "selected" : ""}>Style neutre — autres structures</option></select>`,
   "Style État : police Marianne et bleu France, réservés aux services de l'État par les conditions d'utilisation du DSFR. Style neutre : police du système et rouge bordeaux, pour toute autre structure. Commun à toutes les pages du document.",
 )}
+${L(
+  "Mode clair / sombre",
+  `<select id="cMode">${[
+    ["", "Comme le système de chaque utilisateur"],
+    ["clair", "Toujours clair"],
+    ["sombre", "Toujours sombre"],
+  ]
+    .map(([v, t]) => `<option value="${v}" ${(draftNav.mode || "") === v ? "selected" : ""}>${t}</option>`)
+    .join("")}</select>`,
+  "Par défaut, le widget passe en mode sombre quand l'ordinateur de l'utilisateur est réglé ainsi (réglage du système, pas celui de Grist). L'impression reste toujours claire. Commun à toutes les pages du document.",
+)}
 ${C('id="cHideFields"', draft.hideEmptyFields, "Masquer les champs vides dans les fiches", "Les champs sans valeur ne sont pas affichés dans les fiches (sauf en édition, ou si le bloc demande à les afficher).")}
 ${C('id="cHideBlocks"', draft.hideEmptyBlocks, "Masquer les blocs sans données", "Un bloc sans aucune ligne à afficher (par exemple après filtrage) disparaît de la page.")}
 ${L("Hauteur des graphiques (px)", `<input type="number" id="cChartH" min="100" step="20" value="${draft.chartHeight || 260}" style="width:80px">`, "Hauteur par défaut des graphiques d'une ligne.")}
@@ -6279,6 +6343,7 @@ $("#panel").addEventListener("change", (ev) => {
   if (t.id === "cName") draft.name = t.value;
   if (t.id === "cShowAfter") draftShowAfter = t.checked;
   if (t.id === "cTheme") draftNav.theme = t.value;
+  if (t.id === "cMode") draftNav.mode = t.value;
   if (t.id === "cMnHome") draftNav.home = t.value;
   if (t.id === "cWelcome") draftNav.welcome = t.value;
   if (t.dataset.fml) draft.forms[Number(t.dataset.fml)].label = t.value.trim();
@@ -6451,12 +6516,29 @@ const NAV_NAME = "_Navigation";
    Choix commun au document, rangé avec le menu commun (ligne _Navigation de W_Composition, nav.theme).
    Non choisi : apparence DSFR. Le choix se fait dans la configuration (section Affichage), par un administrateur. */
 const NEUTRAL_BLUE = "#8c1c2c"; // rouge bordeaux (0.9.3.5) : distinct du bleu DSFR au premier coup d'œil
-function applyTheme(theme) {
+// Mode sombre (0.9.3.14) : suit le système (prefers-color-scheme) ; « clair » ou « sombre » l'imposent (nav.mode).
+const darkMQ = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+const isDark = () => {
+  const c = document.documentElement.classList;
+  return c.contains("sombre") || (!c.contains("clair") && !!darkMQ?.matches);
+};
+// cssVar — Valeur d'une variable CSS de la page (couleurs du thème courant, pour les graphiques).
+const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function applyTheme(theme, mode = S.nav?.mode) {
   const neutre = theme === "neutre";
-  document.documentElement.classList.toggle("neutre", neutre);
+  const h = document.documentElement.classList;
+  h.toggle("neutre", neutre);
+  h.toggle("clair", mode === "clair");
+  h.toggle("sombre", mode === "sombre");
   BRAND.c = neutre ? NEUTRAL_BLUE : "#000091";
-  PALETTE[0] = MAP_COLORS[0] = BRAND.c;
+  MAP_COLORS[0] = BRAND.c; // les cartes gardent un fond clair
+  PALETTE[0] = isDark() ? (neutre ? "#e58e9a" : "#8585f6") : BRAND.c; // graphiques : couleur lisible sur fond sombre
 }
+// changement du réglage du système pendant l'utilisation : couleurs des graphiques recalculées
+darkMQ?.addEventListener?.("change", () => {
+  applyTheme(S.nav?.theme);
+  if (S.cfg && !document.documentElement.classList.contains("clair") && !document.documentElement.classList.contains("sombre")) render();
+});
 // readNav — Lit le menu de navigation commun (ligne _Navigation de W_Composition).
 async function readNav() {
   try {
@@ -6470,6 +6552,7 @@ async function readNav() {
       inWidget: !!n.inWidget,
       items: Array.isArray(n.items) ? n.items : [],
       theme: n.theme === "neutre" || n.theme === "dsfr" ? n.theme : "", // "" : pas encore choisi
+      mode: n.mode === "clair" || n.mode === "sombre" ? n.mode : "", // "" : comme le système
       home: n.home || "", // configuration ouverte à l'arrivée (mode « changer de page dans le widget »)
       welcome: typeof n.welcome === "string" ? n.welcome : "", // message d'accueil (Markdown)
     };

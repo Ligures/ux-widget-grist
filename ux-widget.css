@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.3.13).
+/* UX widget grist — feuilles de style (version 0.9.3.14).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -31,6 +31,26 @@
   --carte: #fff;
   --rouge: #ce0500;
   --gap: 10px;
+  /* couleurs secondaires (0.9.3.14) : redéfinies pour le mode sombre ci-dessous */
+  --texte2: #3a3a3a;
+  --muet2: #aaa;
+  --doux: #f6f6f6;
+  --doux2: #f0f0f0;
+  --bord-doux: #eee;
+  --bleu-bord: #b7b7f5;
+  --bleu-bord2: #cfd0e6;
+  --sur-bleu: #fff; /* texte posé sur la couleur principale */
+  --voile: rgba(255, 255, 255, 0.92);
+  --voile2: rgba(240, 240, 240, 0.92);
+  --rouge-clair: #fde8e8;
+  --vert: #18753c;
+  --jaune-clair: #fff8e1;
+  --jaune-bord: #f0d58a;
+  --brun: #8d533e;
+  --brun-clair: #fbf5f2;
+  --tip-fond: #161616;
+  --tip-texte: #fff;
+  color-scheme: light;
 }
 /* Apparence « neutre » (0.8.9) : pour les structures qui ne sont pas des services de l'État, sans la police
    Marianne ni le bleu France, réservés par les conditions d'utilisation du DSFR */
@@ -39,6 +59,93 @@ html.neutre {
   --bleu: #8c1c2c;
   --bleu-clair: #f4dfe2;
   --bleu-hover: #fbf0f2;
+}
+/* Mode sombre (0.9.3.14) : suit le réglage du système (prefers-color-scheme), sauf apparence imposée dans la
+   configuration (html.clair / html.sombre). À l'impression, les couleurs claires restent (règles « screen »). */
+@media screen and (prefers-color-scheme: dark) {
+  html:not(.clair) {
+    --bleu: #8585f6;
+    --bleu-clair: #1b1b35;
+    --bleu-hover: #222244;
+    --texte: #dedede;
+    --texte2: #cecece;
+    --muet: #a0a0a0;
+    --muet2: #777;
+    --bord: #3a3a3a;
+    --bord-doux: #2c2c2c;
+    --fond: #161616;
+    --carte: #1e1e1e;
+    --doux: #262626;
+    --doux2: #2e2e2e;
+    --rouge: #ff6b6b;
+    --bleu-bord: #4a4a8a;
+    --bleu-bord2: #3c3c5a;
+    --sur-bleu: #0e0e1e;
+    --voile: rgba(30, 30, 30, 0.92);
+    --voile2: rgba(40, 40, 40, 0.92);
+    --rouge-clair: #4a1e1e;
+    --vert: #6fd08c;
+    --jaune-clair: #3a3216;
+    --jaune-bord: #7a6520;
+    --brun: #d9a48f;
+    --brun-clair: #2e211c;
+    --tip-fond: #e5e5e5;
+    --tip-texte: #161616;
+    color-scheme: dark;
+  }
+  html.neutre:not(.clair) {
+    --bleu: #e58e9a;
+    --bleu-clair: #3a1d22;
+    --bleu-hover: #2c171b;
+    --sur-bleu: #1e0e10;
+  }
+}
+@media screen {
+  html.sombre {
+    --bleu: #8585f6;
+    --bleu-clair: #1b1b35;
+    --bleu-hover: #222244;
+    --texte: #dedede;
+    --texte2: #cecece;
+    --muet: #a0a0a0;
+    --muet2: #777;
+    --bord: #3a3a3a;
+    --bord-doux: #2c2c2c;
+    --fond: #161616;
+    --carte: #1e1e1e;
+    --doux: #262626;
+    --doux2: #2e2e2e;
+    --rouge: #ff6b6b;
+    --bleu-bord: #4a4a8a;
+    --bleu-bord2: #3c3c5a;
+    --sur-bleu: #0e0e1e;
+    --voile: rgba(30, 30, 30, 0.92);
+    --voile2: rgba(40, 40, 40, 0.92);
+    --rouge-clair: #4a1e1e;
+    --vert: #6fd08c;
+    --jaune-clair: #3a3216;
+    --jaune-bord: #7a6520;
+    --brun: #d9a48f;
+    --brun-clair: #2e211c;
+    --tip-fond: #e5e5e5;
+    --tip-texte: #161616;
+    color-scheme: dark;
+  }
+  html.sombre.neutre {
+    --bleu: #e58e9a;
+    --bleu-clair: #3a1d22;
+    --bleu-hover: #2c171b;
+    --sur-bleu: #1e0e10;
+  }
+  /* fond de carte : un peu assombri pour ne pas éblouir (les tuiles restent claires) */
+  html.sombre .leaflet-tile-pane {
+    filter: brightness(0.82) contrast(1.05);
+  }
+}
+@media screen and (prefers-color-scheme: dark) {
+  html:not(.clair) .leaflet-tile-pane {
+    filter: brightness(0.82) contrast(1.05);
+  }
 }
 html.neutre body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
@@ -49,7 +156,7 @@ html.neutre body {
 body {
   margin: 0;
   padding: 8px;
-  background: #fff;
+  background: var(--carte);
   color: var(--texte);
   font:
     13px/1.4 "Marianne",
@@ -82,7 +189,7 @@ button {
 #pnav a {
   padding: 6px 12px;
   font-size: 14px;
-  color: #161616;
+  color: var(--texte);
   text-decoration: none;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
@@ -104,7 +211,7 @@ button {
   justify-content: center;
 }
 #pnav a:hover {
-  background: #f6f6f6;
+  background: var(--doux);
 }
 #pnav a.cur {
   color: var(--bleu);
@@ -123,7 +230,7 @@ button {
   padding: 0 10px;
   border: 1px solid var(--bord);
   border-radius: 4px;
-  background: #fff;
+  background: var(--carte);
   color: var(--bleu);
   font-size: 13px;
   font-weight: 700;
@@ -162,7 +269,7 @@ button {
   }
   #pnav.open .pnav-tog {
     background: var(--bleu);
-    color: #fff;
+    color: var(--sur-bleu);
   }
   #pnav .pnav-list {
     display: none;
@@ -178,7 +285,7 @@ button {
     max-width: 90vw;
     max-height: 70vh;
     overflow: auto;
-    background: #fff;
+    background: var(--carte);
     border: 1px solid var(--bord);
     border-radius: 4px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
@@ -200,14 +307,14 @@ button {
   gap: 6px;
   align-items: center;
   padding: 4px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--bord-doux);
   font-size: 12px;
 }
 #top {
   position: sticky;
   top: 0;
   z-index: 12;
-  background: #fff;
+  background: var(--carte);
   margin: -8px -8px 8px;
   padding: 8px 8px 2px;
   border-bottom: 1px solid transparent;
@@ -250,7 +357,7 @@ button {
   padding: 6px 10px;
   margin: 0 0 8px;
   background: var(--bleu-hover);
-  border: 1px solid #b7b7f5;
+  border: 1px solid var(--bleu-bord);
   border-radius: 4px;
   font-size: 12.5px;
 }
@@ -261,7 +368,7 @@ button {
   flex: 1;
 }
 .grid.layout > .block {
-  outline: 2px dashed #b7b7f5;
+  outline: 2px dashed var(--bleu-bord);
   outline-offset: -2px;
   position: relative !important;
   top: auto !important;
@@ -317,7 +424,7 @@ button {
   bottom: 2px;
   font-size: 11px;
   background: var(--bleu);
-  color: #fff;
+  color: var(--sur-bleu);
   padding: 0 5px;
   border-radius: 3px;
   z-index: 3;
@@ -343,7 +450,7 @@ button {
   padding: 0 10px;
   border: 1px solid var(--bord);
   border-radius: 4px;
-  background: #fff;
+  background: var(--carte);
   color: var(--bleu);
   font: inherit;
   font-size: 13px;
@@ -352,7 +459,7 @@ button {
 }
 .tb:hover {
   background: var(--bleu-hover);
-  border-color: #b7b7f5;
+  border-color: var(--bleu-bord);
 }
 .tb:focus-visible {
   outline: 2px solid #0a76f6;
@@ -384,7 +491,7 @@ button {
   flex-direction: column;
   min-width: 210px;
   padding: 4px;
-  background: #fff;
+  background: var(--carte);
   border: 1px solid var(--bord);
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
@@ -443,7 +550,7 @@ button {
 }
 #btnMenu[aria-expanded="true"] {
   background: var(--bleu);
-  color: #fff;
+  color: var(--sur-bleu);
 }
 @media (max-width: 900px) {
   .bar > .tb .lbl {
@@ -474,7 +581,7 @@ button {
   max-width: min(46vw, 520px);
   padding: 4px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--voile);
   border: 1px solid var(--bord);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   color: var(--muet);
@@ -554,14 +661,14 @@ button {
   font: inherit;
   font-size: 14px;
   line-height: 1.5;
-  color: #3a3a3a;
+  color: var(--texte2);
   min-width: 160px;
   max-width: 100%;
   padding: 6px 40px 6px 12px;
   border: 0;
   border-radius: 4px 4px 0 0;
-  background-color: #eee;
-  box-shadow: inset 0 -2px 0 0 #3a3a3a;
+  background-color: var(--doux2);
+  box-shadow: inset 0 -2px 0 0 var(--texte2);
   cursor: pointer;
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23161616' d='m12 13.1 5-4.9 1.4 1.4-6.4 6.3-6.4-6.4L7 8.1l5 5z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -569,7 +676,7 @@ button {
   background-size: 16px 16px;
 }
 #filters select:hover {
-  background-color: #ddd;
+  background-color: var(--bord);
 }
 #filters select:focus {
   outline: 2px solid #0a76f6;
@@ -577,7 +684,7 @@ button {
 }
 #filters optgroup {
   font-weight: 700;
-  color: #161616;
+  color: var(--texte);
 }
 
 .grid {
@@ -623,8 +730,8 @@ button {
   position: fixed;
   z-index: 20;
   display: none;
-  background: #161616;
-  color: #fff;
+  background: var(--tip-fond);
+  color: var(--tip-texte);
   font-size: 12px;
   line-height: 1.35;
   padding: 4px 8px;
@@ -674,7 +781,7 @@ button {
 }
 
 .block {
-  background: #fff;
+  background: var(--carte);
   border: 0;
   overflow: hidden;
 }
@@ -746,7 +853,7 @@ button {
 .qf .qf-opts button {
   border: 0;
   border-left: 1px solid var(--bord);
-  background: #fff;
+  background: var(--carte);
   color: var(--bleu);
   font: inherit;
   font-size: 11.5px;
@@ -763,7 +870,7 @@ button {
 }
 .qf .qf-opts button.on {
   background: var(--bleu);
-  color: #fff;
+  color: var(--sur-bleu);
 }
 .qf .qf-cur {
   display: none;
@@ -771,7 +878,7 @@ button {
   gap: 4px;
   border: 1px solid var(--bord);
   border-radius: 4px;
-  background: #fff;
+  background: var(--carte);
   color: var(--bleu);
   font: inherit;
   font-size: 11.5px;
@@ -816,7 +923,7 @@ button {
 }
 .qf.icon.active .qf-cur {
   background: var(--bleu);
-  color: #fff;
+  color: var(--sur-bleu);
 }
 .qf.icon.active .qf-ico {
   fill: currentColor;
@@ -871,8 +978,8 @@ button {
   /* un liseré blanc comble les espaces entre blocs figés et sous l'en-tête : le contenu qui défile
      dessous n'apparaît plus par ces interstices ; une ombre légère marque la limite basse */
   box-shadow:
-    0 -8px 0 #fff,
-    0 8px 0 #fff,
+    0 -8px 0 var(--carte),
+    0 8px 0 var(--carte),
     0 14px 10px -8px rgba(0, 0, 0, 0.18);
 }
 /* dans un bloc figé de hauteur limitée, c'est le tableau (ou le contenu) qui défile, pas le bloc :
@@ -891,7 +998,7 @@ button {
 #stickyMask > div {
   position: fixed;
   z-index: 2;
-  background: #fff;
+  background: var(--carte);
 }
 .block.collapsed > .bb {
   display: none !important;
@@ -1041,10 +1148,10 @@ table {
 th {
   position: sticky;
   top: 0;
-  background: #f0f0f0;
+  background: var(--doux2);
   text-align: center;
   font-weight: 500; /* en-têtes discrets : graisse moyenne, gris foncé */
-  color: #3a3a3a;
+  color: var(--texte2);
   padding: 4px 6px;
   border-bottom: 1px solid var(--bord);
   white-space: normal;
@@ -1054,21 +1161,21 @@ th {
 }
 td {
   padding: 3px 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--bord-doux);
   max-width: 280px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 table.zebra tbody tr:nth-child(even) td {
-  background: #f5f5f5;
+  background: var(--doux);
 }
 table.nohgrid td {
   border-bottom-color: transparent;
 }
 table.vgrid td,
 table.vgrid th {
-  border-right: 1px solid #eee;
+  border-right: 1px solid var(--bord-doux);
 }
 table.vgrid td:last-child,
 table.vgrid th:last-child {
@@ -1078,15 +1185,15 @@ td.frz,
 th.frz {
   position: sticky;
   z-index: 1;
-  background: #fff;
+  background: var(--carte);
   box-shadow: inset -1px 0 0 var(--bord);
 }
 th.frz {
   z-index: 3;
-  background: #f0f0f0;
+  background: var(--doux2);
 }
 table.zebra tbody tr:nth-child(even) td.frz {
-  background: #f5f5f5;
+  background: var(--doux);
 }
 tbody tr {
   cursor: pointer;
@@ -1315,7 +1422,7 @@ td.num {
   border-color: var(--rouge);
 }
 .delrow:hover {
-  background: #fde8e8;
+  background: var(--rouge-clair);
 }
 .delrow.confirm,
 .delrow.confirm:hover {
@@ -1325,7 +1432,7 @@ td.num {
 }
 tr.todel > td,
 .mini.todel {
-  background: #fde8e8 !important;
+  background: var(--rouge-clair) !important;
 }
 .addrow:hover {
   background: var(--bleu-hover);
@@ -1395,7 +1502,7 @@ dd[data-kind="sel"][data-ed] {
   display: none;
 }
 #fmodal .fmbox {
-  background: #fff;
+  background: var(--carte);
   border-radius: 8px;
   width: min(760px, 100%);
   height: min(860px, 100%);
@@ -1418,7 +1525,7 @@ dd[data-kind="sel"][data-ed] {
   flex: 1;
 }
 #fmodal .fmmsg {
-  color: #18753c;
+  color: var(--vert);
   font-weight: 600;
   font-size: 13px;
 }
@@ -1445,7 +1552,7 @@ dd[data-kind="sel"][data-ed] {
   display: none;
 }
 #welcome .wbox {
-  background: #fff;
+  background: var(--carte);
   border-radius: 6px;
   border-top: 4px solid var(--bleu);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
@@ -1510,7 +1617,7 @@ dd[data-kind="sel"][data-ed] {
   display: none;
 }
 #help .hbox {
-  background: #fff;
+  background: var(--carte);
   border-radius: 6px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   width: min(860px, 100%);
@@ -1539,7 +1646,7 @@ dd[data-kind="sel"][data-ed] {
 }
 #help .htabs button {
   border: 1px solid var(--bord);
-  background: #fff;
+  background: var(--carte);
   color: var(--bleu);
   border-radius: 4px;
   padding: 3px 12px;
@@ -1549,7 +1656,7 @@ dd[data-kind="sel"][data-ed] {
 }
 #help .htabs button.on {
   background: var(--bleu);
-  color: #fff;
+  color: var(--sur-bleu);
   border-color: var(--bleu);
 }
 #help .hbody {
@@ -1593,13 +1700,13 @@ dd[data-kind="sel"][data-ed] {
   height: auto;
 }
 .md code {
-  background: #f3f3f3;
+  background: var(--doux);
   border-radius: 3px;
   padding: 0 4px;
   font-size: 12.5px;
 }
 .md pre {
-  background: #f6f6f6;
+  background: var(--doux);
   padding: 8px 10px;
   border-radius: 4px;
   overflow: auto;
@@ -1637,7 +1744,7 @@ a.tb.formlink {
   height: 8px;
   border-radius: 50%;
   background: var(--rouge);
-  box-shadow: 0 0 0 2px #fff;
+  box-shadow: 0 0 0 2px var(--carte);
 }
 .tb .newdot[hidden] {
   display: none;
@@ -1661,7 +1768,7 @@ a.tb.formlink {
   width: min(720px, calc(100vw - 24px));
   max-height: calc(100vh - 40px);
   overflow: auto;
-  background: #fff;
+  background: var(--carte);
   border-radius: 6px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   display: none;
@@ -1672,7 +1779,7 @@ a.tb.formlink {
 #rc .rch {
   position: sticky;
   top: 0;
-  background: #fff;
+  background: var(--carte);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1701,7 +1808,7 @@ a.tb.formlink {
 }
 /* champ éditable survolé : fond de la cellule teinté */
 [data-ed]:hover {
-  background-color: #dde3fb !important;
+  background-color: var(--bleu-clair) !important;
 }
 .fiche dd[data-ed]:hover {
   border-radius: 3px;
@@ -1709,7 +1816,7 @@ a.tb.formlink {
 .fiche dd[data-ed]:empty::after,
 td[data-ed]:empty::after {
   content: "—";
-  color: #bbb;
+  color: var(--muet2);
 }
 .ed-input {
   font: inherit;
@@ -1720,7 +1827,7 @@ td[data-ed]:empty::after {
   padding: 2px 4px;
   border: 1px solid var(--bleu);
   border-radius: 3px;
-  background: #fff;
+  background: var(--carte);
   color: var(--texte);
 }
 textarea.ed-input {
@@ -1733,7 +1840,7 @@ textarea.ed-input {
 .picker {
   position: fixed;
   z-index: 28;
-  background: #fff;
+  background: var(--carte);
   border: 1px solid var(--bord);
   border-radius: 4px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
@@ -1795,15 +1902,15 @@ textarea.ed-input {
   display: inline-block;
   padding: 0 6px;
   border-radius: 10px;
-  background: #eee;
+  background: var(--doux2);
   font-size: 11.5px;
   margin: 0 2px 1px 0;
 }
 .ok {
-  color: #18753c;
+  color: var(--vert);
 }
 .ko {
-  color: #bbb;
+  color: var(--muet2);
 }
 
 /* Graphiques */
@@ -1832,11 +1939,11 @@ textarea.ed-input {
 .qpvinfo {
   margin-top: 3px;
   font-size: 11px;
-  color: #ce0500;
+  color: var(--rouge);
   font-weight: 700;
 }
 .map-legend {
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--voile);
   padding: 6px 8px;
   border-radius: 4px;
   font-size: 11px;
@@ -1856,8 +1963,8 @@ textarea.ed-input {
   border-radius: 50%;
   margin-right: 6px;
   vertical-align: -1px;
-  border: 1px solid #fff;
-  box-shadow: 0 0 0 1px #ccc;
+  border: 1px solid var(--carte);
+  box-shadow: 0 0 0 1px var(--bord);
 }
 .leaflet-tooltip.lbl {
   font-size: 11px;
@@ -1869,14 +1976,14 @@ textarea.ed-input {
 .map-box .leaflet-tooltip {
   border-radius: 0;
   border: 2px solid var(--tc, #c8c8c8);
-  box-shadow: inset 0 0 0 8px var(--tc2, #fff);
+  box-shadow: inset 0 0 0 8px var(--tc2, var(--carte));
 }
 .map-box .leaflet-popup-content-wrapper {
   border-radius: 0;
   border: 2px solid var(--tc, #c8c8c8);
   /* second liseré à l'intérieur : couleur du contour du point (--tc2) */
   box-shadow:
-    inset 0 0 0 8px var(--tc2, #fff),
+    inset 0 0 0 8px var(--tc2, var(--carte)),
     0 3px 14px rgba(0, 0, 0, 0.4);
 }
 .map-box .leaflet-popup-tip {
@@ -1931,7 +2038,7 @@ textarea.ed-input {
   cursor: help;
 }
 .panel label[title] > .lt {
-  border-bottom: 1px dotted #999;
+  border-bottom: 1px dotted var(--muet2);
 }
 .panel select,
 .panel input[type="number"],
@@ -2026,7 +2133,7 @@ textarea.ed-input {
   border: 1px solid var(--bord);
   border-radius: 4px;
   padding: 4px 8px 6px;
-  background: #fff;
+  background: var(--carte);
 }
 .mgrp-h {
   font-size: 11px;
@@ -2044,8 +2151,8 @@ textarea.ed-input {
   margin-bottom: 4px;
 }
 .cother {
-  background: #fff8e1;
-  border: 1px solid #f0d58a;
+  background: var(--jaune-clair);
+  border: 1px solid var(--jaune-bord);
   border-radius: 4px;
   padding: 6px 8px;
   margin-bottom: 8px;
@@ -2069,11 +2176,11 @@ textarea.ed-input {
   color: var(--muet);
 }
 .cs.adv {
-  border-left-color: #8d533e;
+  border-left-color: var(--brun);
 }
 .cs.adv > h4 {
-  color: #8d533e;
-  background: #fbf5f2;
+  color: var(--brun);
+  background: var(--brun-clair);
 }
 .pick {
   border: 1px solid var(--bord);
@@ -2084,7 +2191,7 @@ textarea.ed-input {
   background: var(--carte);
 }
 .pick label.dis {
-  color: #aaa;
+  color: var(--muet2);
 }
 .chosen {
   list-style: none;
@@ -2101,10 +2208,10 @@ textarea.ed-input {
   align-items: center;
   gap: 6px;
   padding: 0 0 6px;
-  border: 1px solid #cfd0e6;
+  border: 1px solid var(--bleu-bord2);
   border-left: 4px solid var(--bleu);
   border-radius: 6px;
-  background: #fff;
+  background: var(--carte);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
@@ -2118,7 +2225,7 @@ textarea.ed-input {
   gap: 6px;
   padding: 7px 8px;
   background: var(--bleu-hover);
-  border-bottom: 1px solid #dfe0f0;
+  border-bottom: 1px solid var(--bleu-bord2);
 }
 .chosen li > .ctrls,
 .chosen li > .fl {
@@ -2207,7 +2314,7 @@ textarea.ed-input {
 }
 .preview div {
   background: var(--bleu-clair);
-  border: 1px solid #b7b7f5;
+  border: 1px solid var(--bleu-bord);
   border-radius: 3px;
   font-size: 10px;
   padding: 1px 4px;
@@ -2275,7 +2382,7 @@ textarea.ed-input {
 }
 .btn.primary {
   background: var(--bleu);
-  color: #fff;
+  color: var(--sur-bleu);
 }
 #printhead {
   display: none;
@@ -2295,10 +2402,10 @@ th .thf {
   right: 1px;
   bottom: 3px;
   border: 0;
-  background: rgba(240, 240, 240, 0.92);
+  background: var(--voile2);
   padding: 0 2px;
   font-size: 10px;
-  color: #888;
+  color: var(--muet2);
   cursor: pointer;
   opacity: 0;
   border-radius: 3px;
@@ -2312,14 +2419,14 @@ th .thf:hover {
   color: var(--bleu);
 }
 th .thf.on {
-  color: #fff;
+  color: var(--sur-bleu);
   background: var(--bleu);
   opacity: 1;
 }
 .fpop {
   position: fixed;
   z-index: 28;
-  background: #fff;
+  background: var(--carte);
   border: 1px solid var(--bord);
   border-radius: 4px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);

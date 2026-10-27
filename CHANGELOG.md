@@ -26,6 +26,17 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.14] — Mode sombre — 2026-10-27
+
+### Utilisateurs
+- *Nouveau* — **Mode sombre** : le widget suit le réglage clair ou sombre du système (ordinateur ou téléphone), y compris s'il change pendant l'utilisation. Tableaux, fiches, graphiques, menus, fenêtres et configuration s'adaptent ; le fond de carte reste clair, légèrement assombri ; l'impression reste claire.
+
+### Administrateurs
+- *Nouveau* — **Configuration → Affichage → Mode clair / sombre** : comme le système de chaque utilisateur (par défaut), toujours clair ou toujours sombre.
+
+### Développeurs
+- *Nouveau* — Couleurs écrites en dur remplacées par des variables CSS (`--doux`, `--texte2`, `--sur-bleu`, `--voile`…), redéfinies sous `@media screen and (prefers-color-scheme: dark)` (sauf `html.clair`) et pour `html.sombre`. `nav.mode` (`""`, `clair`, `sombre`) ; `applyTheme` gère les classes et `PALETTE[0]` ; Chart.js (couleurs des légendes, graduations et grilles) et Plotly (fond, police, grilles) lisent les variables ; nouveau rendu au changement de `prefers-color-scheme` ; à l'impression en mode sombre, `chartColors(true)` repasse les graphiques déjà dessinés en couleurs claires.
+
 ## [0.9.3.13] — Parties repliables dans le message d'accueil — 2026-10-27
 
 ### Utilisateurs

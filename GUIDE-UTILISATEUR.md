@@ -16,6 +16,7 @@ Ce guide s'adresse aux **utilisateurs**, qui consultent les pages. Les administr
    - [Cartes](#cartes)
    - [Imprimer et exporter](#imprimer-et-exporter)
    - [Sur smartphone](#sur-smartphone)
+   - [Mode sombre](#mode-sombre)
 2. [Questions fréquentes](#2-questions-fréquentes)
 
 ---
@@ -107,6 +108,10 @@ Chaque vue s'affiche dans un **bloc**, avec un titre et quelques commandes :
 - Les blocs s'affichent les uns sous les autres.
 - Le menu des pages est regroupé derrière un bouton, en haut à gauche, qui porte le nom de la page affichée (icône de pages, ▾). Le menu ☰ des actions reste à droite.
 - Les listes de sélection tiennent sur une seule ligne. Leur nom n'est plus affiché : la valeur choisie suffit à les reconnaître, et le texte complet apparaît à l'ouverture de la liste.
+
+### Mode sombre
+
+Le widget suit le réglage clair ou sombre de votre ordinateur ou de votre téléphone (réglage du système, pas celui de Grist), sauf si l'administrateur a imposé un mode. L'impression est toujours en couleurs claires.
 
 ---
 

@@ -210,6 +210,12 @@ Section **4. Affichage**, **Apparence (tout le document)** :
 
 Sans choix, le widget s'affiche en style État. Le choix vaut pour toutes les pages du document ; il n'est jamais proposé aux utilisateurs.
 
+**Mode clair / sombre** (même section) :
+- **Comme le système de chaque utilisateur** (par défaut) : le widget passe en mode sombre quand l'ordinateur ou le téléphone de la personne est réglé en sombre, et bascule aussitôt si ce réglage change. C'est le réglage du système qui compte, pas le thème choisi dans Grist.
+- **Toujours clair** / **Toujours sombre** : impose un mode à tous.
+
+En mode sombre, les couleurs choisies dans Grist (pastilles, mises en forme conditionnelles, couleurs des graphiques) sont reprises telles quelles ; le fond de carte reste clair, légèrement assombri. L'impression est toujours en couleurs claires.
+
 ### Enregistrer
 
 **Enregistrer** applique la configuration et l'écrit dans la table `W_Composition` du document. Les filtres rapides reviennent alors à leur valeur à l'ouverture.
