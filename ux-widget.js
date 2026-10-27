@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.8). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.10). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.8"; // voir CHANGELOG.md
+const VERSION = "0.9.3.10"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -650,7 +650,7 @@ function cellStyle(f, row, rowSt = {}) {
   const rules = fRules.length ? fRules : refList(f.col.rules);
   let css = styleCss(applyRules(base, rules, o.rulesOptions || [], row));
   if (o.alignment) css += `text-align:${o.alignment};`;
-  if (o.wrap) css += "white-space:normal;";
+  if (o.wrap) css += "white-space:pre-line;"; // retour à la ligne de Grist : le texte s'enroule ET garde ses sauts de ligne
   return css;
 }
 // headerCss — Style de l'en-tête d'une colonne (couleurs d'en-tête définies dans Grist).

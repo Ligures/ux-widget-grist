@@ -26,6 +26,22 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.10] — Sauts de ligne des champs « retour à la ligne » — 2026-10-27
+
+### Utilisateurs
+- *Corrigé* — **Fiches et tableaux** : un texte sur plusieurs lignes (formule avec `\n`, par exemple) garde ses sauts de ligne quand le champ est réglé sur « retour à la ligne » dans Grist ; les lignes se suivaient.
+
+### Développeurs
+- *Corrigé* — `cellStyle` : option `wrap` traduite par `white-space: pre-line` (au lieu de `normal`, qui fusionnait les sauts de ligne).
+
+## [0.9.3.9] — Distancier : moteur Valhalla — 2026-10-26
+
+### Administrateurs
+- *Corrigé* — **Distancier routier** : le moteur `bdtopo-osrm` a été retiré par l'IGN (toutes les demandes recevaient « 404 Not found ») ; le calcul utilise désormais `bdtopo-valhalla`. Nouveaux paramètres **Moteur** (`bdtopo-valhalla` ou `bdtopo-pgr`) et **Appels par seconde** (1 par défaut, limite de la passerelle IGN).
+
+### Développeurs
+- *Amélioré* — Tracé demandé au format `polyline` (réponse plus légère) ; intervalle entre appels calculé d'après `opt.rate`.
+
 ## [0.9.3.8] — Distancier : diagnostic des échecs — 2026-10-26
 
 ### Administrateurs
