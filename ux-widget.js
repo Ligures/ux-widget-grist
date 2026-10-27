@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.10). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.11). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.10"; // voir CHANGELOG.md
+const VERSION = "0.9.3.11"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -2630,8 +2630,14 @@ const isMapSection = (sec) => !!mapSpec(sec);
 // mdSpec — Colonne « Content » du widget Markdown (mapping par colId ou numéro de colonne), sinon null.
 function mdSpec(sec) {
   const cv = parseJSON(parseJSON(sec?.options).customView, null);
-  if (!cv || !/markdown/i.test(cv.url || "")) return null;
-  const v = (parseJSON(cv.columnsMapping, {}) || {}).Content;
+  if (!cv) return null;
+  // widget Markdown de Grist : reconnu par son adresse (ancienne installation) ou, depuis la galerie de widgets,
+  // par son identifiant (« @gristlabs/widget-markdown », sans adresse) ; à défaut, par son unique champ « Content »
+  const mapping = parseJSON(cv.columnsMapping, {}) || {};
+  const ids = [cv.url, cv.widgetId, cv.pluginId, cv.widgetDef?.widgetId, cv.widgetDef?.name, cv.widgetDef?.url].filter(Boolean).join(" ");
+  const keys = Object.keys(mapping);
+  if (!/markdown/i.test(ids) && !(keys.length === 1 && keys[0] === "Content" && !/plotly|chart/i.test(ids))) return null;
+  const v = mapping.Content;
   return { content: Array.isArray(v) ? v[0] : v };
 }
 const isMarkdownSection = (sec) => !!mdSpec(sec);
