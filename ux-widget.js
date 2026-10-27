@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.11). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.3.12). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.11"; // voir CHANGELOG.md
+const VERSION = "0.9.3.12"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3924,7 +3924,10 @@ function advChartSpec(sec) {
 async function renderAdvChart(info, rows, body, jobs) {
   const spec = advChartSpec(info.sec);
   if (!spec?.data) {
-    body.innerHTML = `<div class="msg">Widget personnalisé non reconnu comme graphique avancé${spec ? ` (url : ${esc(spec.url)} ; options : ${esc(spec.keys.join(", ") || "aucune")})` : ""}</div>`;
+    // diagnostic : description du widget dans Grist (sans ses options, parfois volumineuses)
+    const cv = parseJSON(parseJSON(info.sec.options).customView, null);
+    const raw = cv ? JSON.stringify({ ...cv, widgetOptions: undefined }).slice(0, 400) : "aucune description";
+    body.innerHTML = `<div class="msg">Widget personnalisé non reconnu (ni graphique avancé, ni texte Markdown, ni carte)${spec ? ` — url : ${esc(spec.url) || "aucune"} ; options : ${esc(spec.keys.join(", ") || "aucune")}` : ""}<br><small style="font-family:monospace;word-break:break-all">${esc(raw)}</small></div>`;
     return;
   }
   const cols = S.meta.colsByTable.get(info.sec.tableRef) || [];

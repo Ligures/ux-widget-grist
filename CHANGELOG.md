@@ -26,6 +26,11 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.12] — Diagnostic des widgets personnalisés non reconnus — 2026-10-27
+
+### Administrateurs
+- *Amélioré* — **Widget personnalisé non reconnu** : le message affiche la description du widget enregistrée par Grist (adresse, identifiant, colonnes associées), pour comprendre pourquoi il n'est pas reconnu.
+
 ## [0.9.3.11] — Widgets Markdown installés depuis la galerie — 2026-10-27
 
 ### Utilisateurs
