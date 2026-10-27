@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.3.11] — Widgets Markdown installés depuis la galerie — 2026-10-27
+
+### Utilisateurs
+- *Corrigé* — **Textes Markdown** : les widgets Markdown ajoutés depuis la galerie de widgets de Grist s'affichent ; ils étaient pris pour des graphiques et restaient vides.
+
+### Développeurs
+- *Corrigé* — `mdSpec` reconnaît le widget Markdown par `widgetId` (`@gristlabs/widget-markdown`, adresse absente) ou par son unique correspondance `Content`, en plus de l'adresse.
+
 ## [0.9.3.10] — Sauts de ligne des champs « retour à la ligne » — 2026-10-27
 
 ### Utilisateurs
