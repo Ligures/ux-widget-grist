@@ -183,6 +183,10 @@
               <option value="ign">IGN (Géoplateforme)</option>
             </select></label
           >
+          <label
+            title="Metric-OSRM : les trajets par bateau (OpenStreetMap : liaisons maritimes) sont exclus. Une école d'île n'est alors reliée qu'aux écoles de la même île ; une île sans autre école est ignorée."
+            ><span>Sans bateaux</span> <input type="checkbox" data-opt="noFerry"
+          /></label>
           <label title="Garde-fou : nombre maximal d'écoles candidates essayées pour une école">Candidates au plus <input type="number" min="5" max="200" data-opt="maxc" /></label>
           <label
             title="Moteur de calcul de l'IGN (liste : data.geopf.fr/navigation/getcapabilities). Sans effet avec Metric-OSRM."
@@ -240,6 +244,7 @@
         endpoint: ENDPOINTS[0],
         engine: "metric", // « metric » : serveur OSRM de l'Insee (Metric-OSRM) ; « ign » : Géoplateforme
         osrm: "https://metric-osrm-backend.lab.sspcloud.fr",
+        noFerry: true, // Metric-OSRM : sans bacs ni bateaux (les îles ne sont reliées qu'entre écoles de la même île)
       };
       const BATCH = 25; // Metric-OSRM : destinations demandées en un seul appel (service « table »)
       let opt = { ...DEFAULTS };
@@ -249,13 +254,18 @@
 
       // ---------- paramètres (options de la vue) ----------
       function showOpts() {
-        for (const el of document.querySelectorAll("[data-opt]")) el.value = opt[el.dataset.opt];
+        for (const el of document.querySelectorAll("[data-opt]")) {
+          if (el.type === "checkbox") el.checked = opt[el.dataset.opt] !== false;
+          else el.value = opt[el.dataset.opt];
+        }
       }
       document.addEventListener("change", (ev) => {
         const k = ev.target.dataset?.opt;
         if (!k) return;
         const v =
-          ev.target.type === "number" ? Number(ev.target.value) || DEFAULTS[k] : k === "filtCol" ? ev.target.value.trim() : ev.target.value.trim() || DEFAULTS[k];
+          ev.target.type === "checkbox"
+            ? ev.target.checked
+            : ev.target.type === "number" ? Number(ev.target.value) || DEFAULTS[k] : k === "filtCol" ? ev.target.value.trim() : ev.target.value.trim() || DEFAULTS[k];
         opt[k] = v;
         grist.setOption(k, v).catch(() => {});
         prepare();
@@ -406,7 +416,7 @@
       // ---------- Metric-OSRM (Insee) : service « table » d'OSRM, une source vers plusieurs destinations ----------
       const osrmUrl = (a, list) =>
         `${String(opt.osrm).replace(/\/+$/, "")}/table/v1/driving/${[a, ...list].map((p) => `${p.lon},${p.lat}`).join(";")}` +
-        `?sources=0&annotations=distance,duration`;
+        `?sources=0&annotations=distance,duration${opt.noFerry ? "&exclude=ferry" : ""}`;
       async function metricTable(a, list) {
         const url = osrmUrl(a, list);
         for (let essai = 0; essai < 4; essai++) {
@@ -430,6 +440,8 @@
           } catch {
             return fail(`HTTP ${res.status}, réponse illisible`);
           }
+          if (j.code === "InvalidValue" && opt.noFerry && /exclude/i.test(j.message || ""))
+            throw new Error("le serveur ne sait pas exclure les bateaux : décochez « Sans bateaux » dans les paramètres");
           if (!res.ok || j.code !== "Ok") return fail(`HTTP ${res.status} ${j.code || ""}`);
           return list.map((_, i) => {
             const m = j.distances?.[0]?.[i + 1],
@@ -564,7 +576,12 @@
               // arrêt exact : la N-ième meilleure distance routière ne peut plus être battue
               if (found.length >= N && found[N - 1] <= c.d) break;
               if (tried >= MAXC) {
-                log(`École #${e.id} : arrêt après ${MAXC} candidates (garde-fou) — résultat peut-être incomplet.`, "err");
+                log(
+                  found.length < N
+                    ? `École #${e.id} : seulement ${found.length} école(s) reliée(s) par la route parmi ${MAXC} candidates (île ?).`
+                    : `École #${e.id} : arrêt après ${MAXC} candidates (garde-fou) — résultat peut-être incomplet.`,
+                  "err",
+                );
                 break;
               }
               if (opt.engine !== "ign" && needsCall(e, c.o)) await prefetch(e, cands, i, MAXC - tried);
@@ -576,8 +593,9 @@
                 found.push(r.km);
                 found.sort((x, y) => x - y);
               }
-              if (!found.length && fails >= 3 && S.fetched) {
-                log(`École #${e.id} : aucun itinéraire vers les 3 écoles les plus proches (île ?) — ignorée.`, "err");
+              // IGN (un appel par trajet) : on n'insiste pas après 3 échecs ; Metric-OSRM : le lot est déjà calculé
+              if (opt.engine === "ign" && !found.length && fails >= 3 && S.fetched) {
+                log(`École #${e.id} : aucun itinéraire par la route vers les 3 écoles les plus proches (île sans autre école ?) — ignorée.`, "err");
                 break;
               }
             }
