@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.0). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.1). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.0"; // voir CHANGELOG.md
+const VERSION = "0.9.4.1"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3823,7 +3823,7 @@ window.addEventListener("storage", (ev) => {
 
 // renderSelectors — Affiche les listes de sélection dans l'en-tête (avec regroupement et ordre).
 // pageIcon — Icône de la page affichée : celle de son lien dans le menu des pages (0.9.4.0), nettoyée par safeSvg.
-//   Classe au choix : « picon » (en-tête de la page) ou « phicon » (en-tête imprimé).
+//   Classe au choix : « ticon » (devant le titre), « picon » (devant les listes, page sans titre), « phicon » (impression).
 function pageIcon(cls = "picon") {
   const it = (S.nav?.items || []).find((x) => x.icon && x.cfg && x.cfg === S.cfg?.name);
   const svg = it ? safeSvg(it.icon) : "";
@@ -3832,8 +3832,8 @@ function pageIcon(cls = "picon") {
 async function renderSelectors(sels, ctx) {
   const box = $("#filters");
   const parts = [];
-  // icône de la page, avant les listes (ou seule s'il n'y a pas de liste)
-  const ico = pageIcon();
+  // icône de la page, avant les listes (ou seule s'il n'y a pas de liste) — seulement si la page n'affiche pas de titre
+  const ico = String(S.cfg?.title || "").trim() ? "" : pageIcon();
   if (ico) parts.push(ico);
   for (const b of sels) {
     const info = getInfo(b.id);
@@ -4150,7 +4150,8 @@ async function render() {
   const my = (S.renderSeq = (S.renderSeq || 0) + 1); // un rendu plus récent annule celui-ci
   const stale = () => my !== S.renderSeq;
   applyTheme(S.nav?.theme); // apparence DSFR ou neutre (peut changer à l'enregistrement de la configuration)
-  $("#title").textContent = S.cfg.title || "";
+  // titre de la page, précédé de son icône de menu (comme sur le lien du menu) ; sans titre, l'icône va devant les listes
+  $("#title").innerHTML = String(S.cfg.title || "").trim() ? `${pageIcon("ticon")}<span>${esc(S.cfg.title)}</span>` : "";
   renderForms();
   const setNoTitle = () =>
     $("#top").classList.toggle(

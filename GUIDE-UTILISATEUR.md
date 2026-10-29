@@ -27,7 +27,7 @@ Ce guide s'adresse aux **utilisateurs**, qui consultent les pages. Les administr
 
 En haut de la page, de gauche à droite et de haut en bas :
 
-- **Menu des pages** : un clic affiche une autre page. Seules les pages auxquelles vous avez accès apparaissent. Une icône peut précéder le nom d'une page ; elle est aussi rappelée en tête de la page, avant les listes de sélection (sauf sur smartphone).
+- **Menu des pages** : un clic affiche une autre page. Seules les pages auxquelles vous avez accès apparaissent. Une icône peut précéder le nom d'une page ; elle est aussi rappelée devant le titre de la page, ou, sans titre, avant les listes de sélection (sauf sur smartphone).
 - **Boutons directs**, à gauche du menu ☰ :
   - **⟳ Actualiser** : recharge les données et la configuration des vues ;
   - **⚙ Configurer** : réservé aux administrateurs.

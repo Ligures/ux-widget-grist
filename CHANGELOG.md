@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.1] — Icône devant le titre de la page — 2026-10-29
+
+### Utilisateurs
+- *Amélioré* — **Icône de la page** : quand la page affiche un titre, l'icône le précède, à sa taille, comme sur le lien du menu. Sans titre, elle reste devant les listes de sélection.
+
+### Développeurs
+- *Amélioré* — `pageIcon("ticon")` dans `#title` ; `picon` réservé aux pages sans titre.
+
 ## [0.9.4.0] — Icône de la page — 2026-10-29
 
 Palier 0.9.4 ; les livraisons 0.9.3.0 à 0.9.3.14 sont regroupées dans « 0.9.3 » ci-dessous.
