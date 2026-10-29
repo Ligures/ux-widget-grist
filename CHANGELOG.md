@@ -26,133 +26,46 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
-## [0.9.3.14] — Mode sombre — 2026-10-27
+## [0.9.4.0] — Icône de la page — 2026-10-29
+
+Palier 0.9.4 ; les livraisons 0.9.3.0 à 0.9.3.14 sont regroupées dans « 0.9.3 » ci-dessous.
 
 ### Utilisateurs
-- *Nouveau* — **Mode sombre** : le widget suit le réglage clair ou sombre du système (ordinateur ou téléphone), y compris s'il change pendant l'utilisation. Tableaux, fiches, graphiques, menus, fenêtres et configuration s'adaptent ; le fond de carte reste clair, légèrement assombri ; l'impression reste claire.
+- *Nouveau* — **Icône de la page** : l'icône du lien de menu de la page s'affiche en tête de page, avant les listes de sélection, à leur hauteur et dans la couleur du thème ; seule, s'il n'y a pas de liste. Elle est masquée sur smartphone et reprise dans l'en-tête imprimé.
 
 ### Administrateurs
-- *Nouveau* — **Configuration → Affichage → Mode clair / sombre** : comme le système de chaque utilisateur (par défaut), toujours clair ou toujours sombre.
+- *Nouveau* — Rien à régler : l'icône est celle saisie pour le lien de la page dans **Menu des pages** (champ « Icône (code SVG) »). Une page sans icône dans le menu n'en affiche pas.
 
 ### Développeurs
-- *Nouveau* — Couleurs écrites en dur remplacées par des variables CSS (`--doux`, `--texte2`, `--sur-bleu`, `--voile`…), redéfinies sous `@media screen and (prefers-color-scheme: dark)` (sauf `html.clair`) et pour `html.sombre`. `nav.mode` (`""`, `clair`, `sombre`) ; `applyTheme` gère les classes et `PALETTE[0]` ; Chart.js (couleurs des légendes, graduations et grilles) et Plotly (fond, police, grilles) lisent les variables ; nouveau rendu au changement de `prefers-color-scheme` ; à l'impression en mode sombre, `chartColors(true)` repasse les graphiques déjà dessinés en couleurs claires.
+- *Nouveau* — `pageIcon()` : icône de l'élément de `nav.items` dont `cfg` est la configuration affichée, nettoyée par `safeSvg` ; classes `picon` (en-tête, 48 px) et `phicon` (impression, 40 px).
 
-## [0.9.3.13] — Parties repliables dans le message d'accueil — 2026-10-27
+## [0.9.3] — Message d'accueil, mode sombre, icônes du menu, distancier routier — 2026-10-25 → 2026-10-27
+
+Regroupe les livraisons 0.9.3.0 à 0.9.3.14.
 
 ### Utilisateurs
-- *Nouveau* — **Message d'accueil** : certaines parties peuvent être repliées ; un clic sur leur titre les affiche.
+- *Nouveau* — **Message d'accueil** à l'ouverture du widget, quand l'administrateur en a rédigé un : fenêtre de 60 % de la largeur (90 % sur écran étroit), parties repliables, case **« Ne plus afficher ce message »** (le message revient si le texte change) ; **Aide → « Message d'accueil »** le réaffiche à la demande.
+- *Nouveau* — **Mode sombre** : le widget suit le réglage clair ou sombre du système, y compris pendant l'utilisation ; le fond de carte reste clair, légèrement assombri ; l'impression reste claire.
+- *Nouveau* — **Nombre de lignes** en bas de chaque tableau (« 12 sur 686 lignes » pendant une recherche).
+- *Nouveau* — **Icônes** devant les noms des pages dans le menu.
+- *Amélioré* — **Style neutre** : couleur principale rouge bordeaux, distincte du bleu de l'État.
+- *Corrigé* — **Textes sur plusieurs lignes** : les sauts de ligne sont conservés dans les champs « retour à la ligne ».
+- *Corrigé* — **Widgets Markdown** ajoutés depuis la galerie de Grist : affichés (ils étaient pris pour des graphiques).
 
 ### Administrateurs
-- *Nouveau* — **Message d'accueil** : une ligne `+++ Titre` ouvre une partie repliable (`+++! Titre` : dépliée au départ), une ligne `+++` la ferme. Voir le guide administrateur.
+- *Nouveau* — Section **Message d'accueil** : texte en Markdown commun à toutes les pages, parties repliables (`+++ Titre` … `+++`, `+++! Titre` : dépliée au départ), bouton **Aperçu**.
+- *Nouveau* — **Affichage → Mode clair / sombre** : comme le système (par défaut), toujours clair ou toujours sombre.
+- *Nouveau* — **Menu des pages** : champ « Icône (code SVG) » par lien, avec aperçu ; les fichiers SVG téléchargés tels quels sont acceptés (déclaration XML, styles, classes, blocs `<switch>`).
+- *Nouveau* — Encadré **Tableau** : case **Nombre de lignes** (cochée par défaut).
+- *Nouveau* — **Distancier routier** (`outils/distancier.html`, widget à accès complet) : distances par la route de chaque école vers ses N écoles les plus proches par la route (résultat exact) et vers son collège de secteur, ajoutées à `REF_DISTANCES`. Service Metric-OSRM de l'Insee (par défaut, sans clé, 25 destinations par appel, sans bateaux) ou IGN ; restriction aux écoles publiques ; collège en référence ou en code UAI ; bouton **Tester un appel** ; arrêt et reprise sans perte.
+- *Amélioré* — **Widget personnalisé non reconnu** : le message affiche la description enregistrée par Grist.
+- *Amélioré* — `index.html` contient la fenêtre du message d'accueil : à déposer avec `ux-widget.js`.
 
 ### Développeurs
-- *Nouveau* — `mdFolds` convertit ces blocs en `<details><summary>` avant `marked` ; DOMPurify garde l'attribut `open`.
-
-## [0.9.3.12] — Diagnostic des widgets personnalisés non reconnus — 2026-10-27
-
-### Administrateurs
-- *Amélioré* — **Widget personnalisé non reconnu** : le message affiche la description du widget enregistrée par Grist (adresse, identifiant, colonnes associées), pour comprendre pourquoi il n'est pas reconnu.
-
-## [0.9.3.11] — Widgets Markdown installés depuis la galerie — 2026-10-27
-
-### Utilisateurs
-- *Corrigé* — **Textes Markdown** : les widgets Markdown ajoutés depuis la galerie de widgets de Grist s'affichent ; ils étaient pris pour des graphiques et restaient vides.
-
-### Développeurs
-- *Corrigé* — `mdSpec` reconnaît le widget Markdown par `widgetId` (`@gristlabs/widget-markdown`, adresse absente) ou par son unique correspondance `Content`, en plus de l'adresse.
-
-## [0.9.3.10] — Sauts de ligne des champs « retour à la ligne » — 2026-10-27
-
-### Utilisateurs
-- *Corrigé* — **Fiches et tableaux** : un texte sur plusieurs lignes (formule avec `\n`, par exemple) garde ses sauts de ligne quand le champ est réglé sur « retour à la ligne » dans Grist ; les lignes se suivaient.
-
-### Développeurs
-- *Corrigé* — `cellStyle` : option `wrap` traduite par `white-space: pre-line` (au lieu de `normal`, qui fusionnait les sauts de ligne).
-
-## [0.9.3.9] — Distancier : moteur Valhalla — 2026-10-26
-
-### Administrateurs
-- *Corrigé* — **Distancier routier** : le moteur `bdtopo-osrm` a été retiré par l'IGN (toutes les demandes recevaient « 404 Not found ») ; le calcul utilise désormais `bdtopo-valhalla`. Nouveaux paramètres **Moteur** (`bdtopo-valhalla` ou `bdtopo-pgr`) et **Appels par seconde** (1 par défaut, limite de la passerelle IGN).
-
-### Développeurs
-- *Amélioré* — Tracé demandé au format `polyline` (réponse plus légère) ; intervalle entre appels calculé d'après `opt.rate`.
-
-## [0.9.3.8] — Distancier : diagnostic des échecs — 2026-10-26
-
-### Administrateurs
-- *Corrigé* — **Distancier routier** : les échecs ne sont plus enregistrés dans la table des distances, et ceux d'un calcul précédent sont supprimés au lancement pour être recalculés. Si le service refuse toutes les demandes, le calcul s'arrête après 3 écoles en affichant sa réponse, au lieu de signaler chaque école comme une île.
-- *Nouveau* — Bouton **Tester un appel** : un seul appel à l'IGN, avec l'adresse et la réponse brute.
-
-### Développeurs
-- *Corrigé* — Coordonnées passées avec des virgules littérales (`start=lon,lat`) et non encodées en `%2C`. Code HTTP et début de la réponse journalisés pour les 3 premiers échecs.
-
-## [0.9.3.7] — Distancier routier — 2026-10-26
-
-### Administrateurs
-- *Nouveau* — **Distancier routier** (`outils/distancier.html`, widget personnalisé à accès complet) : distances par la route (IGN) de chaque école vers ses 5 écoles les plus proches par la route et vers son collège de secteur, ajoutées à `REF_DISTANCES`. Ne calcule que les paires manquantes ; arrêt et reprise sans perte. Voir le guide administrateur.
-
-### Développeurs
-- *Nouveau* — Recherche exacte des N plus proches par la route avec arrêt anticipé (distance routière ≥ distance à vol d'oiseau), réutilisation du sens inverse, débit limité à 4 appels/s, écritures `BulkAddRecord` par lots de 25. Paramètres dans les options de la vue (`grist.setOption`).
-
-## [0.9.3.6] — Icônes SVG avec <switch> — 2026-10-26
-
-### Administrateurs
-- *Corrigé* — **Icônes du menu** : les icônes dont le dessin est rangé dans un bloc `<switch>` (Streamline Carbon…) s'affichent ; elles étaient vidées par le nettoyage.
-
-## [0.9.3.5] — Icônes SVG téléchargées, style neutre bordeaux — 2026-10-25
-
-### Utilisateurs
-- *Amélioré* — **Style neutre** : la couleur principale passe du bleu au rouge bordeaux, pour le distinguer du style État (DSFR) d'un coup d'œil.
-
-### Administrateurs
-- *Corrigé* — **Icônes du menu** : les fichiers SVG téléchargés tels quels s'affichent, même quand ils commencent par `<?xml …?>` ou un commentaire, ou quand leurs couleurs sont données dans un style (`style="…"`, `<style>` à classes, comme chez Streamline).
-
-### Développeurs
-- *Amélioré* — `safeSvg` reporte les déclarations `style` et les règles de classes simples en attributs avant nettoyage ; `NEUTRAL_BLUE` et `html.neutre` passent à `#8c1c2c`.
-
-## [0.9.3.4] — Icônes du menu des pages — 2026-10-25
-
-### Utilisateurs
-- *Nouveau* — **Menu des pages** : une icône peut précéder le nom de la page.
-
-### Administrateurs
-- *Nouveau* — **Configuration → Menu des pages** : champ « Icône (code SVG) » pour chaque lien, avec aperçu. Coller le code d'un fichier .svg ; l'icône prend la couleur du lien.
-
-### Développeurs
-- *Sécurité* — Le SVG collé est nettoyé (`safeSvg`) : formes simples et attributs de dessin seulement, couleurs remplacées par `currentColor`. Stocké dans `nav.items[].icon`.
-
-## [0.9.3.3] — Largeur du message d'accueil — 2026-10-25
-
-### Utilisateurs
-- *Amélioré* — **Message d'accueil** : la fenêtre occupe 60 % de la largeur sur grand écran, et 90 % sur écran étroit (900 px ou moins).
-
-## [0.9.3.2] — Nombre de lignes des tableaux — 2026-10-25
-
-### Utilisateurs
-- *Nouveau* — **Nombre de lignes** en bas à droite de chaque tableau (« 686 lignes »). Avec la recherche du bloc, il indique les lignes trouvées : « 12 sur 686 lignes ». Il tient compte des liaisons, des filtres rapides et des filtres de colonnes.
-
-### Administrateurs
-- *Nouveau* — Encadré **Tableau** : case **Nombre de lignes**, cochée par défaut (`rowCount`).
-
-## [0.9.3.1] — Revoir le message d'accueil depuis l'aide — 2026-10-25
-
-### Utilisateurs
-- *Nouveau* — **Aide → « Message d'accueil »** : un bouton, à côté des onglets de l'aide, réaffiche le message d'accueil, même après avoir coché « Ne plus afficher ce message ». La case reste cochée : le message ne revient pas au démarrage suivant. Le bouton n'apparaît que si un message est défini.
-
-## [0.9.3.0] — Message d'accueil — 2026-10-25
-
-Palier 0.9.3 ; les livraisons 0.9.2.0 à 0.9.2.9 sont regroupées dans « 0.9.2 » ci-dessous.
-
-### Utilisateurs
-- *Nouveau* — **Message d'accueil** à l'ouverture du widget, quand l'administrateur en a rédigé un. La case **« Ne plus afficher ce message »** le masque lors des visites suivantes (mémorisé dans le navigateur) ; il revient si l'administrateur modifie le texte.
-
-### Administrateurs
-- *Nouveau* — Section **Message d'accueil** de la configuration : texte en Markdown, commun à toutes les pages, et bouton **Aperçu**. Vide : pas de message. Enregistré avec la navigation (ligne `_Navigation` de `W_Composition`).
-- *Amélioré* — `index.html` contient la nouvelle fenêtre : à déposer avec `ux-widget.js`.
-
-### Développeurs
-- *Sécurité* — Message mis en forme par marked puis nettoyé par DOMPurify ; liens ouverts dans un nouvel onglet.
-- *Nouveau* — « Ne plus afficher » mémorise l'empreinte du texte (`localStorage`, clé `uxwg_welcome_<document>`), d'où le retour du message après modification.
+- *Sécurité* — Message d'accueil mis en forme par marked puis nettoyé par DOMPurify (attribut `open` conservé) ; SVG des icônes nettoyé par `safeSvg` (formes simples, attributs de dessin, couleurs en `currentColor`).
+- *Nouveau* — Thème par variables CSS redéfinies sous `prefers-color-scheme: dark` et pour `html.sombre` ; `nav.mode`, `nav.welcome`, `nav.items[].icon` ; graphiques Chart.js et Plotly aux couleurs du thème, repassés en clair à l'impression.
+- *Nouveau* — Distancier : arrêt anticipé exact (distance routière ≥ distance à vol d'oiseau), réutilisation du sens inverse, service « table » d'OSRM par lots de 25 (`exclude=ferry`), débit réglable, écritures `BulkAddRecord` par lots de 25, échecs jamais enregistrés.
+- *Corrigé* — `cellStyle` : `wrap` → `white-space: pre-line` ; `mdSpec` reconnaît le widget Markdown par `widgetId` ou par sa seule correspondance `Content`.
 
 ## [0.9.2] — Configuration réorganisée, journal par public, Markdown, secteurs de collège — 2026-10-22 → 2026-10-24
 

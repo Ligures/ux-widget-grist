@@ -195,7 +195,7 @@ Section **5. Navigation entre pages**. Ce réglage est commun à toutes les conf
 - **Page d'accueil** : page affichée à l'ouverture, pour tous les utilisateurs. Avec « Changer de page dans le widget », elle s'impose ; sinon, elle sert quand le widget n'a pas de configuration enregistrée. Si le widget ne sait pas quelle configuration afficher, seul un administrateur se voit poser la question, et sa réponse devient la page d'accueil ; les utilisateurs ne sont jamais interrogés.
 - **Ouvrir les pages en mode page unique** : les liens ouvrent Grist sans ses menus. Proposé seulement sans « Changer de page dans le widget » ; sinon, utiliser le bouton **Plein écran** de la barre d'outils, réservé aux administrateurs.
 - **Pour chaque lien** :
-  - icône (facultative) : code d'un fichier SVG collé dans le champ « Icône (code SVG) » — ouvrir le fichier .svg dans un éditeur de texte (Bloc-notes…), tout sélectionner, copier. L'aperçu s'affiche à gauche du champ (« ? » rouge : code non reconnu). L'icône prend la couleur du lien ; scripts, styles et images externes sont retirés ;
+  - icône (facultative), affichée devant le lien et en tête de la page elle-même (avant les listes de sélection, et dans l'en-tête imprimé) : code d'un fichier SVG collé dans le champ « Icône (code SVG) » — ouvrir le fichier .svg dans un éditeur de texte (Bloc-notes…), tout sélectionner, copier. L'aperçu s'affiche à gauche du champ (« ? » rouge : code non reconnu). L'icône prend la couleur du lien ; scripts, styles et images externes sont retirés ;
   - libellé ;
   - infobulle (facultative) : texte affiché au survol du lien ; sans infobulle, le survol montre l'adresse de la page, sauf avec « Changer de page dans le widget » ;
   - page Grist, ou **— ce widget —** ;
@@ -226,9 +226,12 @@ En mode sombre, les couleurs choisies dans Grist (pastilles, mises en forme cond
 Outil séparé, à installer dans une page d'administration : vue **Widget personnalisé**, adresse `https://ligures.github.io/ux-widget-grist/outils/distancier.html`, accès **complet**.
 
 1. Créer la table des distances (`REF_DISTANCES`) : `Depart`, `Arrivee` (références à `REF_ETAB`), `Km`, `Minutes` (numériques), `Statut` (texte), `Calcule_le` (date).
-2. Vérifier les **Paramètres** (noms de tables et de colonnes). Le bandeau indique le nombre d'écoles localisées et de distances déjà connues.
-3. Faire un essai : « Écoles à traiter » = 5, puis **Calculer les distances manquantes**. Contrôler quelques lignes dans `REF_DISTANCES`.
-4. Remettre 0 (toutes les écoles) et relancer. Laisser l'onglet ouvert : compter environ 1 heure pour un département (l'IGN accepte 1 appel par seconde). **Arrêter** est sans risque : on reprend où l'on en était.
+2. Vérifier les **Paramètres** : noms de tables et de colonnes, **Restreindre à** (par défaut les écoles dont `Statut_public_prive` contient « Public » ; vide : toutes), **Service** (Metric-OSRM de l'Insee par défaut, ou IGN), **Sans bateaux** (coché : les îles ne sont reliées qu'à leurs propres écoles). Le bandeau indique le nombre d'écoles retenues, celles dont le collège de secteur est localisé, et les distances déjà connues ; en rouge, il signale un collège renseigné mais introuvable ou sans coordonnées.
+3. Cliquer sur **Tester un appel** : le journal montre la réponse du service pour une école et ses voisines.
+4. Faire un essai : « Écoles à traiter » = 5, puis **Calculer les distances manquantes**. Contrôler quelques lignes dans `REF_DISTANCES`.
+5. Remettre 0 (toutes les écoles) et relancer. Laisser l'onglet ouvert : avec Metric-OSRM, compter environ 1 appel par école, soit une vingtaine de minutes pour 1 400 écoles. **Arrêter** est sans risque : on reprend où l'on en était.
+
+Le distancier écrit dans le document à chaque lot de 25 lignes : les formules qui lisent `REF_DISTANCES` se recalculent alors. Lancez-le de préférence quand personne d'autre ne travaille sur le document, et placez-le seul sur une page d'administration (il lit les tables entières à son ouverture). Les colonnes de formule de `REF_DISTANCES` (un résumé du trajet, par exemple) peuvent être des formules d'initialisation, recalculées seulement si `Depart` ou `Arrivee` change.
 
 Les distances calculées ne bougent plus. Après le déplacement d'une école (nouvelles coordonnées), supprimer ses lignes dans `REF_DISTANCES` (en départ et en arrivée), puis relancer. Après l'ajout d'une école, relancer simplement.
 

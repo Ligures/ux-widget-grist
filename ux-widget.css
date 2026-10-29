@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.3.14).
+/* UX widget grist — feuilles de style (version 0.9.4.0).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -616,8 +616,16 @@ button {
   padding: 0;
 }
 #filters:empty,
-#filters:not(:has(label:not(.solo))) {
+#filters:not(:has(label:not(.solo), .picon)) {
   display: none;
+}
+/* icône de la page (0.9.4.0) : celle de son lien de menu, à la hauteur d'une liste (titre + champ), couleur du thème */
+#filters .picon {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  color: var(--bleu);
+  align-self: flex-end;
 }
 #filters label.solo {
   display: none;
@@ -634,6 +642,12 @@ button {
     min-width: 0;
   }
   #filters label .fl {
+    display: none;
+  }
+  #filters .picon {
+    display: none;
+  }
+  #filters:not(:has(label:not(.solo))) {
     display: none;
   }
   #filters select {
@@ -2511,10 +2525,18 @@ html.printing #grid {
     display: none !important;
   }
   #printhead {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     margin: 0 0 8px;
     padding-bottom: 6px;
     border-bottom: 2px solid var(--bleu);
+  }
+  #printhead .phicon {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    color: var(--bleu);
   }
   #printhead h1 {
     font-size: 16px;

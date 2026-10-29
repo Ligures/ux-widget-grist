@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.3.14). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.0). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.3.14"; // voir CHANGELOG.md
+const VERSION = "0.9.4.0"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3822,9 +3822,19 @@ window.addEventListener("storage", (ev) => {
 });
 
 // renderSelectors — Affiche les listes de sélection dans l'en-tête (avec regroupement et ordre).
+// pageIcon — Icône de la page affichée : celle de son lien dans le menu des pages (0.9.4.0), nettoyée par safeSvg.
+//   Classe au choix : « picon » (en-tête de la page) ou « phicon » (en-tête imprimé).
+function pageIcon(cls = "picon") {
+  const it = (S.nav?.items || []).find((x) => x.icon && x.cfg && x.cfg === S.cfg?.name);
+  const svg = it ? safeSvg(it.icon) : "";
+  return svg ? svg.replace('class="nico"', `class="${cls}"`) : "";
+}
 async function renderSelectors(sels, ctx) {
   const box = $("#filters");
   const parts = [];
+  // icône de la page, avant les listes (ou seule s'il n'y a pas de liste)
+  const ico = pageIcon();
+  if (ico) parts.push(ico);
   for (const b of sels) {
     const info = getInfo(b.id);
     const key = syncKey(b);
@@ -4920,7 +4930,7 @@ function selectionSummary() {
 async function printPage() {
   const ph = $("#printhead"),
     sel = selectionSummary();
-  ph.innerHTML = `<h1>${esc(S.cfg.title || S.cfg.name || "")}</h1>${sel ? `<p>${esc(sel)}</p>` : ""}<p>Édité le ${new Date().toLocaleDateString("fr-FR")}</p>`;
+  ph.innerHTML = `${pageIcon("phicon")}<div><h1>${esc(S.cfg.title || S.cfg.name || "")}</h1>${sel ? `<p>${esc(sel)}</p>` : ""}<p>Édité le ${new Date().toLocaleDateString("fr-FR")}</p></div>`;
   // tout déplier, sortir du plein écran, et attendre la fin de l'affichage progressif des grands tableaux
   const saved = { ...S.collapsed },
     maxed = S.maxed;
