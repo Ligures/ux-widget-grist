@@ -26,6 +26,22 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.3] — Couleurs des séries regroupées des graphiques avancés — 2026-10-29
+
+### Utilisateurs
+- *Corrigé* — **Graphiques avancés dont les séries viennent d'une colonne de regroupement** (« Split » de l'éditeur, cas des graphiques natifs convertis) : chaque série prend la couleur choisie, d'après son nom renommé ou sa valeur ; la colonne de codes et la couleur de repli s'appliquent aussi.
+
+### Développeurs
+- *Corrigé* — `renderAdvChart` : transformation `groupby` colorée par `styles[].value.marker.color` (cible = valeur du groupe ; nom lu dans `styles[].value.name`), au lieu d'une couleur par barre.
+
+## [0.9.4.2] — Couleurs des barres des graphiques avancés — 2026-10-29
+
+### Utilisateurs
+- *Corrigé* — **Graphiques avancés en barres à plusieurs séries** (par exemple convertis depuis un graphique natif) : les couleurs choisies s'appliquent ; les séries sans nom prennent dans la légende le nom de leur colonne au lieu de « trace 0 ».
+
+### Développeurs
+- *Corrigé* — `renderAdvChart` : une trace sans `name` est rapprochée de la correspondance des couleurs par le libellé de sa colonne de valeurs (`ysrc`, ou `xsrc` en barres horizontales) ; catégories imbriquées (plusieurs colonnes d'axe) assemblées en une étiquette par barre.
+
 ## [0.9.4.1] — Icône devant le titre de la page — 2026-10-29
 
 ### Utilisateurs

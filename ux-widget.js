@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.1). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.3). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.1"; // voir CHANGELOG.md
+const VERSION = "0.9.4.3"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3990,13 +3990,50 @@ async function renderAdvChart(info, rows, body, jobs) {
   data.forEach(fill);
   // camemberts : couleurs par catégorie (marker.colors), une valeur par ligne, dans l'ordre des lignes
   const blk = S.cfg.blocks.find((x) => x.id === info.secId);
+  // nom d'une série : celui de la trace, sinon le libellé de la colonne de ses valeurs (graphique converti depuis
+  // un graphique natif : les traces n'ont souvent pas de nom, Plotly affiche « trace 0 »)
+  const srcLabel = (t0) => {
+    const v = t0?.[t0?.orientation === "h" ? "xsrc" : "ysrc"];
+    if (typeof v !== "string") return "";
+    const m = /^gristsrc:(\d+)$/.exec(v);
+    const c = m ? S.meta.cols.get(Number(m[1])) : byName.get(v);
+    return c ? c.label || c.colId : v;
+  };
+  // traces sans nom : le libellé de leur colonne de valeurs (légende lisible au lieu de « trace 0 »)
+  data.forEach((t, ti) => {
+    if (t && t.type !== "pie" && !t.name && data.length > 1) {
+      const n = srcLabel(spec.data[ti]);
+      if (n) t.name = n;
+    }
+  });
   if (pieCustom(blk))
-    for (const t of data)
+    data.forEach((t, ti) => {
       if (t && t.type !== "pie") {
         // barres, courbes… : couleur de la trace d'après son nom ; une seule trace de barres : une couleur par barre
         const map = pieColorMapOf(blk.pieColorMap);
-        const named = map.get(pieKey(t.name));
-        const cats = t.orientation === "h" ? t.y : t.x;
+        // séries « éclatées » par une colonne (transformation groupby de l'éditeur Plotly, ou graphique natif
+        // converti) : une couleur par groupe, d'après son nom renommé (styles[].value.name) ou sa valeur
+        const gb = (t.transforms || []).find((x) => x?.type === "groupby" && Array.isArray(x.groups));
+        if (gb) {
+          const styles = (Array.isArray(gb.styles) ? gb.styles : []).map((st) => ({ ...st, value: { ...(st?.value || {}) } }));
+          const groups = [...new Set(gb.groups.map((g) => String(g ?? "")))];
+          for (const g of groups) {
+            let st = styles.find((x) => String(x.target ?? "") === g);
+            let c = map.get(pieKey(st?.value?.name)) || map.get(pieKey(g));
+            if (!c && blk.pieColorCol) c = hexColor(rows[gb.groups.findIndex((x) => String(x ?? "") === g)]?.[blk.pieColorCol]);
+            c ||= hexColor(blk.pieColorDefault);
+            if (!c) continue;
+            if (!st) styles.push((st = { target: g, value: {} }));
+            st.value.marker = { ...(st.value.marker || {}), color: c };
+            if ((t.type || "scatter") === "scatter") st.value.line = { ...(st.value.line || {}), color: c };
+          }
+          gb.styles = styles;
+          return;
+        }
+        const named = map.get(pieKey(t.name)) || map.get(pieKey(srcLabel(spec.data[ti])));
+        let cats = t.orientation === "h" ? t.y : t.x;
+        // catégories imbriquées (plusieurs colonnes) : [[niveaux…], [années…]] → une étiquette par barre
+        if (Array.isArray(cats) && cats.length && cats.every(Array.isArray)) cats = cats[0].map((_, k) => cats.map((a) => a[k]).join(" "));
         if (named) {
           t.marker = { ...(t.marker || {}), color: named };
           if (t.type === "scatter") t.line = { ...(t.line || {}), color: named };
@@ -4021,6 +4058,7 @@ async function renderAdvChart(info, rows, body, jobs) {
           });
         t.marker = { ...(t.marker || {}), colors: cols };
       }
+    });
   // camemberts : les étiquettes longues passent à la ligne (Plotly ne le fait pas) et la marge s'agrandit au
   // besoin pour les étiquettes placées à l'extérieur, qui étaient coupées au bord du bloc
   const wrapLabel = (l, max = 14) => {
