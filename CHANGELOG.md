@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.4] — Agrégations des graphiques avancés — 2026-10-31
+
+### Utilisateurs
+- *Corrigé* — **Graphiques avancés avec agrégation** (moyenne, somme… par année, par exemple) : les valeurs sont agrégées comme dans Grist, une barre par catégorie, au lieu d'empiler chaque ligne ; les étiquettes montrent la valeur agrégée, arrondie au dixième.
+
+### Développeurs
+- *Corrigé* — `fixAggregate` : une transformation `aggregate` dont le regroupement est vide ou porte sur une colonne agrégée elle-même regroupe par l'axe des catégories (`groups: "x"`, ou `"y"` en barres horizontales) ; étiquettes reprenant les valeurs : `texttemplate` sur la valeur agrégée.
+
 ## [0.9.4.3] — Couleurs des séries regroupées des graphiques avancés — 2026-10-29
 
 ### Utilisateurs

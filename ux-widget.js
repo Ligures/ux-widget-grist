@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.3). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.4). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.3"; // voir CHANGELOG.md
+const VERSION = "0.9.4.4"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3934,6 +3934,29 @@ function advChartSpec(sec) {
   return { data: null, url: cv.url || "", keys: Object.keys(wo) };
 }
 // renderAdvChart — Affiche un graphique avancé avec Plotly, en remplaçant les références gristsrc par les données.
+// fixAggregate — Transformations « Aggregate » de l'éditeur Plotly : regroupées par l'axe des catégories (x, ou y en
+//   barres horizontales) quand le regroupement choisi est vide ou porte sur une colonne agrégée elle-même (par
+//   exemple « Groups = Défavorisé » pour la moyenne de Défavorisé) : regrouper par la valeur à agréger n'agrège
+//   rien, chaque ligne restait une barre. C'est ce qu'affiche le graphique avancé de Grist.
+function fixAggregate(data, src) {
+  data.forEach((t, ti) => {
+    const t0 = src?.[ti] || {};
+    (t?.transforms || []).forEach((tr, k) => {
+      if (tr?.type !== "aggregate") return;
+      const g0 = t0.transforms?.[k]?.groupssrc;
+      const aggSrcs = (tr.aggregations || []).filter((a) => a && a.enabled !== false).map((a) => t0[`${a.target}src`]);
+      const empty = !Array.isArray(tr.groups) || !tr.groups.length;
+      if (!g0 || empty || aggSrcs.includes(g0)) {
+        delete tr.groupssrc;
+        tr.groups = t.orientation === "h" ? "y" : "x";
+      }
+      // étiquettes reprenant les valeurs (texte = colonne des valeurs) : celles du résultat agrégé, arrondies au
+      // dixième, et non la première ligne de chaque groupe
+      const vk = t.orientation === "h" ? "x" : "y";
+      if (t0.textsrc && t0.textsrc === t0[`${vk}src`] && !t.texttemplate) t.texttemplate = `%{${vk}:.1~f}`;
+    });
+  });
+}
 async function renderAdvChart(info, rows, body, jobs) {
   const spec = advChartSpec(info.sec);
   if (!spec?.data) {
@@ -3988,6 +4011,7 @@ async function renderAdvChart(info, rows, body, jobs) {
   };
   const data = JSON.parse(JSON.stringify(spec.data));
   data.forEach(fill);
+  fixAggregate(data, spec.data);
   // camemberts : couleurs par catégorie (marker.colors), une valeur par ligne, dans l'ordre des lignes
   const blk = S.cfg.blocks.find((x) => x.id === info.secId);
   // nom d'une série : celui de la trace, sinon le libellé de la colonne de ses valeurs (graphique converti depuis
