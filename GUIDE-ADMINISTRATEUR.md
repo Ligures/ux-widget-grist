@@ -115,6 +115,7 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
 |---|---|
 | Étiquette | Colonne affichée au survol (par défaut celle de la carte Grist) |
 | Étiquettes toujours visibles | Affiche toutes les étiquettes en permanence |
+| Zoom à la molette sans Ctrl | La molette et un doigt agissent directement sur la carte (ancien comportement). Par défaut, ils font défiler la page : Ctrl + molette ou deux doigts pour la carte |
 | Couleur selon | Couleur des points selon une colonne |
 | … sinon selon | Pour les points dont la colonne « Couleur selon » est vide : couleur selon une 2ᵉ colonne (teintes différentes, légende à part, sous le nom de la colonne). Les autres points gardent leur couleur |
 

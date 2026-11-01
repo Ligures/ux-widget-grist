@@ -94,6 +94,7 @@ Chaque vue s'affiche dans un **bloc**, avec un titre et quelques commandes :
 - **Zones** (communes, intercommunalités, quartiers IRIS) : le survol affiche leur nom et leurs chiffres.
 - **Quartiers prioritaires (QPV)** : en pointillés rouges. L'infobulle d'un établissement indique s'il est dans un QPV ou à proximité.
 - **Sélection** : cliquer sur un point le sélectionne et met à jour les blocs liés.
+- **Zoom et déplacement** : la molette fait défiler la page ; pour zoomer, gardez **Ctrl** enfoncé (⌘ sur Mac) ou utilisez les boutons + / −. Sur écran tactile, un doigt fait défiler la page et **deux doigts** déplacent et zooment la carte. En plein écran du bloc, la carte réagit directement.
 - **Cadrage** : à l'ouverture, la carte montre l'ensemble des données. Le bouton **⤢**, sous les boutons de zoom, y revient après un déplacement ou un zoom.
 
 **Confidentialité** : les cartes n'envoient aucune donnée de vos tables à l'extérieur. Seuls des codes géographiques (département, communes), parfois la position d'un point sans code INSEE, et la zone affichée (fond de carte) sont transmis à des services publics. Le détail figure dans la documentation technique (README).

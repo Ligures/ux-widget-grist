@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.4). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.5). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -43,7 +43,7 @@
  Tableaux/fiches : colWidths, rowCount, asList, cardW, editable, addable, showEmpty, hideLabels
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
- Carte : mapLabel, mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
+ Carte : mapLabel, mapWheel (molette sans Ctrl), mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
          qpvUrl, mapZone (communes|epci|iris|legis|college), mapZone2 (contours croisés), zoneHover, legisUrl, collegeUrl, legisCol, collegeCol, mapCommune, zoneColor,
          zoneSum, zoneTable/zoneKey/zoneVal, mapLabelsOn
 
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.4"; // voir CHANGELOG.md
+const VERSION = "0.9.4.5"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3543,6 +3543,7 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
         11,
       ); // vue initiale sûre
       S.maps.push(map);
+      mapGestures(map, el, b);
       L.tileLayer(spec.tiles, { attribution: spec.attribution, maxZoom: 19 }).addTo(map);
       const markers = new Map();
       // sans colonne de couleur : bleu, sélection en rouge ; avec : couleur de la valeur, sélection agrandie et cerclée de noir
@@ -3956,6 +3957,53 @@ function fixAggregate(data, src) {
       if (t0.textsrc && t0.textsrc === t0[`${vk}src`] && !t.texttemplate) t.texttemplate = `%{${vk}:.1~f}`;
     });
   });
+}
+// mapGestures — Carte posée dans une page qui défile (0.9.4.5) : la molette fait défiler la page, Ctrl (ou ⌘) +
+//   molette zoome ; sur écran tactile, un doigt fait défiler la page et deux doigts déplacent et zooment la carte.
+//   Un court message l'indique. Bloc en plein écran, ou option « Zoom à la molette sans Ctrl » : carte libre.
+function mapGestures(map, el, b) {
+  if (b?.mapWheel) return; // ancien comportement demandé pour ce bloc
+  const free = () => !!el.closest(".block.maxed");
+  const coarse = window.matchMedia?.("(pointer: coarse)").matches;
+  const hint = document.createElement("div");
+  hint.className = "map-hint";
+  hint.setAttribute("aria-hidden", "true");
+  el.appendChild(hint);
+  let timer = 0;
+  const say = (msg) => {
+    hint.textContent = msg;
+    hint.classList.add("on");
+    clearTimeout(timer);
+    timer = setTimeout(() => hint.classList.remove("on"), 1300);
+  };
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+  // molette : sans Ctrl, l'évènement n'atteint pas Leaflet (arrêté à la phase de capture) et la page défile
+  el.addEventListener(
+    "wheel",
+    (e) => {
+      if (free() || e.ctrlKey || e.metaKey) return; // pincement du pavé tactile : ctrlKey, zoom de la carte
+      e.stopPropagation();
+      say(isMac ? "⌘ + molette pour zoomer sur la carte" : "Ctrl + molette pour zoomer sur la carte");
+    },
+    { capture: true },
+  );
+  // glisser : à la souris, la carte se déplace ; au doigt, seulement en plein écran (un doigt fait défiler la
+  // page, deux doigts déplacent et zooment la carte par le pincement de Leaflet)
+  const sync = (touch) => {
+    if (touch && !free()) map.dragging.disable();
+    else map.dragging.enable();
+  };
+  sync(coarse);
+  el.addEventListener("pointerenter", (e) => e.pointerType === "mouse" && sync(false));
+  el.addEventListener("pointerdown", (e) => e.pointerType === "touch" && sync(true), { capture: true });
+  el.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!free() && e.touches.length === 1 && !e.target.closest?.(".leaflet-control")) say("Utilisez deux doigts pour déplacer la carte");
+    },
+    { passive: true },
+  );
+  map.on("resize", () => sync(coarse)); // passage en plein écran du bloc, ou retour
 }
 async function renderAdvChart(info, rows, body, jobs) {
   const spec = advChartSpec(info.sec);
@@ -5878,6 +5926,12 @@ ${
           "Étiquettes toujours visibles",
           "Affiche l'étiquette de chaque point en permanence, au lieu de la montrer au survol.",
         ) +
+        C(
+          `data-mwheel="${i}"`,
+          b.mapWheel,
+          "Zoom à la molette sans Ctrl",
+          "Par défaut, la molette fait défiler la page et Ctrl + molette zoome sur la carte ; sur écran tactile, un doigt fait défiler la page et deux doigts déplacent la carte. Cochée : la molette et un doigt agissent directement sur la carte, comme avant. En plein écran du bloc, la carte est toujours libre.",
+        ) +
         L(
           "Couleur selon",
           sel("mapColor", [["", "aucune"], ...colOpts(s)], b.mapColor || ""),
@@ -6381,6 +6435,10 @@ $("#panel").addEventListener("change", (ev) => {
   }
   if (t.dataset.mlbl) {
     draft.blocks[Number(t.dataset.mlbl)].mapLabelsOn = t.checked;
+    return;
+  }
+  if (t.dataset.mwheel) {
+    draft.blocks[Number(t.dataset.mwheel)].mapWheel = t.checked;
     return;
   }
   if (t.dataset.asel) {

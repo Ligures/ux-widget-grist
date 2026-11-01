@@ -26,6 +26,17 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.5] — Cartes : la page défile sans zoomer la carte — 2026-11-01
+
+### Utilisateurs
+- *Amélioré* — **Cartes** : la molette fait défiler la page au lieu de zoomer ; **Ctrl + molette** (⌘ sur Mac, ou pincement du pavé tactile) zoome. Sur écran tactile, **un doigt** fait défiler la page et **deux doigts** déplacent et zooment la carte. Un court message le rappelle. Les boutons + / − et le double-clic zooment toujours ; en plein écran du bloc, la carte est entièrement libre.
+
+### Administrateurs
+- *Nouveau* — Encadré **Points** des cartes : case **Zoom à la molette sans Ctrl** (`mapWheel`) pour retrouver l'ancien comportement sur un bloc.
+
+### Développeurs
+- *Nouveau* — `mapGestures` : molette sans Ctrl arrêtée en phase de capture avant Leaflet ; glisser désactivé au toucher (la page défile, `touch-action` de Leaflet), le pincement de Leaflet déplace et zoome ; carte libre si `.block.maxed` (recalcul à l'évènement `resize` de la carte).
+
 ## [0.9.4.4] — Agrégations des graphiques avancés — 2026-10-31
 
 ### Utilisateurs
