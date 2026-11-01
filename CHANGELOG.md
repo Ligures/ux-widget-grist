@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.6] — Cartes : message « deux doigts » plus discret — 2026-11-01
+
+### Utilisateurs
+- *Amélioré* — **Cartes sur écran tactile** : le message « Utilisez deux doigts pour déplacer la carte » n'apparaît plus à la fin d'un geste à deux doigts (quand un doigt se lève avant l'autre), ni pour un petit mouvement ; au plus une fois toutes les 30 secondes.
+
+### Développeurs
+- *Amélioré* — `mapGestures` : geste suivi de `touchstart` à `touchend` (multi-doigts mémorisé jusqu'au lever du dernier doigt), seuil de 40 px, intervalle de 30 s.
+
 ## [0.9.4.5] — Cartes : la page défile sans zoomer la carte — 2026-11-01
 
 ### Utilisateurs

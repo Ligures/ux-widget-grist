@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.5). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.6). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.5"; // voir CHANGELOG.md
+const VERSION = "0.9.4.6"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3996,13 +3996,39 @@ function mapGestures(map, el, b) {
   sync(coarse);
   el.addEventListener("pointerenter", (e) => e.pointerType === "mouse" && sync(false));
   el.addEventListener("pointerdown", (e) => e.pointerType === "touch" && sync(true), { capture: true });
+  // message « deux doigts » : seulement pour un vrai glissement à un doigt commencé sur la carte (pas pendant ni à
+  // la fin d'un geste à deux doigts, quand un doigt se lève avant l'autre), et au plus une fois toutes les 30 s
+  let multi = false,
+    start = null,
+    lastSay = 0;
   el.addEventListener(
-    "touchmove",
+    "touchstart",
     (e) => {
-      if (!free() && e.touches.length === 1 && !e.target.closest?.(".leaflet-control")) say("Utilisez deux doigts pour déplacer la carte");
+      if (e.touches.length > 1) multi = true;
+      start = e.touches.length === 1 && !multi ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
     },
     { passive: true },
   );
+  el.addEventListener(
+    "touchmove",
+    (e) => {
+      if (e.touches.length > 1) multi = true;
+      if (multi || !start || free() || e.touches.length !== 1 || e.target.closest?.(".leaflet-control")) return;
+      const t = e.touches[0];
+      if (Math.hypot(t.clientX - start.x, t.clientY - start.y) < 40 || Date.now() - lastSay < 30000) return;
+      lastSay = Date.now();
+      say("Utilisez deux doigts pour déplacer la carte");
+    },
+    { passive: true },
+  );
+  const end = (e) => {
+    if (!e.touches.length) {
+      multi = false;
+      start = null;
+    }
+  };
+  el.addEventListener("touchend", end, { passive: true });
+  el.addEventListener("touchcancel", end, { passive: true });
   map.on("resize", () => sync(coarse)); // passage en plein écran du bloc, ou retour
 }
 async function renderAdvChart(info, rows, body, jobs) {
