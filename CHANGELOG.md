@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.13] — Fond de carte à l'impression — 2026-11-02
+
+### Utilisateurs
+- *Corrigé* — **Carte imprimée seule** : le fond de carte s'imprime en entier. L'impression attend que toutes ses tuiles soient chargées (8 secondes au plus), et le cadrage n'est plus refait pendant la préparation.
+
+### Développeurs
+- *Corrigé* — `printMap` : attente de l'évènement `load` de la couche de tuiles (`tileLayer.isLoading()`), drapeau `S.mapPrinting` qui suspend le recadrage automatique (`ResizeObserver`) ; à l'impression, `will-change` et transitions des tuiles Leaflet neutralisés (Chrome n'imprime pas toujours ces calques).
+
 ## [0.9.4.12] — Carte imprimée au zoom de l'écran — 2026-11-02
 
 ### Utilisateurs

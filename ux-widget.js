@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.12). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.13). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.12"; // voir CHANGELOG.md
+const VERSION = "0.9.4.13"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3673,7 +3673,7 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
       S.maps.push(map);
       (S.mapOf ??= {})[b.id] = { map, tiles: spec.tiles, attribution: spec.attribution };
       mapGestures(map, el, b);
-      L.tileLayer(spec.tiles, { attribution: spec.attribution, maxZoom: 19 }).addTo(map);
+      S.mapOf[b.id].tileLayer = L.tileLayer(spec.tiles, { attribution: spec.attribution, maxZoom: 19 }).addTo(map);
       const markers = new Map();
       // sans colonne de couleur : bleu, sélection en rouge ; avec : couleur de la valeur, sélection agrandie et cerclée de noir
       const style0 = (on, fill) =>
@@ -3861,6 +3861,7 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
       new ResizeObserver(() => {
         if (!el.isConnected) return;
         map.invalidateSize();
+        if (S.mapPrinting) return; // impression de la carte seule : son cadrage ne doit pas être refait
         if ((el.clientWidth !== lastW || el.clientHeight !== lastH) && !userMoved) fitAll(); // cadre redimensionné
         lastW = el.clientWidth;
         lastH = el.clientHeight;
@@ -5311,17 +5312,31 @@ async function printMap(id) {
     blk.style.setProperty("--pk", String(Math.min(PW / W, PH / H)));
     blk.classList.add("printscale");
   }
+  S.mapPrinting = true;
   h.classList.add("printone");
   blk.classList.add("printme");
+  status("Préparation de l'impression de la carte…");
   if (!big) {
     await new Promise((r) => setTimeout(r, 60));
     m.map.invalidateSize();
     m.map.setView(center, zoom, { animate: false });
-    status("Préparation de l'impression de la carte…");
-    await new Promise((r) => setTimeout(r, 1200)); // fond de carte de la nouvelle taille
-    status("");
   }
+  // fond de carte : attendre que toutes les tuiles visibles soient chargées (8 s au plus), sinon elles manquent
+  // sur le papier
+  await new Promise((r) => setTimeout(r, 120));
+  const tl = m.tileLayer;
+  if (tl?.isLoading?.())
+    await new Promise((r) => {
+      const t = setTimeout(r, 8000);
+      tl.once("load", () => {
+        clearTimeout(t);
+        r();
+      });
+    });
+  await new Promise((r) => setTimeout(r, 300)); // fondu des dernières tuiles
+  status("");
   const restore = () => {
+    S.mapPrinting = false;
     h.classList.remove("printone");
     blk.classList.remove("printme", "printscale");
     for (const v of ["--pw", "--ph", "--pk"]) blk.style.removeProperty(v);

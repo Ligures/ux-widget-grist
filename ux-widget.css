@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.4.12).
+/* UX widget grist — feuilles de style (version 0.9.4.13).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -2854,6 +2854,18 @@ html.printing #grid {
     width: 100% !important;
     margin: 0 !important;
     border: 0 !important;
+  }
+  /* fond de carte : Chrome n'imprime pas toujours les tuiles marquées « will-change » (calques d'animation de Leaflet) */
+  .leaflet-tile,
+  .leaflet-tile-container,
+  .leaflet-zoom-animated,
+  .leaflet-fade-anim .leaflet-tile {
+    will-change: auto !important;
+    transition: none !important;
+  }
+  .leaflet-tile-loaded {
+    opacity: 1 !important;
+    visibility: visible !important;
   }
   /* carte plus grande que la page (plein écran) : imprimée telle qu'à l'écran, réduite (même zoom, même étendue) */
   html.printone .block.printme.printscale > .bb {
