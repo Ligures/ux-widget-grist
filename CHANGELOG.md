@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.12] — Carte imprimée au zoom de l'écran — 2026-11-02
+
+### Utilisateurs
+- *Corrigé* — **Carte imprimée seule** : le zoom choisi à l'écran est conservé. Une carte plus grande que la page (plein écran) est imprimée exactement comme à l'écran, réduite à la taille du papier ; une carte plus petite est agrandie au format de la page, avec le même centre et le même zoom.
+
+### Développeurs
+- *Corrigé* — `printMap` : carte plus grande que la zone imprimable (275 × 158 mm) laissée à sa taille d'écran et réduite par `transform: scale()` (classe `printscale`, variables `--pw`, `--ph`, `--pk`), sans recadrage ; sinon agrandie au format papier avec `setView` (centre et zoom).
+
 ## [0.9.4.11] — Impression d'une carte en plein écran — 2026-11-02
 
 ### Utilisateurs

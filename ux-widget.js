@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.11). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.12). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.11"; // voir CHANGELOG.md
+const VERSION = "0.9.4.12"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -5295,20 +5295,36 @@ async function printMap(id) {
   // une seule ligne pour les choix : la carte doit tenir sur la page
   $("#printhead").innerHTML = `${pageIcon("phicon")}<div><h1>${esc(head.title)}</h1><p>${esc([...head.lines, `Édité le ${new Date().toLocaleDateString("fr-FR")}`].join(" · "))}</p></div>`;
   const center = m.map.getCenter(),
-    zoom = m.map.getZoom(),
-    bounds = m.map.getBounds(); // zone visible à l'écran : entièrement reprise sur le papier (format différent)
+    zoom = m.map.getZoom();
+  // même zoom qu'à l'écran (0.9.4.12) : une carte plus grande que la page (plein écran) est imprimée telle quelle,
+  // réduite à la taille du papier ; une carte plus petite est agrandie au format de la page, même centre, même zoom
+  const box = m.map.getContainer(),
+    W = box.offsetWidth,
+    H = box.offsetHeight;
+  const PW = (275 * 96) / 25.4,
+    PH = (158 * 96) / 25.4; // zone de la carte sur une page A4 paysage, en pixels CSS
+  const big = W > PW || H > PH;
   const h = document.documentElement;
+  if (big) {
+    blk.style.setProperty("--pw", `${W}px`);
+    blk.style.setProperty("--ph", `${H}px`);
+    blk.style.setProperty("--pk", String(Math.min(PW / W, PH / H)));
+    blk.classList.add("printscale");
+  }
   h.classList.add("printone");
   blk.classList.add("printme");
-  await new Promise((r) => setTimeout(r, 60));
-  m.map.invalidateSize();
-  m.map.fitBounds(bounds, { animate: false, padding: [4, 4] });
-  status("Préparation de l'impression de la carte…");
-  await new Promise((r) => setTimeout(r, 1200)); // fond de carte de la nouvelle taille
-  status("");
+  if (!big) {
+    await new Promise((r) => setTimeout(r, 60));
+    m.map.invalidateSize();
+    m.map.setView(center, zoom, { animate: false });
+    status("Préparation de l'impression de la carte…");
+    await new Promise((r) => setTimeout(r, 1200)); // fond de carte de la nouvelle taille
+    status("");
+  }
   const restore = () => {
     h.classList.remove("printone");
-    blk.classList.remove("printme");
+    blk.classList.remove("printme", "printscale");
+    for (const v of ["--pw", "--ph", "--pk"]) blk.style.removeProperty(v);
     m.map.invalidateSize();
     m.map.setView(center, zoom, { animate: false });
     window.removeEventListener("afterprint", restore);

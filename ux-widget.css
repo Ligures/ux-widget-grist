@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.4.11).
+/* UX widget grist — feuilles de style (version 0.9.4.12).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -2118,7 +2118,7 @@ textarea.ed-input {
 }
 /* carte imprimée seule : même taille à l'écran pendant la préparation et sur papier ; avec l'en-tête (≈ 15 mm),
    elle tient sur une page A4 paysage (186 mm utiles) */
-html.printone .block.printme > .bb > .map-box {
+html.printone .block.printme:not(.printscale) > .bb > .map-box {
   flex: none !important; /* bloc en plein écran : la carte ne s'étire plus à la hauteur de l'écran */
   width: 275mm !important;
   height: 158mm !important;
@@ -2854,6 +2854,18 @@ html.printing #grid {
     width: 100% !important;
     margin: 0 !important;
     border: 0 !important;
+  }
+  /* carte plus grande que la page (plein écran) : imprimée telle qu'à l'écran, réduite (même zoom, même étendue) */
+  html.printone .block.printme.printscale > .bb {
+    height: calc(var(--ph) * var(--pk)) !important;
+    overflow: hidden !important;
+  }
+  html.printone .block.printme.printscale > .bb > .map-box {
+    flex: none !important;
+    width: var(--pw) !important;
+    height: var(--ph) !important;
+    transform: scale(var(--pk));
+    transform-origin: 0 0;
   }
   html.printone .block.printme > .bh,
   html.printone .block.printme > .bh2 {
