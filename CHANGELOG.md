@@ -26,6 +26,17 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.19] — Plusieurs regroupements de communes par carte — 2026-11-02
+
+### Utilisateurs
+- *Nouveau* — **Cartes** : la liste « Zonage » peut proposer jusqu'à trois regroupements de communes (par exemple réseaux pédagogiques et circonscriptions IEN).
+
+### Administrateurs
+- *Nouveau* — Configuration d'une carte, « Zones sous les points » : réglages *Regroupement 1*, *2*, *3* (table des communes, code INSEE, colonne, libellé), toujours visibles ; un regroupement de plus apparaît quand le précédent est complet. Un regroupement complet est proposé aux utilisateurs même s'il n'est pas le zonage par défaut, et peut être choisi comme *Zonage* ou *Second zonage*.
+
+### Développeurs
+- *Nouveau* — Zonages `groupe2` et `groupe3`, options `grp2Table`/`grp2Key`/`grp2Col`/`grp2Label` et `grp3…` (colonnes suivies au renommage) ; aides `isGrp`, `grpN`, `grpF`, `grpOpt`, `grpChoices`.
+
 ## [0.9.4.18] — Zonage mémorisé qui n'existe plus — 2026-11-02
 
 ### Utilisateurs
