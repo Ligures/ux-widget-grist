@@ -140,7 +140,8 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
 
 | Réglage | Effet |
 |---|---|
-| Zonage | Communes, EPCI, IRIS, circonscriptions législatives ou secteurs de collège, dessinés sous les points |
+| Zonage | Communes, EPCI, IRIS, circonscriptions législatives, secteurs de collège ou regroupements de communes, dessinés sous les points |
+| Regroupement : table, code INSEE, colonne, libellé | Pour le zonage *regroupements de communes* : table avec une ligne par commune (ex. `P_Communes`), colonne du code INSEE (ex. `CODE_COM`), colonne qui réunit les communes (ex. `CODE_RP`, réseau pédagogique ; une référence est lue par sa colonne d'affichage) et nom du zonage (ex. *Réseaux pédagogiques*). Chaque regroupement qui contient des points est dessiné en entier, communes sans point comprises |
 | Second zonage (contours) | Un autre découpage tracé en pointillés noirs par-dessus le premier, pour croiser deux fonds (ex. secteurs de collège colorés + circonscriptions législatives). Nom au survol du trait |
 | Étiquette au survol | Avec un second zonage : zonage dont le nom s'affiche au survol. *Zonage principal* (par défaut) ; ou *second zonage* : son nom s'affiche partout à l'intérieur de ses contours, et le principal n'a plus d'étiquette |
 | Rattachement : circonscriptions / secteurs de collège | « position des points » (défaut) : la zone dont le contour contient le point. Ou une colonne de code (ex. `2201`, UAI) : la zone désignée par vos données, même si le point est hors de son contour (commune partagée entre deux zones, commune nouvelle…) |
@@ -154,7 +155,8 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
    - code INSEE pour les communes ;
    - SIREN pour les EPCI ;
    - code de la circonscription (ex. `2901`) pour les circonscriptions législatives ;
-   - UAI du collège pour les secteurs de collège.
+   - UAI du collège pour les secteurs de collège ;
+   - valeur du regroupement (ex. nom du réseau) pour les regroupements de communes.
 2. Couleur des zones → *selon une table Grist* : choisir la table, la colonne du code et la colonne de la valeur.
 
 ### Graphiques : couleurs

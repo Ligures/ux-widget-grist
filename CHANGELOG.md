@@ -26,6 +26,18 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.16] — Zonage par regroupement de communes (réseaux pédagogiques) — 2026-11-02
+
+### Utilisateurs
+- *Nouveau* — **Cartes : zonage par regroupement de communes**, par exemple les réseaux pédagogiques. Chaque réseau qui contient des écoles affichées est dessiné en entier (communes sans école comprises), avec une couleur par réseau. Il figure dans la liste « Zonage » de la carte sous le nom choisi par l'administrateur.
+
+### Administrateurs
+- *Nouveau* — Configuration d'une carte, zonage *regroupements de communes (table Grist)* : table des communes (ex. `P_Communes`), colonne du code INSEE (ex. `CODE_COM`), colonne de regroupement (ex. `CODE_RP` ; une référence est lue par sa colonne d'affichage) et libellé (ex. *Réseaux pédagogiques*). Utilisable aussi comme second zonage (contours) et avec toutes les couleurs des zones (nombre de points, somme, table Grist reliée par le nom du regroupement).
+
+### Développeurs
+- *Nouveau* — Zonage `groupe` : options `grpTable`, `grpKey`, `grpCol`, `grpLabel` (colonnes suivies au renommage) ; `drawZones` lit la table par `tableMap`, charge les contours des départements de toutes les communes des groupes concernés et les fusionne (`polygon-clipping`), comme les EPCI. `zoneChoices(b)` : liste « Zonage » de la carte (le regroupement seulement s'il est configuré).
+- *Amélioré* — `zoneTableValues` s'appuie sur `tableMap(table, code, valeur)` : code INSEE numérique à 4 chiffres complété d'un zéro ; une référence est rendue par son texte, plus par son identifiant.
+
 ## [0.9.4.15] — Fond de carte sur imprimante : retour au rendu de la 0.9.4.10 — 2026-11-02
 
 ### Utilisateurs

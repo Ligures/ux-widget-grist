@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.4.15** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.4.16** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---
@@ -167,6 +167,7 @@ Un bloc carte reprend le widget carte de Grist : colonnes Nom / Latitude / Longi
 | IRIS | Géoplateforme IGN, couche WFS `STATISTICALUNITS.IRISGE:iris_ge` | Communes découpées en IRIS uniquement |
 | Circonscriptions législatives | Fichier `circonscriptions-bretagne.geojson` déposé à côté du widget (extrait du fichier national data.gouv.fr) | Circonscriptions qui contiennent des points |
 | Secteurs de collège | Fichier `secteurs-colleges-bretagne.geojson` déposé à côté du widget (extrait du fichier national data.gouv.fr) | Secteurs qui contiennent des points |
+| Regroupements de communes | Table Grist des communes (ex. `P_Communes` : code INSEE + réseau pédagogique), contours geo.api.gouv.fr fusionnés | Regroupements qui contiennent des points, dessinés en entier |
 | QPV | Fichier GeoJSON fourni (QPV 2024, ANCT) | Points dans un QPV ou à moins de X m |
 
 **Second zonage** : un deuxième découpage peut être tracé en pointillés noirs, sans couleur de fond, par-dessus le premier. On croise ainsi, par exemple, les communes colorées et les circonscriptions législatives.

@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.15). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.16). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -44,8 +44,8 @@
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapWheel (molette sans Ctrl), mapExportAdmin, qfFree (filtre libre, tous blocs), mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
-         qpvUrl, mapZone (communes|epci|iris|legis|college), mapZone2 (contours croisés), zoneHover, legisUrl, collegeUrl, legisCol, collegeCol, mapCommune, zoneColor,
-         zoneSum, zoneTable/zoneKey/zoneVal, mapLabelsOn
+         qpvUrl, mapZone (communes|epci|iris|legis|college|groupe), mapZone2 (contours croisés), zoneHover, legisUrl, collegeUrl, legisCol, collegeCol, mapCommune, zoneColor,
+         zoneSum, zoneTable/zoneKey/zoneVal, grpTable/grpKey/grpCol/grpLabel, mapLabelsOn
 
    RÈGLES À RESPECTER
      • Toute valeur issue des données ou de la configuration insérée dans du HTML
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.15"; // voir CHANGELOG.md
+const VERSION = "0.9.4.16"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -2997,7 +2997,7 @@ const loadClip = () =>
   (clipP ??= (window.polygonClipping ? Promise.resolve() : loadLib(LIBS.clip, "polygon-clipping")).catch(
     () => {},
   ));
-// zoneMode — Zonage demandé pour un bloc carte : "", "communes", "epci" ou "iris".
+// zoneMode — Zonage demandé pour un bloc carte : "", "communes", "epci", "iris", "legis", "college" ou "groupe".
 const zoneMode = (b) => b.mapZone || (b.mapCommunes ? "communes" : "");
 // needsInsee — Le zonage (principal ou second) s'appuie-t-il sur le code INSEE des points ? (pas les circonscriptions)
 const needsInsee = (b) =>
@@ -3222,12 +3222,15 @@ function loadZoneFile(kind, url) {
     }));
 }
 /* Valeurs d'une table Grist reliées aux zones par un code (INSEE, SIREN d'EPCI, code IRIS) */
-async function zoneTableValues(b) {
-  const t = [...S.meta.tables.values()].find((x) => x.tableId === b.zoneTable);
-  if (!t || !b.zoneKey || !b.zoneVal) return null;
+const zoneTableValues = (b) => tableMap(b.zoneTable, b.zoneKey, b.zoneVal);
+// tableMap — Table Grist lue en dictionnaire code → valeur (codes en majuscules, sans espaces ; code INSEE numérique
+//   à 4 chiffres complété d'un zéro). Sert aux couleurs « selon une table » et aux regroupements de communes.
+async function tableMap(tableId, keyId, valId) {
+  const t = [...S.meta.tables.values()].find((x) => x.tableId === tableId);
+  if (!t || !keyId || !valId) return null;
   const cols = S.meta.colsByTable.get(t.id) || [];
-  const kC = cols.find((c) => c.colId === b.zoneKey),
-    vC = cols.find((c) => c.colId === b.zoneVal);
+  const kC = cols.find((c) => c.colId === keyId),
+    vC = cols.find((c) => c.colId === valId);
   if (!kC || !vC) return null;
   await ensureRefTables([kC, vC]);
   const rows = await fetchRows(t.tableId);
@@ -3238,10 +3241,11 @@ async function zoneTableValues(b) {
     const k = String(textOf(kC, kO, r[kC.colId]) ?? "")
       .trim()
       .toUpperCase()
-      .replace(/\s/g, "");
+      .replace(/\s/g, "")
+      .replace(/^(\d{4})$/, "0$1");
     if (!k) continue;
     const v = r[vC.colId];
-    m.set(k, typeof v === "number" ? v : isEmpty(v) || isErr(v) ? null : textOf(vC, vO, v));
+    m.set(k, typeof v === "number" && !["Ref", "RefList"].includes(baseType(vC)) ? v : isEmpty(v) || isErr(v) ? null : textOf(vC, vO, v));
   }
   return { map: m, label: vC.label || vC.colId };
 }
@@ -3314,12 +3318,24 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
   const how = outline || noFill ? "" : b.zoneColor || "";
   try {
     const codes = [...byCode.keys()];
-    const deps = [...new Set(codes.map(depOf))];
+    // regroupement de communes : commune → groupe lu dans la table ; chaque groupe des points est dessiné en entier
+    let grp = null,
+      grpIn = null;
+    if (mode === "groupe") {
+      grp = grpReady(b) ? await tableMap(b.grpTable, b.grpKey, b.grpCol) : null;
+      if (!map._container?.isConnected) return;
+      if (!grp) return note(`${grpLabel(b)} : table, colonne du code INSEE et colonne de regroupement à choisir`);
+      for (const [c, g] of grp.map) grp.map.set(c, g === null || g === undefined ? "" : String(g));
+      grpIn = new Set(codes.map((c) => grp.map.get(c)).filter(Boolean));
+      if (!grpIn.size) return note(`${grpLabel(b)} : aucune commune des points dans la table ${b.grpTable}`);
+    }
+    const deps = [...new Set((grp ? [...grp.map].filter(([, g]) => grpIn.has(g)).map(([c]) => c) : codes).map(depOf))];
+    const merged = mode === "epci" || mode === "groupe"; // communes fusionnées en zones
     const [fcs, irisFeats, tv, fileFeats] = await Promise.all([
       mode === "iris" || fileZ ? [] : Promise.all(deps.map(fetchCommuneShapes)),
       mode === "iris" ? fetchIris(codes) : [],
       how === "table" ? zoneTableValues(b) : null,
-      mode === "epci" ? loadClip() : null,
+      merged ? loadClip() : null,
     ]).then(async (r) => [r[0], r[1], r[2], fileZ ? await loadZoneFile(mode, b[fileZ.urlKey]) : null]);
     if (!map._container?.isConnected) return;
     const all = fcs.flatMap((fc) => fc.features || []);
@@ -3336,6 +3352,15 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
       }
       for (const z of zones.values()) for (const f of z.feats) z.pts.push(...(byCode.get(codeOf(f)) || []));
       for (const [k, z] of zones) if (!z.pts.length) zones.delete(k); // seulement les EPCI qui contiennent des points
+    } else if (mode === "groupe") {
+      for (const f of all) {
+        const c = codeOf(f),
+          g = grp.map.get(c);
+        if (!g || !grpIn.has(g)) continue;
+        if (!zones.has(g)) zones.set(g, { key: g, name: g, feats: [], pts: [] });
+        zones.get(g).feats.push(f);
+        zones.get(g).pts.push(...(byCode.get(c) || []));
+      }
     } else if (fileZ) {
       // zones des points : par la colonne de code choisie (ex. 2201), sinon par position (point dans le polygone,
       // après le rectangle englobant)
@@ -3375,7 +3400,7 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
     const fmtN = (x) => (Number.isInteger(x) ? x : Math.round(x * 10) / 10).toLocaleString("fr-FR");
     const val = (z) =>
       how === "table"
-        ? (tv?.map.get(String(z.key).toUpperCase()) ?? null)
+        ? (tv?.map.get(String(z.key).toUpperCase().replace(/\s/g, "")) ?? null)
         : how === "sum" && sumC
           ? z.pts.reduce((t, p) => t + (Number.isFinite(p.sv) ? p.sv : 0), 0)
           : z.pts.length;
@@ -3412,7 +3437,7 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
         ? z.value === null || z.value === ""
           ? "#C8C8C8"
           : scale.colorOf(z.value)
-        : mode === "epci" || fileZ
+        : merged || fileZ
           ? distinctColor(i)
           : mode === "iris"
             ? "#6A6AF4"
@@ -3447,7 +3472,7 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
               ? { color: "#3a3a3a", weight: mode === "iris" ? 1 : 1.5, opacity: 0.8, fillOpacity: 0 } // fond transparent : survol conservé
               : ({
           color: how ? "#1d3fb8" : f.properties.color,
-          weight: mode === "epci" || fileZ ? 2.5 : mode === "iris" ? 1 : 1.5,
+          weight: merged || fileZ ? 2.5 : mode === "iris" ? 1 : 1.5,
           opacity: 0.9,
           fillColor: f.properties.color,
           fillOpacity: how ? 0.55 : mode === "iris" ? 0.06 : 0.18,
@@ -3483,7 +3508,7 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
       c.onAdd = () => {
         const d = L.DomUtil.create("div", "map-legend");
         d.innerHTML =
-          `<b>${fileZ ? fileZ.label : { epci: "EPCI", iris: "IRIS", communes: "Communes" }[mode]} : ${esc(what || "nombre de points")}</b>` +
+          `<b>${fileZ ? fileZ.label : { epci: "EPCI", iris: "IRIS", communes: "Communes", groupe: grpLabel(b) }[mode]} : ${esc(what || "nombre de points")}</b>` +
           scale.items
             .map(([t, col]) => `<div><i style="background:${esc(col)};border-radius:2px"></i>${esc(t)}</div>`)
             .join("") +
@@ -3515,6 +3540,13 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
 // renderMap — Affiche un widget carte : points, couleurs, contours, QPV, zonage, légendes. Le dessin Leaflet est différé (jobs).
 // Zonage choisi par l'utilisateur (0.9.4.7) : liste « Zonage » dans l'en-tête de la carte, mémorisée dans le
 // navigateur pour cette carte ; null = celui de la configuration.
+// Regroupement de communes (0.9.4.16) : zones formées des communes qui partagent une valeur dans une table Grist
+//   (ex. réseau pédagogique de P_Communes), contours fusionnés comme pour les EPCI
+const grpReady = (b) => !!(b.grpTable && b.grpKey && b.grpCol);
+const grpLabel = (b) => b.grpLabel || "Regroupements de communes";
+// zoneChoices — Zonages proposés à l'utilisateur pour une carte (le regroupement seulement s'il est configuré)
+const zoneChoices = (b) =>
+  ZONE_CHOICES.filter(([k]) => k !== "groupe" || grpReady(b)).map(([k, t]) => (k === "groupe" ? [k, grpLabel(b)] : [k, t]));
 const ZONE_CHOICES = [
   ["", "Aucun zonage"],
   ["communes", "Communes"],
@@ -3522,6 +3554,7 @@ const ZONE_CHOICES = [
   ["iris", "Quartiers IRIS"],
   ["legis", "Circonscriptions législatives"],
   ["college", "Secteurs de collège"],
+  ["groupe", "Regroupements de communes"],
 ];
 const zoneKey = (id) => `uxwg_zone_${S.docKey || "doc"}_${S.cfg?.name || ""}_${id}`;
 function userZone(id) {
@@ -3545,7 +3578,7 @@ function setUserZone(id, v) {
 // mapCtlHtml — En-tête d'un bloc carte : zonage au choix, imprimer la carte seule, exporter en HTML interactif.
 function mapCtlHtml(b) {
   const cur = userZone(b.id) ?? zoneMode(b);
-  const zone = `<select class="mapzone" data-mzone="${b.id}" title="Zonage affiché sur la carte (votre choix est mémorisé dans ce navigateur)" aria-label="Zonage">${ZONE_CHOICES.map(
+  const zone = `<select class="mapzone" data-mzone="${b.id}" title="Zonage affiché sur la carte (votre choix est mémorisé dans ce navigateur)" aria-label="Zonage">${zoneChoices(b).map(
     ([v, t]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${esc(t)}</option>`,
   ).join("")}</select>`;
   const pr = `<button type="button" class="mapbtn" data-mprint="${b.id}" title="Imprimer cette carte seule (A4 paysage)" aria-label="Imprimer la carte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z" /></svg></button>`;
@@ -5276,7 +5309,7 @@ window.addEventListener("beforeprint", markPrintBig); // impression lancée par 
 function mapPrintHead(id) {
   const blk = document.querySelector(`#grid > .block[data-sec="${id}"]`);
   const b = S.cfg.blocks.find((x) => x.id === id) || {};
-  const zl = ZONE_CHOICES.find(([k]) => k === (userZone(id) ?? zoneMode(b)))?.[1];
+  const zl = zoneChoices(b).find(([k]) => k === (userZone(id) ?? zoneMode(b)))?.[1];
   return {
     title: getInfo(id)?.title || "",
     lines: [
@@ -5786,13 +5819,14 @@ const COL_SPECIAL = new Set(["", "__qpv", "__pos"]); // valeurs qui ne sont pas 
 // colFieldTable — Table d'une option de colonne (zoneKey / zoneVal : table choisie pour colorer les zones).
 function colFieldTable(b, f) {
   if (f === "zoneKey" || f === "zoneVal") return [...S.meta.tables.values()].find((t) => t.tableId === b.zoneTable)?.id;
+  if (f === "grpKey" || f === "grpCol") return [...S.meta.tables.values()].find((t) => t.tableId === b.grpTable)?.id;
   return S.meta.sections.get(b.id)?.tableRef;
 }
 // rememberColRefs — À l'enregistrement : mémorise le colRef de chaque colonne choisie.
 function rememberColRefs(cfg) {
   for (const b of cfg.blocks || []) {
     const refs = {};
-    for (const f of [...COL_FIELDS, "zoneKey", "zoneVal"]) {
+    for (const f of [...COL_FIELDS, "zoneKey", "zoneVal", "grpKey", "grpCol"]) {
       if (COL_SPECIAL.has(b[f] ?? "")) continue;
       const c = (S.meta.colsByTable.get(colFieldTable(b, f)) || []).find((x) => x.colId === b[f]);
       if (c) refs[f] = c.id;
@@ -5937,7 +5971,7 @@ function zoneTableHtml(b, i) {
     `<select data-f="${f}" data-i="${i}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(v) === String(cur) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
   const lab = (txt, ctrl, tip) => `<label title="${esc(tip)}"><span class="lt">${txt}</span> ${ctrl}</label>`;
   const code =
-    { communes: "code INSEE", epci: "SIREN de l'EPCI", iris: "code IRIS (9 caractères)", legis: "code de la circonscription (ex. 2901)", college: "UAI du collège" }[zoneMode(b)] || "code";
+    { communes: "code INSEE", epci: "SIREN de l'EPCI", iris: "code IRIS (9 caractères)", legis: "code de la circonscription (ex. 2901)", college: "UAI du collège", groupe: "nom du regroupement" }[zoneMode(b)] || "code";
   return (
     lab(
       "Table",
@@ -5963,6 +5997,39 @@ function zoneTableHtml(b, i) {
           "Valeur qui colore la zone : dégradé en 5 classes pour un nombre, une couleur par valeur pour un texte.",
         )
       : "")
+  );
+}
+// grpHtml — Configuration d'un regroupement de communes (0.9.4.16) : table, code INSEE, valeur commune, libellé
+function grpHtml(b, i) {
+  const m = S.meta,
+    tabs = [...m.tables.values()].filter((t) => t.tableId && !t.tableId.startsWith("_grist") && !t.summarySourceTable);
+  const t = tabs.find((x) => x.tableId === b.grpTable);
+  const cols = t
+    ? byLabel((m.colsByTable.get(t.id) || []).filter((c) => !c.colId.startsWith("gristHelper_") && c.colId !== "manualSort"))
+    : [];
+  const so = (f, opts, cur) =>
+    `<select data-f="${f}" data-i="${i}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(v) === String(cur) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  const lab = (txt, ctrl, tip) => `<label title="${esc(tip)}"><span class="lt">${txt}</span> ${ctrl}</label>`;
+  const co = [["", "—"], ...cols.map((c) => [c.colId, c.label || c.colId])];
+  return (
+    lab(
+      "Regroupement : table des communes",
+      so("grpTable", [["", "—"], ...tabs.sort((x, y) => COLL.compare(x.tableId, y.tableId)).map((x) => [x.tableId, x.tableId])], b.grpTable || ""),
+      "Table Grist avec une ligne par commune (ex. P_Communes).",
+    ) +
+    (t
+      ? lab("Regroupement : code INSEE", so("grpKey", co, b.grpKey || ""), "Colonne du code INSEE de la commune (ex. CODE_COM).") +
+        lab(
+          "Regroupement : colonne",
+          so("grpCol", co, b.grpCol || ""),
+          "Colonne dont la valeur réunit les communes en une zone (ex. CODE_RP, réseau pédagogique). Une référence est lue par sa colonne d'affichage.",
+        )
+      : "") +
+    lab(
+      "Regroupement : libellé",
+      `<input type="text" data-zfile="${i}" data-zkey="grpLabel" value="${esc(b.grpLabel || "")}" placeholder="Regroupements de communes" style="width:220px">`,
+      "Nom du zonage dans la liste « Zonage » de la carte, dans la légende et dans l'en-tête imprimé (ex. Réseaux pédagogiques).",
+    )
   );
 }
 /* Éditeur des couleurs choisies d'une carte */
@@ -6401,10 +6468,11 @@ ${
               ["iris", "IRIS (quartiers INSEE)"],
               ["legis", "circonscriptions législatives"],
               ["college", "secteurs de collège"],
+              ["groupe", "regroupements de communes (table Grist)"],
             ],
             zoneMode(b),
           ),
-          "Dessine sous les points les communes qui en contiennent, les EPCI entiers (contours geo.api.gouv.fr, communes fusionnées), les IRIS des communes découpées en quartiers (service IGN, édition la plus récente), ou les circonscriptions législatives et les secteurs de collège (fichiers GeoJSON déposés à côté du widget).",
+          "Dessine sous les points les communes qui en contiennent, les EPCI entiers (contours geo.api.gouv.fr, communes fusionnées), les IRIS des communes découpées en quartiers (service IGN, édition la plus récente), les circonscriptions législatives et les secteurs de collège (fichiers GeoJSON déposés à côté du widget), ou des regroupements de communes définis dans une table Grist (ex. réseaux pédagogiques).",
         ) +
         (zoneMode(b)
           ? L(
@@ -6419,6 +6487,7 @@ ${
                     ["iris", "IRIS"],
                     ["legis", "circonscriptions législatives"],
                     ["college", "secteurs de collège"],
+                    ["groupe", "regroupements de communes"],
                   ].filter(([v]) => v !== zoneMode(b)),
                 ],
                 b.mapZone2 || "",
@@ -6455,6 +6524,7 @@ ${
             ),
           )
           .join("") +
+        ([zoneMode(b), zoneMode(b) ? b.mapZone2 : ""].includes("groupe") ? grpHtml(b, i) : "") +
         (needsInsee(b)
           ? L(
               "Code INSEE",
@@ -6472,7 +6542,7 @@ ${
               sel(
                 "zoneColor",
                 [
-                  ["", zoneMode(b) === "epci" ? "une couleur par EPCI" : FILE_ZONES[zoneMode(b)] ? `une couleur par ${FILE_ZONES[zoneMode(b)].one}` : "couleur majoritaire des points"],
+                  ["", zoneMode(b) === "epci" ? "une couleur par EPCI" : zoneMode(b) === "groupe" ? "une couleur par regroupement" : FILE_ZONES[zoneMode(b)] ? `une couleur par ${FILE_ZONES[zoneMode(b)].one}` : "couleur majoritaire des points"],
                   ["none", "aucune (contours seuls)"],
                   ["count", "selon le nombre de points"],
                   ["sum", "selon la somme d'une colonne"],
@@ -6728,6 +6798,9 @@ $("#panel").addEventListener("change", (ev) => {
       "zoneTable",
       "zoneKey",
       "zoneVal",
+      "grpTable",
+      "grpKey",
+      "grpCol",
       "cardW",
       "colWidths",
       "startFold",
