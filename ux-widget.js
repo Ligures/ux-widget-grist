@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.19). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.21). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.19"; // voir CHANGELOG.md
+const VERSION = "0.9.4.21"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3284,7 +3284,10 @@ function loadZoneFile(kind, url) {
 const zoneTableValues = (b) => tableMap(b.zoneTable, b.zoneKey, b.zoneVal);
 // tableMap — Table Grist lue en dictionnaire code → valeur (codes en majuscules, sans espaces ; code INSEE numérique
 //   à 4 chiffres complété d'un zéro). Sert aux couleurs « selon une table » et aux regroupements de communes.
-async function tableMap(tableId, keyId, valId) {
+//   group (0.9.4.21) : table qui peut avoir plusieurs lignes par commune (ex. REF_ETAB, une ligne par établissement) ;
+//   la commune prend la valeur la plus fréquente parmi ses lignes non vides, et une référence vers la table des
+//   communes est lue par son code INSEE même si sa colonne d'affichage est le nom.
+async function tableMap(tableId, keyId, valId, group = false) {
   const t = [...S.meta.tables.values()].find((x) => x.tableId === tableId);
   if (!t || !keyId || !valId) return null;
   const cols = S.meta.colsByTable.get(t.id) || [];
@@ -3295,17 +3298,32 @@ async function tableMap(tableId, keyId, valId) {
   const rows = await fetchRows(t.tableId);
   const kO = parseJSON(kC.widgetOptions),
     vO = parseJSON(vC.widgetOptions),
-    m = new Map();
-  for (const r of rows) {
-    const k = String(textOf(kC, kO, r[kC.colId]) ?? "")
+    m = new Map(),
+    votes = new Map();
+  const norm = (x) =>
+    String(x ?? "")
       .trim()
       .toUpperCase()
       .replace(/\s/g, "")
       .replace(/^(\d{4})$/, "0$1");
+  const insee = (x) => /^(\d{5}|2[AB]\d{3}|97\d{3})$/.test(x);
+  for (const r of rows) {
+    let k = norm(textOf(kC, kO, r[kC.colId]));
+    if (group && k && !insee(k) && baseType(kC) === "Ref") {
+      const row = S.byId[refTarget(kC)]?.get(r[kC.colId]);
+      const c = row && Object.values(row).map(norm).find(insee);
+      if (c) k = c;
+    }
     if (!k) continue;
     const v = r[vC.colId];
-    m.set(k, typeof v === "number" && !["Ref", "RefList"].includes(baseType(vC)) ? v : isEmpty(v) || isErr(v) ? null : textOf(vC, vO, v));
+    const val = typeof v === "number" && !["Ref", "RefList"].includes(baseType(vC)) ? v : isEmpty(v) || isErr(v) ? null : textOf(vC, vO, v);
+    if (!group) m.set(k, val);
+    else if (val !== null && val !== "") {
+      const n = votes.get(k) || votes.set(k, new Map()).get(k);
+      n.set(String(val), (n.get(String(val)) || 0) + 1);
+    }
   }
+  for (const [k, n] of votes) m.set(k, [...n].sort((a, c) => c[1] - a[1])[0][0]);
   return { map: m, label: vC.label || vC.colId };
 }
 /* Commune d'un point d'après sa position : département obtenu par geo.api.gouv.fr (une requête, mise en cache),
@@ -3385,7 +3403,7 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
       grpIn = null;
     const gn = grpN(mode);
     if (isGrp(mode)) {
-      grp = grpReady(b, gn) ? await tableMap(grpOpt(b, gn, "Table"), grpOpt(b, gn, "Key"), grpOpt(b, gn, "Col")) : null;
+      grp = grpReady(b, gn) ? await tableMap(grpOpt(b, gn, "Table"), grpOpt(b, gn, "Key"), grpOpt(b, gn, "Col"), true) : null;
       if (!map._container?.isConnected) return;
       if (!grp) return note(`${grpLabel(b, gn)} : table, colonne du code INSEE et colonne de regroupement à choisir`);
       for (const [c, g] of grp.map) grp.map.set(c, g === null || g === undefined ? "" : String(g));
@@ -3613,8 +3631,8 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
   }
 }
 // renderMap — Affiche un widget carte : points, couleurs, contours, QPV, zonage, légendes. Le dessin Leaflet est différé (jobs).
-// Zonage choisi par l'utilisateur (0.9.4.7) : liste « Zonage » dans l'en-tête de la carte, mémorisée dans le
-// navigateur pour cette carte ; null = celui de la configuration.
+// Zonage choisi par l'utilisateur (0.9.4.7) : liste « Zonage » dans l'en-tête de la carte, gardée pour la session
+// (0.9.4.20) ; null = celui de la configuration.
 // Regroupement de communes (0.9.4.16) : zones formées des communes qui partagent une valeur dans une table Grist
 //   (ex. réseau pédagogique de P_Communes), contours fusionnés comme pour les EPCI
 // Jusqu'à trois regroupements par carte (0.9.4.19) : zonages "groupe", "groupe2", "groupe3", options grpTable… /
@@ -3642,45 +3660,63 @@ const ZONE_CHOICES = [
   ["groupe3", "Regroupements de communes 3"],
 ];
 const zoneKey = (id) => `uxwg_zone_${S.docKey || "doc"}_${S.cfg?.name || ""}_${id}`;
-function userZone(id) {
-  // choix encore proposé par cette carte (0.9.4.18) : un regroupement retiré de la configuration est ignoré
+function userZone(id, k = 1) {
+  // choix encore proposé par cette carte (0.9.4.18) : un regroupement retiré de la configuration est ignoré ;
+  // k = 2 : second zonage (contours), choisi par l'utilisateur depuis 0.9.4.21 ("" = aucun)
   const b = S.cfg?.blocks?.find((x) => x.id === id) || {},
-    ok = (v) => zoneChoices(b).some(([k]) => k === v);
-  if (S.zoneSel?.[id] !== undefined) return ok(S.zoneSel[id]) ? S.zoneSel[id] : null;
+    ok = (v) => (k === 2 && v === "") || zoneChoices(b).some(([z]) => z === v),
+    key = zoneKey(id) + (k === 2 ? "_2" : ""),
+    mem = k === 2 ? "zoneSel2" : "zoneSel";
+  if (S[mem]?.[id] !== undefined) return ok(S[mem][id]) ? S[mem][id] : null;
+  // mémorisé pour la session seulement (0.9.4.20) : à la réouverture du document, zonage de la configuration
   try {
-    const v = localStorage.getItem(zoneKey(id));
-    if (v !== null && ok(v)) return ((S.zoneSel ??= {})[id] = v);
+    localStorage.removeItem(key); // choix enregistré par les versions 0.9.4.7 à 0.9.4.19
+    const v = sessionStorage.getItem(key);
+    if (v !== null && ok(v)) return ((S[mem] ??= {})[id] = v);
   } catch {
     /* stockage indisponible */
   }
   return null;
 }
-function setUserZone(id, v) {
-  (S.zoneSel ??= {})[id] = v;
+function setUserZone(id, v, k = 1) {
+  (S[k === 2 ? "zoneSel2" : "zoneSel"] ??= {})[id] = v;
   try {
-    localStorage.setItem(zoneKey(id), v);
+    sessionStorage.setItem(zoneKey(id) + (k === 2 ? "_2" : ""), v);
   } catch {
-    /* stockage indisponible : choix gardé pour la session */
+    /* stockage indisponible : choix gardé jusqu'au rechargement */
   }
 }
 // mapCtlHtml — En-tête d'un bloc carte : zonage au choix, imprimer la carte seule, exporter en HTML interactif.
 function mapCtlHtml(b) {
   const cur = userZone(b.id) ?? zoneMode(b);
-  const zone = `<select class="mapzone" data-mzone="${b.id}" title="Zonage affiché sur la carte (votre choix est mémorisé dans ce navigateur)" aria-label="Zonage">${zoneChoices(b).map(
+  let cur2 = userZone(b.id, 2) ?? (b.mapZone2 || "");
+  if (cur2 === cur) cur2 = "";
+  const zone = `<select class="mapzone" data-mzone="${b.id}" title="Zonage affiché sur la carte (votre choix est gardé jusqu'à la fermeture de l'onglet)" aria-label="Zonage">${zoneChoices(b).map(
     ([v, t]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${esc(t)}</option>`,
   ).join("")}</select>`;
+  const zone2 = `<select class="mapzone mapzone2" data-mzone="${b.id}" data-mk="2" title="Second zonage : contours en pointillés par-dessus le premier (votre choix est gardé jusqu'à la fermeture de l'onglet)" aria-label="Second zonage">${[
+    ["", "Aucun second zonage"],
+    ...zoneChoices(b)
+      .filter(([v]) => v && v !== cur)
+      .map(([v, t]) => [v, `+ ${t}`]),
+  ]
+    .map(([v, t]) => `<option value="${v}" ${v === cur2 ? "selected" : ""}>${esc(t)}</option>`)
+    .join("")}</select>`;
   const pr = `<button type="button" class="mapbtn" data-mprint="${b.id}" title="Imprimer cette carte seule (A4 paysage)" aria-label="Imprimer la carte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z" /></svg></button>`;
   const ex =
     b.mapExportAdmin && !S.isAdmin
       ? ""
       : `<button type="button" class="mapbtn" data-mexport="${b.id}" title="Exporter la carte : fichier HTML interactif (zoom, étiquettes, infobulles), à ouvrir dans un navigateur" aria-label="Exporter la carte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 19h16" /></svg></button>`;
-  return `<span class="mapctl">${zone}${pr}${ex}</span>`;
+  return `<span class="mapctl">${zone}${zone2}${pr}${ex}</span>`;
 }
 async function renderMap(info, rows, body, jobs, selId, b = {}) {
   // zonage choisi par l'utilisateur : remplace celui de la configuration (et ses couleurs propres à ce zonage)
   const uz = userZone(b.id);
   if (uz !== null && uz !== zoneMode(b))
     b = { ...b, mapZone: uz, mapCommunes: false, zoneColor: "", zoneHover: "", mapZone2: b.mapZone2 === uz ? "" : b.mapZone2 };
+  const uz2 = userZone(b.id, 2); // second zonage choisi par l'utilisateur
+  if (uz2 !== null && uz2 !== (b.mapZone2 || ""))
+    b = { ...b, mapZone2: uz2 === zoneMode(b) ? "" : uz2, zoneHover: "" };
   const spec = mapSpec(info.sec);
   const cols = S.meta.colsByTable.get(info.sec.tableRef) || [];
   const find = (id, re) => colByKey(cols, id) || cols.find((c) => re.test(c.colId) || re.test(c.label || ""));
@@ -5283,7 +5319,7 @@ $("#grid").addEventListener("change", (ev) => {
   }
   const mz = ev.target.closest("[data-mzone]"); // carte : zonage choisi par l'utilisateur
   if (mz) {
-    setUserZone(Number(mz.dataset.mzone), mz.value);
+    setUserZone(Number(mz.dataset.mzone), mz.value, Number(mz.dataset.mk) || 1);
     scheduleRender();
   }
 });
@@ -5397,13 +5433,16 @@ window.addEventListener("beforeprint", markPrintBig); // impression lancée par 
 function mapPrintHead(id) {
   const blk = document.querySelector(`#grid > .block[data-sec="${id}"]`);
   const b = S.cfg.blocks.find((x) => x.id === id) || {};
-  const zl = zoneChoices(b).find(([k]) => k === (userZone(id) ?? zoneMode(b)))?.[1];
+  const z1 = userZone(id) ?? zoneMode(b),
+    z2 = userZone(id, 2) ?? (b.mapZone2 || "");
+  const zl = zoneChoices(b).find(([k]) => k === z1)?.[1],
+    zl2 = z2 && z2 !== z1 ? zoneChoices(b).find(([k]) => k === z2)?.[1] : "";
   return {
     title: getInfo(id)?.title || "",
     lines: [
       selectionSummary(),
       [...(blk?.querySelectorAll(".qf-print") || [])].map((e) => e.textContent).join(" · "),
-      zl && zl !== "Aucun zonage" ? `Zonage : ${zl}` : "",
+      [zl && zl !== "Aucun zonage" ? `Zonage : ${zl}` : "", zl2 ? `Contours : ${zl2}` : ""].filter(Boolean).join(" · "),
     ].filter(Boolean),
   };
 }

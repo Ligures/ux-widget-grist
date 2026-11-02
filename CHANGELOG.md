@@ -26,6 +26,27 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.21] — Second zonage au choix, regroupements lus dans une table d'établissements — 2026-11-02
+
+### Utilisateurs
+- *Nouveau* — **Cartes** : une seconde liste dans l'en-tête choisit le **second zonage** (contours en pointillés par-dessus le premier), par exemple réseaux pédagogiques colorés + circonscriptions IEN. Gardé jusqu'à la fermeture de l'onglet, comme le premier ; l'en-tête imprimé l'indique (« Contours : … »).
+- *Corrigé* — **Regroupement lu dans une table d'établissements** (ex. `REF_ETAB` : `CODE_COM`, `CODE_CIRCO`) : des communes avec établissement manquaient au tracé. La dernière ligne de la commune l'emportait, même vide (collège sans circonscription…) ; la commune prend désormais la valeur la plus fréquente parmi ses lignes non vides.
+
+### Administrateurs
+- *Amélioré* — Regroupements : la colonne du code INSEE peut être une référence vers la table des communes, même affichée par le nom de la commune (le code INSEE est lu dans la ligne référencée).
+
+### Développeurs
+- *Nouveau* — `userZone(id, k)` / `setUserZone(id, v, k)` : k = 2 pour le second zonage (`S.zoneSel2`, clé `…_2` en `sessionStorage`) ; `renderMap` remplace `mapZone2` par ce choix.
+- *Amélioré* — `tableMap(table, code, valeur, group)` : en mode regroupement, vote majoritaire par commune sur les lignes non vides, et code INSEE cherché dans la ligne référencée quand la référence s'affiche autrement.
+
+## [0.9.4.20] — Zonage d'origine à chaque ouverture — 2026-11-02
+
+### Utilisateurs
+- *Amélioré* — **Cartes** : le zonage choisi dans la liste « Zonage » est gardé jusqu'à la fermeture de l'onglet, et non plus d'une visite à l'autre ; à la réouverture du document, la carte reprend le zonage prévu par sa configuration.
+
+### Développeurs
+- *Amélioré* — `userZone` / `setUserZone` : `sessionStorage` au lieu de `localStorage` ; l'ancienne clé `uxwg_zone_…` est effacée de `localStorage` à la lecture.
+
 ## [0.9.4.19] — Plusieurs regroupements de communes par carte — 2026-11-02
 
 ### Utilisateurs
