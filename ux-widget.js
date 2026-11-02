@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.9). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.10). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.9"; // voir CHANGELOG.md
+const VERSION = "0.9.4.10"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -5295,13 +5295,14 @@ async function printMap(id) {
   // une seule ligne pour les choix : la carte doit tenir sur la page
   $("#printhead").innerHTML = `${pageIcon("phicon")}<div><h1>${esc(head.title)}</h1><p>${esc([...head.lines, `Édité le ${new Date().toLocaleDateString("fr-FR")}`].join(" · "))}</p></div>`;
   const center = m.map.getCenter(),
-    zoom = m.map.getZoom();
+    zoom = m.map.getZoom(),
+    bounds = m.map.getBounds(); // zone visible à l'écran : entièrement reprise sur le papier (format différent)
   const h = document.documentElement;
   h.classList.add("printone");
   blk.classList.add("printme");
   await new Promise((r) => setTimeout(r, 60));
   m.map.invalidateSize();
-  m.map.setView(center, zoom, { animate: false });
+  m.map.fitBounds(bounds, { animate: false, padding: [4, 4] });
   status("Préparation de l'impression de la carte…");
   await new Promise((r) => setTimeout(r, 1200)); // fond de carte de la nouvelle taille
   status("");
@@ -5366,7 +5367,16 @@ function exportMap(id) {
   });
   const head = mapPrintHead(id);
   const bd = map.getBounds(); // zone visible à l'écran, retrouvée quelle que soit la taille de la fenêtre
-  const data = { title: head.title, lines: head.lines, date: new Date().toLocaleDateString("fr-FR"), tiles: m.tiles, attribution: m.attribution, bounds: [[bd.getSouth(), bd.getWest()], [bd.getNorth(), bd.getEast()]], panes, layers, legends, brand: "#000091" };
+  // points au-dessus des zones (ordre de création différent dans le widget, où les zones ont leur propre volet)
+  layers.sort((a, z) => (a.k === "c") - (z.k === "c"));
+  // fond OpenStreetMap : ses serveurs refusent un fichier ouvert depuis le poste (« Access blocked ») ;
+  // l'export prend alors le Plan IGN de la Géoplateforme, sans clé ni restriction
+  const osm = /tile\.openstreetmap\.org/.test(m.tiles || "");
+  const tiles = osm
+    ? "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/png&TILEMATRIX={z}&TILECOL={x}&TILEROW={y}"
+    : m.tiles;
+  const attribution = osm ? '&copy; <a href="https://www.ign.fr/">IGN</a> — Plan IGN' : m.attribution;
+  const data = { title: head.title, lines: head.lines, date: new Date().toLocaleDateString("fr-FR"), tiles, attribution, bounds: [[bd.getSouth(), bd.getWest()], [bd.getNorth(), bd.getEast()]], panes, layers, legends, brand: "#000091" };
   const json = JSON.stringify(data).replace(/</g, "\\u003c");
   // couleur principale : celle du style (bleu État ou bordeaux), en version claire même si l'écran est en mode sombre
   data.brand = document.documentElement.classList.contains("neutre") ? NEUTRAL_BLUE : "#000091";
@@ -5400,7 +5410,8 @@ document.getElementById("lines").textContent = [...D.lines, "Exportée le " + D.
 const map = L.map("map", { zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 120 }).fitBounds(D.bounds);
 L.tileLayer(D.tiles, { attribution: D.attribution, maxZoom: 19 }).addTo(map);
 for (const [n, z, pe] of D.panes) { const p = map.createPane(n); if (z) p.style.zIndex = z; if (pe) p.style.pointerEvents = pe; }
-for (const x of D.layers) {
+let bad = 0;
+for (const x of D.layers) try {
   const l = x.k === "c" ? L.circleMarker(x.ll, { ...x.s, radius: x.r }) : L.geoJSON(x.g, { style: x.s, pane: x.s.pane || "overlayPane" });
   if (x.t && x.t.c) l.bindTooltip(x.t.c, { permanent: x.t.p, direction: x.t.d || "auto", sticky: x.t.s, offset: x.t.o || [0, 0], className: (x.t.cl + (x.tc ? " uxp" : "")).trim() });
   if (x.p && x.p.c) l.bindPopup(x.p.c, { maxWidth: x.p.w || 420, className: x.tc ? "uxp" : "" });
@@ -5410,7 +5421,8 @@ for (const x of D.layers) {
   }
   l.addTo(map);
   if (x.tc && l.isTooltipOpen && l.isTooltipOpen()) l.getTooltip().getElement()?.style.setProperty("--tc", x.tc[0]);
-}
+} catch (e) { bad++; }
+if (bad) console.warn(bad + " élément(s) de la carte n'ont pas pu être affichés");
 for (const [pos, h] of D.legends) {
   const c = L.control({ position: pos });
   c.onAdd = () => { const d = L.DomUtil.create("div", "map-legend"); d.innerHTML = h; L.DomEvent.disableScrollPropagation(d); return d; };
@@ -5574,9 +5586,11 @@ function newsForUsers(body) {
 }
 /* ---------- Message d'accueil (0.9.3) ----------
    Texte Markdown réglé par l'administrateur (S.nav.welcome, ligne _Navigation de W_Composition), affiché au
-   démarrage. « Ne plus afficher » mémorise, dans le navigateur, l'empreinte du texte : un texte modifié s'affiche
-   de nouveau. */
+   démarrage. À sa fermeture, le navigateur mémorise l'empreinte du texte : seul un texte modifié s'affiche de
+   nouveau (0.9.4.10). Identifiant du document parfois inconnu (jeton d'accès lent) : l'empreinte est aussi gardée
+   sous une clé de secours, pour que le message ne revienne pas à tort. */
 const welcomeKey = () => `uxwg_welcome_${S.docKey || "doc"}`;
+const welcomeKeys = () => [...new Set([welcomeKey(), "uxwg_welcome_doc"])];
 const textHash = (t) => {
   let h = 0;
   for (let i = 0; i < t.length; i++) h = (Math.imul(31, h) + t.charCodeAt(i)) | 0;
@@ -5610,7 +5624,7 @@ async function showWelcome(force = false, text = S.nav?.welcome || "") {
   const hash = textHash(text);
   let seen = null;
   try {
-    seen = localStorage.getItem(welcomeKey());
+    seen = welcomeKeys().map((k) => localStorage.getItem(k)).find((v) => v === hash) || localStorage.getItem(welcomeKey());
   } catch {
     /* stockage indisponible : le message s'affiche à chaque fois */
   }
@@ -5627,7 +5641,6 @@ async function showWelcome(force = false, text = S.nav?.welcome || "") {
   if (!box) return; // index.html antérieur à 0.9.3
   box.querySelector(".wbody").innerHTML = DOMPurify.sanitize(marked.parse(mdFolds(text)), { ADD_ATTR: ["open"] });
   box.querySelectorAll(".wbody a[href]").forEach((a) => Object.assign(a, { target: "_blank", rel: "noopener" }));
-  $("#wNoMore").checked = seen === hash;
   box.dataset.hash = hash;
   box.hidden = false;
   $("#wClose").focus();
@@ -5635,9 +5648,10 @@ async function showWelcome(force = false, text = S.nav?.welcome || "") {
 function closeWelcome() {
   const box = $("#welcome");
   if (!box || box.hidden) return;
+  // vu une fois : il ne revient que si son texte change (0.9.4.10) — ni à la visite suivante, ni après une mise à
+  // jour du widget ou un enregistrement de la configuration ; Aide → « Message d'accueil » le réaffiche
   try {
-    if ($("#wNoMore").checked) localStorage.setItem(welcomeKey(), box.dataset.hash);
-    else localStorage.removeItem(welcomeKey());
+    for (const k of welcomeKeys()) localStorage.setItem(k, box.dataset.hash);
   } catch {
     /* stockage indisponible */
   }
@@ -5661,7 +5675,7 @@ async function openHelp(tab = helpTab, anchor = "") {
     docs
       .map((d) => `<button role="tab" data-htab="${d.id}" class="${d.id === doc.id ? "on" : ""}" aria-selected="${d.id === doc.id}">${esc(d.label)}</button>`)
       .join("") +
-    // message d'accueil : le revoir à tout moment (même après « Ne plus afficher »)
+    // message d'accueil : le revoir à tout moment
     (String(S.nav?.welcome || "").trim() && $("#welcome")
       ? `<button data-hwelcome="1" title="Afficher de nouveau le message d'accueil">Message d'accueil</button>`
       : "");
@@ -6571,7 +6585,7 @@ ${L("Hauteur des graphiques (px)", `<input type="number" id="cChartH" min="100" 
 ${L("Hauteur maximale des tableaux (px)", `<input type="number" id="cMaxH" min="120" step="20" value="${draft.tableMaxHeight}" style="width:80px">`, "Au-delà, le tableau défile à l'intérieur de son bloc (en-têtes fixes).")}
     </section>
     <section class="cs adv"><h4>Message d'accueil <small>— affiché au démarrage, à tous les utilisateurs</small></h4>
-${L("Texte (Markdown)", `<textarea id="cWelcome" rows="6" style="width:100%" placeholder="## Bienvenue&#10;Ce tableau de bord présente…&#10;&#10;+++ En savoir plus&#10;Texte replié, affiché au clic sur le titre.&#10;+++">${esc(draftNav.welcome || "")}</textarea>`, "Texte en Markdown (titres #, gras **, listes -, liens [texte](https://…)) affiché dans une fenêtre à l'ouverture du widget. Partie repliable : une ligne « +++ Titre » (ou « +++! Titre » pour qu'elle soit dépliée au départ), le texte, puis une ligne « +++ ». Chaque personne peut cocher « Ne plus afficher ce message » ; si le texte est modifié, il s'affiche à nouveau à tous. Vide : pas de message.")}
+${L("Texte (Markdown)", `<textarea id="cWelcome" rows="6" style="width:100%" placeholder="## Bienvenue&#10;Ce tableau de bord présente…&#10;&#10;+++ En savoir plus&#10;Texte replié, affiché au clic sur le titre.&#10;+++">${esc(draftNav.welcome || "")}</textarea>`, "Texte en Markdown (titres #, gras **, listes -, liens [texte](https://…)) affiché dans une fenêtre à l'ouverture du widget. Partie repliable : une ligne « +++ Titre » (ou « +++! Titre » pour qu'elle soit dépliée au départ), le texte, puis une ligne « +++ ». Chaque personne le voit une fois ; il ne revient que si le texte est modifié (Aide → « Message d'accueil » le réaffiche). Vide : pas de message.")}
 <button class="icon-btn" id="cWelcomePrev" title="Afficher le message tel que le verront les utilisateurs">Aperçu</button>
     </section>
     <section class="cs adv"><h4>5. Navigation entre pages <small>— menu commun à toutes les configurations</small></h4>

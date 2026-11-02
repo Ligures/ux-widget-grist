@@ -26,6 +26,20 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.10] — Impression et export des cartes corrigés, message d'accueil vu une fois — 2026-11-02
+
+### Utilisateurs
+- *Corrigé* — **Carte imprimée seule** : toute la zone visible à l'écran figure sur le papier (le cadrage s'adapte au format de la page au lieu de garder le même zoom, qui coupait le haut et le bas).
+- *Corrigé* — **Carte exportée** : le fond de carte s'affiche (Plan IGN, à la place d'OpenStreetMap, qui refuse les fichiers ouverts depuis le poste : « Access blocked ») ; les points sont dessinés au-dessus des zones, et un élément qui ne peut pas être affiché n'empêche plus les suivants.
+- *Amélioré* — **Message d'accueil** : vu une fois, il ne revient que si son texte est modifié — ni à la visite suivante, ni après une mise à jour du widget ou un enregistrement de la configuration. La case « Ne plus afficher ce message » disparaît ; Aide → « Message d'accueil » le réaffiche.
+
+### Administrateurs
+- *Amélioré* — `index.html` : fenêtre d'accueil sans case à cocher, avec une phrase d'explication (à déposer avec `ux-widget.js`).
+
+### Développeurs
+- *Corrigé* — `printMap` : `fitBounds` sur la zone visible avant impression ; `exportMap` : tuiles `data.geopf.fr` (WMTS `PLANIGNV2`) quand la source est `tile.openstreetmap.org`, cercles triés après les polygones, `try/catch` par calque.
+- *Amélioré* — Empreinte du message d'accueil enregistrée à chaque fermeture, aussi sous une clé de secours (`uxwg_welcome_doc`) quand l'identifiant du document n'a pas pu être lu à temps.
+
 ## [0.9.4.9] — Filtre libre à plusieurs valeurs, seconde ligne d'en-tête — 2026-11-02
 
 ### Utilisateurs

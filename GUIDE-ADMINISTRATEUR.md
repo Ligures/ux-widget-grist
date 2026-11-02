@@ -188,7 +188,7 @@ Choisir une circonscription dans la liste en haut de la page.
 +++
 ```
 
-Chaque personne peut cocher **Ne plus afficher ce message** : le choix est mémorisé dans son navigateur. Si le texte est modifié, le message s'affiche à nouveau à tous. Laisser le texte vide supprime le message.
+Chaque personne voit le message **une fois** : à sa fermeture, le navigateur mémorise l'empreinte du texte. Il ne revient que si le texte est modifié — pas après une mise à jour du widget ni un enregistrement de la configuration. Aide → **Message d'accueil** le réaffiche à la demande. Laisser le texte vide supprime le message.
 
 ### Menu de navigation
 
