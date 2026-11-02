@@ -26,6 +26,24 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.18] — Zonage mémorisé qui n'existe plus — 2026-11-02
+
+### Utilisateurs
+- *Corrigé* — **Cartes** : un zonage choisi dans la liste « Zonage » puis retiré de la configuration (par exemple un regroupement de communes) n'est plus appliqué. La carte reprend le zonage prévu, au lieu d'afficher « table, colonne du code INSEE et colonne de regroupement à choisir » sans aucun contour.
+
+### Développeurs
+- *Corrigé* — `userZone(id)` ne renvoie qu'un choix présent dans `zoneChoices(b)` de la carte.
+
+## [0.9.4.17] — Zonage différé et plus rapide — 2026-11-02
+
+### Utilisateurs
+- *Amélioré* — **Cartes avec zonage** : la page et les points s'affichent d'abord, les zones ensuite, sans bloquer la page. La fusion des communes (réseaux, EPCI) est environ six fois plus rapide, et les contours des communes sont gardés 30 jours dans le navigateur au lieu d'être téléchargés à chaque ouverture.
+
+### Développeurs
+- *Nouveau* — `dissolve(geoms)` : fusion par annulation des côtés communs et enchaînement des côtés restants en anneaux (Polygon multi-anneaux, remplissage pair-impair) ; `polygon-clipping` ne sert plus qu'en repli.
+- *Nouveau* — `cachedJson(url, jours)` : réponses de geo.api.gouv.fr dans le Cache Storage (`uxwg-geo-1`, 30 jours), repli sur un téléchargement simple.
+- *Amélioré* — `drawZones` attend `requestIdleCallback` (1,5 s au plus) puis rend la main au navigateur toutes les 30 ms pendant la fusion.
+
 ## [0.9.4.16] — Zonage par regroupement de communes (réseaux pédagogiques) — 2026-11-02
 
 ### Utilisateurs

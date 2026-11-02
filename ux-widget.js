@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.16). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.18). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.16"; // voir CHANGELOG.md
+const VERSION = "0.9.4.18"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -2834,15 +2834,29 @@ function communeCode(col, v) {
 }
 // depOf — Département d'un code INSEE (2 caractères, 3 pour l'outre-mer).
 const depOf = (code) => (code.startsWith("97") ? code.slice(0, 3) : code.slice(0, 2));
+// cachedJson — Réponse JSON gardée 30 jours dans le cache du navigateur (0.9.4.17) : les contours d'un département
+//   (plusieurs Mo) ne sont plus téléchargés à chaque ouverture. Sans cache disponible : téléchargement simple.
+async function cachedJson(url, days = 30) {
+  let c = null;
+  try {
+    c = await caches.open("uxwg-geo-1");
+    const r = await c.match(url);
+    if (r && Date.now() - Number(r.headers.get("x-uxwg-date") || 0) < days * 864e5) return await r.json();
+  } catch {
+    c = null;
+  }
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const txt = await r.text();
+  if (c)
+    c.put(url, new Response(txt, { headers: { "content-type": "application/json", "x-uxwg-date": String(Date.now()) } })).catch(() => {});
+  return JSON.parse(txt);
+}
 // fetchCommuneShapes — Contours des communes d'un département (geo.api.gouv.fr), avec leur EPCI. Mis en cache.
 function fetchCommuneShapes(dep) {
-  S.geoCache[dep] ??= fetch(
+  S.geoCache[dep] ??= cachedJson(
     `https://geo.api.gouv.fr/departements/${dep}/communes?format=geojson&geometry=contour&fields=nom,code,codeEpci,epci`,
   )
-    .then((r) => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    })
     .catch((e) => {
       delete S.geoCache[dep];
       throw e;
@@ -3146,6 +3160,51 @@ function fetchIris(codes) {
 }
 // polysOf — Liste des polygones d'une géométrie Polygon ou MultiPolygon.
 const polysOf = (g) => (g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : []);
+// dissolve — Fusion rapide (0.9.4.17) de polygones jointifs (communes d'un EPCI ou d'un regroupement) : les côtés communs à deux
+//   polygones (mêmes sommets, contours d'une même source) s'annulent, les côtés restants sont enchaînés en anneaux.
+//   Résultat : un Polygon à plusieurs anneaux, rempli en pair-impair (règle de Leaflet) ; null si l'enchaînement échoue.
+function dissolve(geoms) {
+  const edges = new Map();
+  const pk = (p) => p[0] + "," + p[1];
+  for (const g of geoms)
+    for (const pg of polysOf(g))
+      for (const ring of pg)
+        for (let i = 0; i + 1 < ring.length; i++) {
+          const a = ring[i],
+            b = ring[i + 1],
+            ka = pk(a),
+            kb = pk(b);
+          if (ka === kb) continue;
+          const k = ka < kb ? ka + "|" + kb : kb + "|" + ka;
+          if (edges.has(k)) edges.delete(k);
+          else edges.set(k, [a, b, ka, kb]);
+        }
+  const at = new Map(); // sommet → côtés restants qui y aboutissent
+  const list = [...edges.values()];
+  list.forEach((e, i) => {
+    for (const k of [e[2], e[3]]) (at.get(k) || at.set(k, []).get(k)).push(i);
+  });
+  const used = new Uint8Array(list.length),
+    rings = [];
+  for (let s = 0; s < list.length; s++) {
+    if (used[s]) continue;
+    used[s] = 1;
+    const [a, b, ka] = list[s],
+      ring = [a, b];
+    let cur = list[s][3];
+    while (cur !== ka) {
+      const n = (at.get(cur) || []).find((i) => !used[i]);
+      if (n === undefined) return null; // contour ouvert : sommets non partagés
+      used[n] = 1;
+      const e = list[n],
+        fwd = e[2] === cur;
+      ring.push(fwd ? e[1] : e[0]);
+      cur = fwd ? e[3] : e[2];
+    }
+    if (ring.length >= 4) rings.push(ring);
+  }
+  return rings.length ? { type: "Polygon", coordinates: rings } : null;
+}
 // inGeom — Point dans une géométrie (trous compris).
 const inGeom = (g, lng, lat) =>
   polysOf(g).some((pg) => inRing(lng, lat, pg[0]) && !pg.slice(1).some((h) => inRing(lng, lat, h)));
@@ -3296,6 +3355,9 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
     };
     c.addTo(map);
   };
+  // zonage différé (0.9.4.17) : la page et les points s'affichent d'abord, les zones quand le navigateur est libre
+  await new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(() => r(), { timeout: 1500 }) : setTimeout(r, 200)));
+  if (!map._container?.isConnected) return;
   const fileZ = FILE_ZONES[mode]; // zonage lu dans un fichier (circonscriptions, secteurs de collège)
   if (!fileZ && pts.some((p) => !p.code)) {
     if (comC)
@@ -3446,6 +3508,8 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
     // géométrie : fusion des communes pour un EPCI
     const geomOf = (z) => {
       if (z.feats.length === 1) return z.feats[0].geometry;
+      const fast = dissolve(z.feats.map((f) => f.geometry));
+      if (fast) return fast;
       const polys = z.feats.map((f) => polysOf(f.geometry));
       if (window.polygonClipping) {
         try {
@@ -3456,7 +3520,17 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
       }
       return { type: "MultiPolygon", coordinates: polys.flat() };
     };
-    const feats = ordered.map((z) => ({ type: "Feature", properties: z, geometry: geomOf(z) }));
+    // fusion zone par zone, en rendant la main au navigateur toutes les 30 ms : la page reste réactive
+    const feats = [];
+    let t0 = performance.now();
+    for (const z of ordered) {
+      feats.push({ type: "Feature", properties: z, geometry: geomOf(z) });
+      if (performance.now() - t0 > 30) {
+        await new Promise((r) => setTimeout(r));
+        if (!map._container?.isConnected) return;
+        t0 = performance.now();
+      }
+    }
     if (!map.getPane("zones")) map.createPane("zones").style.zIndex = 350; // sous les points
     if (outline && !map.getPane("zones2")) map.createPane("zones2").style.zIndex = 355; // second zonage : au-dessus du premier
     const what = how === "table" && tv ? tv.label : how === "sum" && sumC ? sumC.label || sumC.colId : "";
@@ -3558,10 +3632,13 @@ const ZONE_CHOICES = [
 ];
 const zoneKey = (id) => `uxwg_zone_${S.docKey || "doc"}_${S.cfg?.name || ""}_${id}`;
 function userZone(id) {
-  if (S.zoneSel?.[id] !== undefined) return S.zoneSel[id];
+  // choix encore proposé par cette carte (0.9.4.18) : un regroupement retiré de la configuration est ignoré
+  const b = S.cfg?.blocks?.find((x) => x.id === id) || {},
+    ok = (v) => zoneChoices(b).some(([k]) => k === v);
+  if (S.zoneSel?.[id] !== undefined) return ok(S.zoneSel[id]) ? S.zoneSel[id] : null;
   try {
     const v = localStorage.getItem(zoneKey(id));
-    if (v !== null && ZONE_CHOICES.some(([k]) => k === v)) return ((S.zoneSel ??= {})[id] = v);
+    if (v !== null && ok(v)) return ((S.zoneSel ??= {})[id] = v);
   } catch {
     /* stockage indisponible */
   }
