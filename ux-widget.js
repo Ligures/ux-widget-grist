@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.7). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.9). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.7"; // voir CHANGELOG.md
+const VERSION = "0.9.4.9"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -994,6 +994,12 @@ function qfDropExcluded(b, info, rows) {
   return rows;
 }
 function qfApplyOne(b, info, rows, k) {
+  if (k === 3) {
+    // filtre libre : plusieurs valeurs cochées
+    const c3 = qfCol(b, info, 3),
+      list = qf3List(b);
+    return c3 && list.length ? rows.filter((r) => list.some((x) => qfSame(qfText(c3, r), x))) : rows;
+  }
   const col = qfCol(b, info, k),
     v = qfCur(b, k);
   if (!col || !v) return rows;
@@ -1018,15 +1024,76 @@ const qfNorm = (x) =>
     .trim();
 // qfHtml — Sélecteurs de l'en-tête : boutons « Tous | valeurs » ; au-delà de 4 valeurs, valeur active et liste au clic.
 function qfHtml(b, info, allRows) {
-  return qfHtmlOne(b, info, allRows, 1) + qfHtmlOne(b, info, allRows, 2) + qfFreeHtml(b, info) + qfHtmlOne(b, info, allRows, 3);
+  return qfHtmlOne(b, info, allRows, 1) + qfHtmlOne(b, info, allRows, 2);
 }
-// qfFreeHtml — Filtre libre : liste des colonnes de la table, au choix de l'utilisateur (« Filtrer sur… »).
+// qfRowHtml — Seconde ligne de l'en-tête (0.9.4.9) : filtre libre (colonne, puis valeurs à cocher).
+const qfRowHtml = (b, info, allRows) => qfFreeHtml(b, info) + qfMultiHtml(b, info, allRows);
+// qf3List — Valeurs cochées du filtre libre (tableau ; vide = toutes).
+const qf3List = (b) => (Array.isArray(S.qf[qfKey(b, 3)]) ? S.qf[qfKey(b, 3)] : []);
+// qfMultiHtml — Filtre libre : bouton « valeurs ▾ » et liste à cocher (plusieurs valeurs possibles), appliquée à la
+//   fermeture de la liste ou par « Appliquer ».
+function qfMultiHtml(b, info, allRows) {
+  const col = qfCol(b, info, 3);
+  if (!col) return "";
+  const cur = qf3List(b);
+  const vals = [...new Set(allRows.map((r) => qfText(col, r)))].sort((x, y) => (x === "(vide)") - (y === "(vide)") || COLL.compare(x, y));
+  const shown = (v) => (v === "(vide)" ? "(sans valeur)" : v);
+  const name = col.label || col.colId;
+  const label = !cur.length ? "Toutes les valeurs" : cur.length <= 2 ? cur.map(shown).join(", ") : `${cur.length} valeurs`;
+  const pr = cur.length ? `<span class="qf-print">${esc(name)} : ${esc(cur.map(shown).join(", "))}</span>` : "";
+  return `${pr}<span class="qf3m${cur.length ? " active" : ""}" data-qf3box="${b.id}">
+    <button type="button" class="qf3-tog" data-qf3tog="${b.id}" title="Valeurs de « ${esc(name)} » à afficher (plusieurs possibles)" aria-haspopup="true">${QF_ICON}<span class="qf-lab">${esc(label)}</span><span class="qf-caret">▾</span></button>
+    <span class="qf3-panel" hidden><span class="qf3-act"><button type="button" data-qf3all="${b.id}">Toutes</button><button type="button" class="primary" data-qf3ok="${b.id}">Appliquer</button></span>${vals
+      .map((v) => `<label><input type="checkbox" data-qf3="${b.id}" value="${esc(v)}" ${cur.some((x) => qfSame(x, v)) ? "checked" : ""}> ${esc(shown(v))}</label>`)
+      .join("")}</span></span>`;
+}
+// qf3Open / qf3Close — Ouvre la liste à cocher (position fixe, non coupée par le bloc) ; à la fermeture, les cases
+//   cochées deviennent le filtre (rendu seulement si le choix a changé).
+function qf3Open(btn) {
+  const box = btn.closest(".qf3m"),
+    panel = box.querySelector(".qf3-panel");
+  const was = !panel.hidden;
+  qf3Close();
+  if (was) return;
+  panel.hidden = false;
+  box.classList.add("open");
+  const r = btn.getBoundingClientRect();
+  panel.style.top = `${r.bottom + 2}px`;
+  panel.style.left = `${Math.max(4, Math.min(r.left, window.innerWidth - panel.offsetWidth - 4))}px`;
+}
+function qf3Close() {
+  for (const box of document.querySelectorAll(".qf3m.open")) {
+    box.classList.remove("open");
+    box.querySelector(".qf3-panel").hidden = true;
+    const id = Number(box.dataset.qf3box),
+      b = S.cfg.blocks.find((x) => x.id === id);
+    if (!b) continue;
+    const list = [...box.querySelectorAll("[data-qf3]:checked")].map((x) => x.value);
+    const old = qf3List(b);
+    if (list.length !== old.length || list.some((v) => !old.some((x) => qfSame(x, v)))) {
+      S.qf[qfKey(b, 3)] = list;
+      scheduleRender();
+    }
+  }
+}
+document.addEventListener("mousedown", (e) => {
+  if (!e.target.closest(".qf3m")) qf3Close();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") qf3Close();
+});
+// qfFreeCandidates — Colonnes d'une table utilisables par le filtre libre (ni techniques, ni pièces jointes).
+const qfFreeCandidates = (tableRef) =>
+  (S.meta.colsByTable.get(tableRef) || [])
+    .filter((c) => !c.colId.startsWith("gristHelper_") && c.colId !== "manualSort" && baseType(c) !== "Attachments")
+    .sort((x, y) => COLL.compare(x.label || x.colId, y.label || y.colId));
+// qfFreeHtml — Filtre libre : liste des colonnes de la table, au choix de l'utilisateur (« Filtrer sur… ») ;
+//   seulement celles cochées dans la configuration (qfFreeCols), toutes si aucune ne l'est.
 function qfFreeHtml(b, info) {
   if (!b.qfFree || !(QF_KINDS.includes(info.kind) || (info.kind === "single" && b.asList))) return "";
   const cur = S.qfFreeCol?.[b.id] || "";
-  const cols = (S.meta.colsByTable.get(info.sec.tableRef) || [])
-    .filter((c) => !c.colId.startsWith("gristHelper_") && c.colId !== "manualSort" && baseType(c) !== "Attachments")
-    .sort((x, y) => COLL.compare(x.label || x.colId, y.label || y.colId));
+  const only = b.qfFreeCols?.length ? new Set(b.qfFreeCols) : null;
+  const cols = qfFreeCandidates(info.sec.tableRef).filter((c) => !only || only.has(c.colId));
   return `<select class="qffree" data-qfcol="${b.id}" title="Filtrer ce bloc sur une colonne de votre choix, puis sur une de ses valeurs" aria-label="Filtrer sur une colonne">
     <option value="">${cur ? "✕ Retirer le filtre" : "Filtrer sur…"}</option>${cols
       .map((c) => `<option value="${esc(c.colId)}" ${c.colId === cur ? "selected" : ""}>${esc(c.label || c.colId)}</option>`)
@@ -1062,7 +1129,7 @@ function qfHtmlOne(b, info, allRows, k) {
   //   · « icon » icône de filtre (pastille si un filtre est actif), liste au clic
   const label = cur ? shown(vals.find((x) => qfSame(x, cur)) || cur) : "Tous"; // valeur rapprochée : son propre texte
   const many = vals.length > 4; // au-delà de 4 valeurs : valeur active + liste au clic, comme sur petit écran
-  return `${pr}<span class="qf ${many ? "compact" : "full"}${cur ? " active" : ""}"${many ? ' data-many="1"' : ""} title="${esc(tip)}">
+  return `${pr}<span class="qf ${many ? "compact" : "full"}${cur ? " active" : ""}${k === 3 ? " qf3" : ""}"${many ? ' data-many="1"' : ""} title="${esc(tip)}">
     <button type="button" class="qf-cur" data-qftog="${b.id}" data-qk="${k}" aria-haspopup="true" aria-label="${esc(tip)} : ${esc(label)}">${QF_ICON}<span class="qf-lab">${esc(label)}</span><span class="qf-caret">▾</span></button>
     <span class="qf-opts">${[["", "Tous"], ...vals.map((v) => [v, shown(v)])]
       .map(([v, l]) => `<button type="button" data-qf="${b.id}" data-qk="${k}" data-qv="${esc(v)}" class="${(v ? cur && isOn(v) : !cur) ? "on" : ""}" title="${esc(`Clic : ${v ? `n'afficher que « ${l} »` : "tout afficher"} dans ce bloc${sync}`)}">${esc(l)}</button>`)
@@ -1070,7 +1137,7 @@ function qfHtmlOne(b, info, allRows, k) {
 }
 
 // blockShell — Crée le cadre d'un bloc : en-tête (titre, compteur, recherche, export, plein écran) et zone de contenu vide.
-function blockShell(b, info, badge, extraHead = "") {
+function blockShell(b, info, badge, extraHead = "", extraRow = "") {
   if (S.collapsed[b.id] === undefined) S.collapsed[b.id] = initialFold(b, info);
   const w = b.width || DEFAULT_WIDTH[info.kind] || 3;
   const el = document.createElement("section");
@@ -1084,7 +1151,7 @@ function blockShell(b, info, badge, extraHead = "") {
   el.dataset.sec = b.id;
   el.innerHTML = `<div class="bh"><button class="tog" data-tog="${b.id}" title="Replier / déplier">${S.collapsed[b.id] ? "▸" : "▾"}</button>
     <h2>${esc(info.title)}</h2>${secDescMark(info)}${extraHead}<span class="badge"></span>
-    <button class="max" data-max="${b.id}" title="${S.maxed === b.id ? "Réduire (Échap)" : "Plein écran"}">${S.maxed === b.id ? "✕" : "⛶"}</button></div><div class="bb"></div>`;
+    <button class="max" data-max="${b.id}" title="${S.maxed === b.id ? "Réduire (Échap)" : "Plein écran"}">${S.maxed === b.id ? "✕" : "⛶"}</button></div>${extraRow ? `<div class="bh2">${extraRow}</div>` : ""}<div class="bb"></div>`;
   if (S.layoutMode) {
     el.draggable = true;
     el.style.cssText += layoutRowsCss(b);
@@ -3598,7 +3665,8 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
           : null,
       ]);
       if (qpv) for (const p of pts) p.qpv = qpvLocate(qpv, p.lat, p.lng, qpvDist);
-      const map = L.map(el, { zoomControl: true, attributionControl: true }).setView(
+      // zoom plus progressif (0.9.4.8) : demi-niveaux aux boutons, quarts de niveau au cadrage, molette deux fois plus douce
+      const map = L.map(el, { zoomControl: true, attributionControl: true, ...MAP_ZOOM }).setView(
         [pts[0].lat, pts[0].lng],
         11,
       ); // vue initiale sûre
@@ -4024,6 +4092,7 @@ function fixAggregate(data, src) {
     });
   });
 }
+const MAP_ZOOM = { zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 120, wheelDebounceTime: 60 };
 // mapGestures — Carte posée dans une page qui défile (0.9.4.5) : la molette fait défiler la page, Ctrl (ou ⌘) +
 //   molette zoome ; sur écran tactile, un doigt fait défiler la page et deux doigts déplacent et zooment la carte.
 //   Un court message l'indique. Bloc en plein écran, ou option « Zoom à la molette sans Ctrl » : carte libre.
@@ -4432,6 +4501,9 @@ async function render() {
         if (qcs.length) await ensureRefTables(qcs); // champ du filtre rapide de type référence : texte affiché
         const before = rows.length; // lignes avant le filtre rapide
         const qfCtl = qfHtml(b, info, rows); // filtre rapide : sélecteur calculé sur toutes les lignes (affiché même sans données)…
+        const isMapBlk = info.kind === "custom" && isMapSection(info.sec);
+        // seconde ligne de l'en-tête : filtre libre et outils de la carte (le titre garde la place)
+        const row2 = qfRowHtml(b, info, qfApplyOne(b, info, qfApplyOne(b, info, qfDropExcluded(b, info, rows), 1), 2)) + (isMapBlk ? mapCtlHtml(b) : "");
         rows = qfApply(b, info, rows); // …puis seules les lignes choisies sont affichées
         const selId = await selectedRowId(b.id, ctx);
         const isSingle = info.kind === "single";
@@ -4458,7 +4530,7 @@ async function render() {
             skipped.empty.push(info.title);
             continue;
           }
-          const el = blockShell(b, info, KIND[info.kind], qfCtl); // le filtre reste affiché pour revenir à « Tous »
+          const el = blockShell(b, info, KIND[info.kind], qfCtl, row2); // le filtre reste affiché pour revenir à « Tous »
           el.classList.add("empty");
           el.querySelector(".bb").textContent = "Aucune donnée";
           if (blockAddable(b, info)) el.querySelector(".bb").insertAdjacentHTML("beforeend", addBtn(b, false));
@@ -4479,8 +4551,7 @@ async function render() {
                 ? "Texte"
                 : "Graphique avancé"
               : `${rows.length} ligne${rows.length > 1 ? "s" : ""}`;
-        const isMapBlk = info.kind === "custom" && isMapSection(info.sec);
-        const el = blockShell(b, info, badge, qfCtl + search + (isMapBlk ? mapCtlHtml(b) : ""));
+        const el = blockShell(b, info, badge, qfCtl + search, row2);
         const body = el.querySelector(".bb");
         if (info.kind === "record") renderTable(info, rows, body, selId, jobs);
         else if (isSingle && b.asList)
@@ -4973,6 +5044,15 @@ $("#grid").addEventListener("click", (ev) => {
     scheduleRender();
     return;
   }
+  const q3 = ev.target.closest("[data-qf3tog],[data-qf3all],[data-qf3ok]"); // filtre libre : liste à cocher
+  if (q3) {
+    ev.stopPropagation();
+    if (q3.dataset.qf3tog) qf3Open(q3);
+    else if (q3.dataset.qf3all) q3.closest(".qf3-panel").querySelectorAll("[data-qf3]").forEach((x) => (x.checked = false));
+    else qf3Close();
+    return;
+  }
+  if (ev.target.closest(".qf3-panel")) return; // case à cocher : appliquée à la fermeture
   const mb = ev.target.closest("[data-mprint],[data-mexport]"); // carte : imprimer seule, exporter
   if (mb) {
     ev.stopPropagation();
@@ -5212,7 +5292,8 @@ async function printMap(id) {
     blk = document.querySelector(`#grid > .block[data-sec="${id}"]`);
   if (!m || !blk) return;
   const head = mapPrintHead(id);
-  $("#printhead").innerHTML = `${pageIcon("phicon")}<div><h1>${esc(head.title)}</h1>${head.lines.map((l) => `<p>${esc(l)}</p>`).join("")}<p>Édité le ${new Date().toLocaleDateString("fr-FR")}</p></div>`;
+  // une seule ligne pour les choix : la carte doit tenir sur la page
+  $("#printhead").innerHTML = `${pageIcon("phicon")}<div><h1>${esc(head.title)}</h1><p>${esc([...head.lines, `Édité le ${new Date().toLocaleDateString("fr-FR")}`].join(" · "))}</p></div>`;
   const center = m.map.getCenter(),
     zoom = m.map.getZoom();
   const h = document.documentElement;
@@ -5316,7 +5397,7 @@ const D = JSON.parse(document.getElementById("data").textContent);
 document.documentElement.style.setProperty("--b", D.brand);
 document.querySelector("header h1").textContent = D.title;
 document.getElementById("lines").textContent = [...D.lines, "Exportée le " + D.date].join(" · ");
-const map = L.map("map").fitBounds(D.bounds);
+const map = L.map("map", { zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 120 }).fitBounds(D.bounds);
 L.tileLayer(D.tiles, { attribution: D.attribution, maxZoom: 19 }).addTo(map);
 for (const [n, z, pe] of D.panes) { const p = map.createPane(n); if (z) p.style.zIndex = z; if (pe) p.style.pointerEvents = pe; }
 for (const x of D.layers) {
@@ -6172,7 +6253,13 @@ ${
         b.qfFree,
         "Proposer un filtre libre",
         "Ajoute dans l'en-tête du bloc une liste « Filtrer sur… » : l'utilisateur choisit une colonne de la table, puis une de ses valeurs. Il se cumule avec les filtres rapides ; le choix est oublié à la fermeture de la page.",
-      )}</div>`,
+      )}${
+        b.qfFree
+          ? `<div class="qfx" title="Colonnes proposées dans « Filtrer sur… ». Aucune cochée : toutes les colonnes de la table."><span class="lt">Colonnes proposées <small>(aucune : toutes)</small></span><span class="qfx-list">${qfFreeCandidates(s.tableRef)
+              .map((c) => `<label><input type="checkbox" data-qffc="${i}" value="${esc(c.colId)}" ${(b.qfFreeCols || []).includes(c.colId) ? "checked" : ""}> ${esc(c.label || c.colId)}</label>`)
+              .join("")}</span></div>`
+          : ""
+      }</div>`,
     );
     return groups.join("");
   })()}
@@ -6559,6 +6646,14 @@ $("#panel").addEventListener("change", (ev) => {
   if (t.dataset.f === "qfField2") draft.blocks[Number(t.dataset.i)].qfExclude2 = [];
   if (t.dataset.qffree) {
     draft.blocks[Number(t.dataset.qffree)].qfFree = t.checked;
+    renderConfig(); // affiche ou masque la liste des colonnes proposées
+    return;
+  }
+  if (t.dataset.qffc) {
+    const b = draft.blocks[Number(t.dataset.qffc)];
+    const list = (b.qfFreeCols || []).filter((x) => x !== t.value);
+    if (t.checked) list.push(t.value);
+    b.qfFreeCols = list;
     return;
   }
   if (t.dataset.qfx) {

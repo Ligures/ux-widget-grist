@@ -26,6 +26,28 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.9] — Filtre libre à plusieurs valeurs, seconde ligne d'en-tête — 2026-11-02
+
+### Utilisateurs
+- *Amélioré* — **Filtre libre** : plusieurs valeurs peuvent être cochées ; le choix s'applique à la fermeture de la liste ou par **Appliquer** (**Toutes** décoche tout). Le bouton résume le choix (« Brest, Morlaix », ou « 3 valeurs »).
+- *Amélioré* — **En-tête des blocs** : le filtre libre et les outils de la carte (zonage, impression, export) passent sur une seconde ligne ; le titre reste lisible.
+
+### Développeurs
+- *Amélioré* — `blockShell(…, extraRow)` crée la ligne `.bh2` ; filtre libre : `qfRowHtml`, `qfMultiHtml`, `qf3Open` / `qf3Close`, valeurs dans `S.qf["<bloc>:3"]` (tableau, vide = toutes).
+
+## [0.9.4.8] — Cartes : impression sur une page, zoom progressif, filtre libre restreint — 2026-11-02
+
+### Utilisateurs
+- *Corrigé* — **Carte imprimée seule** : elle tient sur une page A4 paysage ; les choix (sélections, filtres, zonage, date) sont réunis sur une ligne sous le titre.
+- *Amélioré* — **Zoom des cartes plus progressif** : demi-niveaux aux boutons + / −, molette et pincement deux fois plus doux, cadrage plus fin ; de même dans les cartes exportées.
+- *Amélioré* — **Smartphone** : ni impression de la carte seule, ni zonage au choix, ni filtre libre (l'export reste proposé).
+
+### Administrateurs
+- *Nouveau* — **Filtre libre** : liste **Colonnes proposées** à cocher (`qfFreeCols`) ; aucune cochée : toutes les colonnes.
+
+### Développeurs
+- *Amélioré* — `MAP_ZOOM` (`zoomSnap` 0,25, `zoomDelta` 0,5, `wheelPxPerZoomLevel` 120) ; carte imprimée de 275 × 158 mm ; classe `qf3` du 3ᵉ filtre ; `qfFreeCandidates`.
+
 ## [0.9.4.7] — Cartes : imprimer seule, exporter, zonage au choix ; filtre libre — 2026-11-02
 
 ### Utilisateurs

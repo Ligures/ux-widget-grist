@@ -93,7 +93,7 @@ Les deux filtres se cumulent : *Public* et *Ecole*.
 
 Le filtre est disponible pour les tableaux, les listes de fiches, les graphiques et les cartes.
 
-**Filtre libre** (encadré du même nom) : la case **Proposer un filtre libre** ajoute dans l'en-tête du bloc une liste « Filtrer sur… » où l'utilisateur choisit lui-même une colonne de la table (pièces jointes exceptées), puis une de ses valeurs. Il se cumule avec les filtres rapides ; il n'est pas mémorisé.
+**Filtre libre** (encadré du même nom) : la case **Proposer un filtre libre** ajoute, sur une seconde ligne de l'en-tête du bloc, une liste « Filtrer sur… » où l'utilisateur choisit lui-même une colonne de la table (pièces jointes exceptées), puis coche une ou plusieurs de ses valeurs. Il se cumule avec les filtres rapides ; il n'est pas mémorisé. Une fois la case cochée, **Colonnes proposées** permet de limiter la liste aux colonnes cochées (aucune cochée : toutes). Il n'est pas proposé sur smartphone.
 
 ### Listes de sélection
 
