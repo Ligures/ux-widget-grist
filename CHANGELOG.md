@@ -26,6 +26,25 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.15] — Fond de carte sur imprimante : retour au rendu de la 0.9.4.10 — 2026-11-02
+
+### Utilisateurs
+- *Corrigé* — **Carte imprimée seule, sur imprimante** : le fond de carte s'imprime de nouveau, comme en 0.9.4.10. Une carte affichée en plein écran garde son étendue (zoom ajusté au format de la page) ; une carte plus petite garde son centre et son zoom.
+
+### Développeurs
+- *Retiré* — `tilesSnapshot` (copie des tuiles dans un canevas), réduction CSS `.printscale` (`transform: scale`) et neutralisation de `will-change` à l'impression : ces ajouts (0.9.4.12 à 0.9.4.14) privaient l'imprimante du fond de carte.
+- *Amélioré* — `printMap` : carte toujours au format 275 × 158 mm ; plein écran → `fitBounds` de l'étendue affichée avec `zoomSnap = 0` (zoom fractionnaire, rétabli après l'impression).
+
+## [0.9.4.14] — Fond de carte et légende à l'impression sur imprimante — 2026-11-02
+
+### Utilisateurs
+- *Corrigé* — **Carte imprimée seule, sur imprimante** : le fond de carte est recopié en une seule image avant l'impression ; il s'imprime comme dans le PDF.
+- *Corrigé* — **Légendes des cartes à l'impression** : complètes, au lieu d'être coupées à la hauteur de leur zone de défilement.
+
+### Développeurs
+- *Nouveau* — `tilesSnapshot` : tuiles chargées recopiées dans un canevas (×2) placé dans le volet des tuiles, couches de tuiles masquées à l'impression ; canevas retiré après l'impression.
+- *Corrigé* — Impression : `.map-legend` sans hauteur maximale ; `canvas.print-tiles` exclu de la règle `max-width: 100 %` des graphiques.
+
 ## [0.9.4.13] — Fond de carte à l'impression — 2026-11-02
 
 ### Utilisateurs

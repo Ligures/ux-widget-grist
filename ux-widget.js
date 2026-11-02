@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.13). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.15). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.13"; // voir CHANGELOG.md
+const VERSION = "0.9.4.15"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -5296,31 +5296,25 @@ async function printMap(id) {
   // une seule ligne pour les choix : la carte doit tenir sur la page
   $("#printhead").innerHTML = `${pageIcon("phicon")}<div><h1>${esc(head.title)}</h1><p>${esc([...head.lines, `Édité le ${new Date().toLocaleDateString("fr-FR")}`].join(" · "))}</p></div>`;
   const center = m.map.getCenter(),
-    zoom = m.map.getZoom();
-  // même zoom qu'à l'écran (0.9.4.12) : une carte plus grande que la page (plein écran) est imprimée telle quelle,
-  // réduite à la taille du papier ; une carte plus petite est agrandie au format de la page, même centre, même zoom
+    zoom = m.map.getZoom(),
+    bounds = m.map.getBounds(),
+    snap = m.map.options.zoomSnap;
+  // carte au format de la page (275 × 158 mm). Plus grande à l'écran (plein écran) : même étendue, zoom
+  // fractionnaire (0.9.4.15, sans réduction CSS ni copie des tuiles : le fond de carte manquait sur les imprimantes) ;
+  // plus petite : même centre, même zoom
   const box = m.map.getContainer(),
-    W = box.offsetWidth,
-    H = box.offsetHeight;
-  const PW = (275 * 96) / 25.4,
-    PH = (158 * 96) / 25.4; // zone de la carte sur une page A4 paysage, en pixels CSS
-  const big = W > PW || H > PH;
+    big = box.offsetWidth > (275 * 96) / 25.4 || box.offsetHeight > (158 * 96) / 25.4;
   const h = document.documentElement;
-  if (big) {
-    blk.style.setProperty("--pw", `${W}px`);
-    blk.style.setProperty("--ph", `${H}px`);
-    blk.style.setProperty("--pk", String(Math.min(PW / W, PH / H)));
-    blk.classList.add("printscale");
-  }
   S.mapPrinting = true;
   h.classList.add("printone");
   blk.classList.add("printme");
   status("Préparation de l'impression de la carte…");
-  if (!big) {
-    await new Promise((r) => setTimeout(r, 60));
-    m.map.invalidateSize();
-    m.map.setView(center, zoom, { animate: false });
-  }
+  await new Promise((r) => setTimeout(r, 60));
+  m.map.invalidateSize();
+  if (big) {
+    m.map.options.zoomSnap = 0;
+    m.map.fitBounds(bounds, { animate: false });
+  } else m.map.setView(center, zoom, { animate: false });
   // fond de carte : attendre que toutes les tuiles visibles soient chargées (8 s au plus), sinon elles manquent
   // sur le papier
   await new Promise((r) => setTimeout(r, 120));
@@ -5338,8 +5332,8 @@ async function printMap(id) {
   const restore = () => {
     S.mapPrinting = false;
     h.classList.remove("printone");
-    blk.classList.remove("printme", "printscale");
-    for (const v of ["--pw", "--ph", "--pk"]) blk.style.removeProperty(v);
+    blk.classList.remove("printme");
+    m.map.options.zoomSnap = snap;
     m.map.invalidateSize();
     m.map.setView(center, zoom, { animate: false });
     window.removeEventListener("afterprint", restore);
