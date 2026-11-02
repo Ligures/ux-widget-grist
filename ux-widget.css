@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.4.6).
+/* UX widget grist — feuilles de style (version 0.9.4.7).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1955,6 +1955,65 @@ textarea.ed-input {
   height: var(--h, 320px);
   z-index: 0;
 }
+/* en-tête des cartes (0.9.4.7) : zonage au choix, imprimer la carte seule, exporter */
+.mapctl {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  flex: none;
+}
+.mapctl select,
+.bh .qffree {
+  font: inherit;
+  font-size: 11.5px;
+  max-width: 170px;
+  padding: 1px 4px;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  background: var(--carte);
+  color: var(--texte2);
+}
+.bh .qffree {
+  margin-left: 6px;
+  max-width: 150px;
+}
+.mapbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  background: var(--carte);
+  color: var(--bleu);
+  cursor: pointer;
+}
+.mapbtn:hover {
+  background: var(--bleu-hover);
+}
+.mapbtn svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+/* carte imprimée seule : même taille à l'écran pendant la préparation et sur papier (A4 paysage) */
+@media (max-width: 760px) {
+  .mapctl select {
+    max-width: 110px;
+  }
+  .bh .qffree {
+    max-width: 100px;
+  }
+}
+html.printone .block.printme > .bb > .map-box {
+  width: 275mm !important;
+  height: 165mm !important;
+}
 /* message des gestes sur carte (0.9.4.5) : « Ctrl + molette pour zoomer », « deux doigts… » */
 .map-hint {
   position: absolute;
@@ -2583,6 +2642,9 @@ html.printing #grid {
   .bh .search,
   .bh .qf,
   .bh .qfs,
+  .bh .qffree,
+  .bh .mapctl,
+  .map-hint,
   .lyr {
     display: none !important;
   }
@@ -2672,5 +2734,22 @@ html.printing #grid {
   }
   .block.maxed {
     position: static !important;
+  }
+  /* carte imprimée seule (0.9.4.7) : les autres blocs disparaissent, le titre passe dans l'en-tête imprimé */
+  html.printone #grid > .block:not(.printme) {
+    display: none !important;
+  }
+  html.printone #grid > .block.printme {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border: 0 !important;
+  }
+  html.printone .block.printme > .bh {
+    display: none !important;
+  }
+  html.printone .block.printme .leaflet-control-zoom,
+  html.printone .block.printme .leaflet-bar {
+    display: none !important;
   }
 }

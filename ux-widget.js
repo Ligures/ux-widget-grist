@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.6). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.7). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -43,7 +43,7 @@
  Tableaux/fiches : colWidths, rowCount, asList, cardW, editable, addable, showEmpty, hideLabels
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
- Carte : mapLabel, mapWheel (molette sans Ctrl), mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
+ Carte : mapLabel, mapWheel (molette sans Ctrl), mapExportAdmin, qfFree (filtre libre, tous blocs), mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
          qpvUrl, mapZone (communes|epci|iris|legis|college), mapZone2 (contours croisés), zoneHover, legisUrl, collegeUrl, legisCol, collegeCol, mapCommune, zoneColor,
          zoneSum, zoneTable/zoneKey/zoneVal, mapLabelsOn
 
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.6"; // voir CHANGELOG.md
+const VERSION = "0.9.4.7"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -923,10 +923,11 @@ document.addEventListener("mousedown", (e) => { if (!e.target.closest(".qf")) qf
 window.addEventListener("scroll", qfClose, true);
 // qfCol — Colonne du filtre rapide dans la table d'un bloc (null si le champ est absent ou non configuré).
 // Deux filtres rapides par bloc (0.8.10.1) : emplacement k = 1 (qfField, qfDefault) ou 2 (qfField2, qfDefault2).
-const qfFieldOf = (b, k = 1) => (k === 2 ? b.qfField2 : b.qfField);
-const qfKey = (b, k = 1) => (k === 2 ? `${b.id}:2` : b.id); // clé du choix de l'utilisateur dans S.qf
+// 3ᵉ filtre, « libre » (0.9.4.7, option qfFree) : la colonne est choisie par l'utilisateur dans l'en-tête du bloc
+const qfFieldOf = (b, k = 1) => (k === 3 ? (b.qfFree ? S.qfFreeCol?.[b.id] : "") : k === 2 ? b.qfField2 : b.qfField);
+const qfKey = (b, k = 1) => (k === 3 ? `${b.id}:3` : k === 2 ? `${b.id}:2` : b.id); // clé du choix de l'utilisateur dans S.qf
 // valeurs exclues par l'administrateur (0.8.11.1) : retirées des boutons ET des lignes affichées
-const qfExclOf = (b, k = 1) => (k === 2 ? b.qfExclude2 : b.qfExclude) || [];
+const qfExclOf = (b, k = 1) => (k === 3 ? [] : (k === 2 ? b.qfExclude2 : b.qfExclude) || []);
 const qfExcluded = (b, k, text) => qfExclOf(b, k).some((x) => qfSame(x, text));
 function qfCol(b, info, k = 1) {
   const id = qfFieldOf(b, k);
@@ -941,7 +942,7 @@ const qfSame = (a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }) === 0
 //   du bloc, sinon « Tous » (""). S.qf est vidé à chaque enregistrement de la configuration.
 function qfCur(b, k = 1) {
   const key = qfKey(b, k);
-  return S.qf[key] !== undefined ? S.qf[key] : (k === 2 ? b.qfDefault2 : b.qfDefault) || "";
+  return S.qf[key] !== undefined ? S.qf[key] : k === 3 ? "" : (k === 2 ? b.qfDefault2 : b.qfDefault) || "";
 }
 // qfSync — Applique la valeur choisie à tous les blocs de la page dont le filtre rapide porte sur le même
 //   champ (même identifiant de colonne ou même libellé) : clic milieu ou Maj+clic sur une valeur.
@@ -981,7 +982,8 @@ function qfValuesOf(cols) {
 }
 // qfApply — Ne garde que les lignes dont le champ vaut la valeur choisie pour ce bloc.
 function qfApply(b, info, rows) {
-  return qfApplyOne(b, info, qfApplyOne(b, info, qfDropExcluded(b, info, rows), 1), 2); // les deux filtres se cumulent
+  // les filtres se cumulent : 1er, 2ᵉ, puis filtre libre
+  return qfApplyOne(b, info, qfApplyOne(b, info, qfApplyOne(b, info, qfDropExcluded(b, info, rows), 1), 2), 3);
 }
 // qfDropExcluded — Retire les lignes dont un champ de filtre rapide vaut une valeur exclue.
 function qfDropExcluded(b, info, rows) {
@@ -1016,7 +1018,19 @@ const qfNorm = (x) =>
     .trim();
 // qfHtml — Sélecteurs de l'en-tête : boutons « Tous | valeurs » ; au-delà de 4 valeurs, valeur active et liste au clic.
 function qfHtml(b, info, allRows) {
-  return qfHtmlOne(b, info, allRows, 1) + qfHtmlOne(b, info, allRows, 2);
+  return qfHtmlOne(b, info, allRows, 1) + qfHtmlOne(b, info, allRows, 2) + qfFreeHtml(b, info) + qfHtmlOne(b, info, allRows, 3);
+}
+// qfFreeHtml — Filtre libre : liste des colonnes de la table, au choix de l'utilisateur (« Filtrer sur… »).
+function qfFreeHtml(b, info) {
+  if (!b.qfFree || !(QF_KINDS.includes(info.kind) || (info.kind === "single" && b.asList))) return "";
+  const cur = S.qfFreeCol?.[b.id] || "";
+  const cols = (S.meta.colsByTable.get(info.sec.tableRef) || [])
+    .filter((c) => !c.colId.startsWith("gristHelper_") && c.colId !== "manualSort" && baseType(c) !== "Attachments")
+    .sort((x, y) => COLL.compare(x.label || x.colId, y.label || y.colId));
+  return `<select class="qffree" data-qfcol="${b.id}" title="Filtrer ce bloc sur une colonne de votre choix, puis sur une de ses valeurs" aria-label="Filtrer sur une colonne">
+    <option value="">${cur ? "✕ Retirer le filtre" : "Filtrer sur…"}</option>${cols
+      .map((c) => `<option value="${esc(c.colId)}" ${c.colId === cur ? "selected" : ""}>${esc(c.label || c.colId)}</option>`)
+      .join("")}</select>`;
 }
 function qfHtmlOne(b, info, allRows, k) {
   const col = qfCol(b, info, k);
@@ -3432,7 +3446,53 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
   }
 }
 // renderMap — Affiche un widget carte : points, couleurs, contours, QPV, zonage, légendes. Le dessin Leaflet est différé (jobs).
+// Zonage choisi par l'utilisateur (0.9.4.7) : liste « Zonage » dans l'en-tête de la carte, mémorisée dans le
+// navigateur pour cette carte ; null = celui de la configuration.
+const ZONE_CHOICES = [
+  ["", "Aucun zonage"],
+  ["communes", "Communes"],
+  ["epci", "Intercommunalités"],
+  ["iris", "Quartiers IRIS"],
+  ["legis", "Circonscriptions législatives"],
+  ["college", "Secteurs de collège"],
+];
+const zoneKey = (id) => `uxwg_zone_${S.docKey || "doc"}_${S.cfg?.name || ""}_${id}`;
+function userZone(id) {
+  if (S.zoneSel?.[id] !== undefined) return S.zoneSel[id];
+  try {
+    const v = localStorage.getItem(zoneKey(id));
+    if (v !== null && ZONE_CHOICES.some(([k]) => k === v)) return ((S.zoneSel ??= {})[id] = v);
+  } catch {
+    /* stockage indisponible */
+  }
+  return null;
+}
+function setUserZone(id, v) {
+  (S.zoneSel ??= {})[id] = v;
+  try {
+    localStorage.setItem(zoneKey(id), v);
+  } catch {
+    /* stockage indisponible : choix gardé pour la session */
+  }
+}
+// mapCtlHtml — En-tête d'un bloc carte : zonage au choix, imprimer la carte seule, exporter en HTML interactif.
+function mapCtlHtml(b) {
+  const cur = userZone(b.id) ?? zoneMode(b);
+  const zone = `<select class="mapzone" data-mzone="${b.id}" title="Zonage affiché sur la carte (votre choix est mémorisé dans ce navigateur)" aria-label="Zonage">${ZONE_CHOICES.map(
+    ([v, t]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${esc(t)}</option>`,
+  ).join("")}</select>`;
+  const pr = `<button type="button" class="mapbtn" data-mprint="${b.id}" title="Imprimer cette carte seule (A4 paysage)" aria-label="Imprimer la carte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z" /></svg></button>`;
+  const ex =
+    b.mapExportAdmin && !S.isAdmin
+      ? ""
+      : `<button type="button" class="mapbtn" data-mexport="${b.id}" title="Exporter la carte : fichier HTML interactif (zoom, étiquettes, infobulles), à ouvrir dans un navigateur" aria-label="Exporter la carte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 19h16" /></svg></button>`;
+  return `<span class="mapctl">${zone}${pr}${ex}</span>`;
+}
 async function renderMap(info, rows, body, jobs, selId, b = {}) {
+  // zonage choisi par l'utilisateur : remplace celui de la configuration (et ses couleurs propres à ce zonage)
+  const uz = userZone(b.id);
+  if (uz !== null && uz !== zoneMode(b))
+    b = { ...b, mapZone: uz, mapCommunes: false, zoneColor: "", zoneHover: "", mapZone2: b.mapZone2 === uz ? "" : b.mapZone2 };
   const spec = mapSpec(info.sec);
   const cols = S.meta.colsByTable.get(info.sec.tableRef) || [];
   const find = (id, re) => colByKey(cols, id) || cols.find((c) => re.test(c.colId) || re.test(c.label || ""));
@@ -3543,6 +3603,7 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
         11,
       ); // vue initiale sûre
       S.maps.push(map);
+      (S.mapOf ??= {})[b.id] = { map, tiles: spec.tiles, attribution: spec.attribution };
       mapGestures(map, el, b);
       L.tileLayer(spec.tiles, { attribution: spec.attribution, maxZoom: 19 }).addTo(map);
       const markers = new Map();
@@ -3597,6 +3658,11 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
             permanent: !!b.mapLabelsOn,
             className: b.mapLabelsOn ? "lbl" : "",
           });
+        // couleurs du cadre de l'étiquette, reprises par l'export de la carte
+        m._uxTc = () => {
+          const on = p.id === (S.sel[info.secId] ?? selId);
+          return [ptColor(on, p.fill), ptRing(on, p.fill, p.ring)];
+        };
         // cadre de l'étiquette de la couleur du point (rouge s'il est sélectionné sans couleur choisie)
         m.on("tooltipopen", (e) => {
           const on = p.id === (S.sel[info.secId] ?? selId);
@@ -4362,7 +4428,7 @@ async function render() {
       try {
         let { rows } = await rowsFor(b.id, ctx);
         if (info.kind === "record") rows = applyUserView(info, rows); // tri et filtres choisis dans les en-têtes
-        const qcs = [qfCol(b, info, 1), qfCol(b, info, 2)].filter(Boolean);
+        const qcs = [qfCol(b, info, 1), qfCol(b, info, 2), qfCol(b, info, 3)].filter(Boolean);
         if (qcs.length) await ensureRefTables(qcs); // champ du filtre rapide de type référence : texte affiché
         const before = rows.length; // lignes avant le filtre rapide
         const qfCtl = qfHtml(b, info, rows); // filtre rapide : sélecteur calculé sur toutes les lignes (affiché même sans données)…
@@ -4413,7 +4479,8 @@ async function render() {
                 ? "Texte"
                 : "Graphique avancé"
               : `${rows.length} ligne${rows.length > 1 ? "s" : ""}`;
-        const el = blockShell(b, info, badge, qfCtl + search);
+        const isMapBlk = info.kind === "custom" && isMapSection(info.sec);
+        const el = blockShell(b, info, badge, qfCtl + search + (isMapBlk ? mapCtlHtml(b) : ""));
         const body = el.querySelector(".bb");
         if (info.kind === "record") renderTable(info, rows, body, selId, jobs);
         else if (isSingle && b.asList)
@@ -4902,8 +4969,15 @@ $("#grid").addEventListener("click", (ev) => {
     ev.stopPropagation();
     const k = Number(qb.dataset.qk) || 1;
     if (ev.shiftKey) return qfSync(Number(qb.dataset.qf), qb.dataset.qv, k); // Maj+clic : tous les blocs
-    S.qf[k === 2 ? `${qb.dataset.qf}:2` : Number(qb.dataset.qf)] = qb.dataset.qv;
+    S.qf[k === 3 ? `${qb.dataset.qf}:3` : k === 2 ? `${qb.dataset.qf}:2` : Number(qb.dataset.qf)] = qb.dataset.qv;
     scheduleRender();
+    return;
+  }
+  const mb = ev.target.closest("[data-mprint],[data-mexport]"); // carte : imprimer seule, exporter
+  if (mb) {
+    ev.stopPropagation();
+    if (mb.dataset.mprint) printMap(Number(mb.dataset.mprint));
+    else exportMap(Number(mb.dataset.mexport));
     return;
   }
   const fb = ev.target.closest("[data-filt]");
@@ -4995,7 +5069,19 @@ $("#grid").addEventListener("auxclick", (ev) => {
 $("#grid").addEventListener("change", (ev) => {
   const qs = ev.target.closest("[data-qfs]"); // filtre rapide au-delà de 4 valeurs
   if (qs) {
-    S.qf[Number(qs.dataset.qk) === 2 ? `${qs.dataset.qfs}:2` : Number(qs.dataset.qfs)] = qs.value;
+    const k = Number(qs.dataset.qk);
+    S.qf[k === 3 ? `${qs.dataset.qfs}:3` : k === 2 ? `${qs.dataset.qfs}:2` : Number(qs.dataset.qfs)] = qs.value;
+    scheduleRender();
+  }
+  const qc = ev.target.closest("[data-qfcol]"); // filtre libre : colonne choisie (valeur remise à « Tous »)
+  if (qc) {
+    (S.qfFreeCol ??= {})[qc.dataset.qfcol] = qc.value;
+    delete S.qf[`${qc.dataset.qfcol}:3`];
+    scheduleRender();
+  }
+  const mz = ev.target.closest("[data-mzone]"); // carte : zonage choisi par l'utilisateur
+  if (mz) {
+    setUserZone(Number(mz.dataset.mzone), mz.value);
     scheduleRender();
   }
 });
@@ -5105,6 +5191,160 @@ function markPrintBig() {
   });
 }
 window.addEventListener("beforeprint", markPrintBig); // impression lancée par Ctrl+P
+// mapPrintHead — En-tête d'une carte imprimée ou exportée : titre, sélections, filtres, zonage, date.
+function mapPrintHead(id) {
+  const blk = document.querySelector(`#grid > .block[data-sec="${id}"]`);
+  const b = S.cfg.blocks.find((x) => x.id === id) || {};
+  const zl = ZONE_CHOICES.find(([k]) => k === (userZone(id) ?? zoneMode(b)))?.[1];
+  return {
+    title: getInfo(id)?.title || "",
+    lines: [
+      selectionSummary(),
+      [...(blk?.querySelectorAll(".qf-print") || [])].map((e) => e.textContent).join(" · "),
+      zl && zl !== "Aucun zonage" ? `Zonage : ${zl}` : "",
+    ].filter(Boolean),
+  };
+}
+// printMap — Imprime une carte seule (0.9.4.7) : A4 paysage, carte à pleine page avec ses légendes, cadrage de
+//   l'écran conservé (même centre, même zoom).
+async function printMap(id) {
+  const m = S.mapOf?.[id],
+    blk = document.querySelector(`#grid > .block[data-sec="${id}"]`);
+  if (!m || !blk) return;
+  const head = mapPrintHead(id);
+  $("#printhead").innerHTML = `${pageIcon("phicon")}<div><h1>${esc(head.title)}</h1>${head.lines.map((l) => `<p>${esc(l)}</p>`).join("")}<p>Édité le ${new Date().toLocaleDateString("fr-FR")}</p></div>`;
+  const center = m.map.getCenter(),
+    zoom = m.map.getZoom();
+  const h = document.documentElement;
+  h.classList.add("printone");
+  blk.classList.add("printme");
+  await new Promise((r) => setTimeout(r, 60));
+  m.map.invalidateSize();
+  m.map.setView(center, zoom, { animate: false });
+  status("Préparation de l'impression de la carte…");
+  await new Promise((r) => setTimeout(r, 1200)); // fond de carte de la nouvelle taille
+  status("");
+  const restore = () => {
+    h.classList.remove("printone");
+    blk.classList.remove("printme");
+    m.map.invalidateSize();
+    m.map.setView(center, zoom, { animate: false });
+    window.removeEventListener("afterprint", restore);
+  };
+  window.addEventListener("afterprint", restore);
+  window.print();
+}
+// exportMap — Carte exportée en fichier HTML autonome (0.9.4.7) : Leaflet (CDN, empreinte SRI), fond de carte, points,
+//   zones et légendes tels qu'affichés, étiquettes et infobulles comprises. Les données du fichier ne sont plus
+//   protégées par les règles d'accès de Grist.
+function exportMap(id) {
+  const m = S.mapOf?.[id];
+  if (!m || !window.L) return;
+  const map = m.map;
+  const html = (x, l) => {
+    try {
+      if (x === null || x === undefined) return null;
+      if (typeof x === "function") x = x(l);
+      return x instanceof HTMLElement ? x.outerHTML : String(x);
+    } catch {
+      return null;
+    }
+  };
+  const KEYS = ["color", "weight", "opacity", "fillColor", "fillOpacity", "dashArray", "fill", "stroke", "pane", "interactive", "lineCap", "lineJoin"];
+  const sty = (o) => Object.fromEntries(KEYS.filter((k) => o[k] !== undefined).map((k) => [k, o[k]]));
+  const tipOf = (l) => {
+    const t = l.getTooltip?.();
+    if (!t) return null;
+    const o = t.options,
+      off = o.offset ? L.point(o.offset) : null;
+    return { c: html(t._content, l), p: !!o.permanent, d: o.direction, cl: o.className || "", s: !!o.sticky, o: off ? [off.x, off.y] : null };
+  };
+  const popOf = (l) => {
+    const p = l.getPopup?.();
+    return p ? { c: html(p._content, l), w: p.options.maxWidth } : null;
+  };
+  const layers = [];
+  map.eachLayer((l) => {
+    if (l instanceof L.TileLayer || l instanceof L.LayerGroup) return;
+    if (l instanceof L.CircleMarker) {
+      const ll = l.getLatLng();
+      layers.push({ k: "c", ll: [ll.lat, ll.lng], r: l.getRadius(), s: sty(l.options), t: tipOf(l), p: popOf(l), tc: l._uxTc?.() || null });
+    } else if (l instanceof L.Path && l.toGeoJSON) {
+      const g = l.toGeoJSON();
+      if (g?.geometry) layers.push({ k: "g", g: g.geometry, s: sty(l.options), t: tipOf(l), p: popOf(l) });
+    }
+  });
+  const std = ["mapPane", "tilePane", "overlayPane", "shadowPane", "markerPane", "tooltipPane", "popupPane"];
+  const panes = Object.entries(map.getPanes())
+    .filter(([n]) => !std.includes(n))
+    .map(([n, el]) => [n, el.style.zIndex || "", el.style.pointerEvents || ""]);
+  const legends = [...map.getContainer().querySelectorAll(".map-legend")].map((el) => {
+    const c = el.closest(".leaflet-top, .leaflet-bottom")?.className || "";
+    const pos = `${/leaflet-top/.test(c) ? "top" : "bottom"}${/leaflet-right/.test(c) ? "right" : "left"}`;
+    return [pos, el.innerHTML];
+  });
+  const head = mapPrintHead(id);
+  const bd = map.getBounds(); // zone visible à l'écran, retrouvée quelle que soit la taille de la fenêtre
+  const data = { title: head.title, lines: head.lines, date: new Date().toLocaleDateString("fr-FR"), tiles: m.tiles, attribution: m.attribution, bounds: [[bd.getSouth(), bd.getWest()], [bd.getNorth(), bd.getEast()]], panes, layers, legends, brand: "#000091" };
+  const json = JSON.stringify(data).replace(/</g, "\\u003c");
+  // couleur principale : celle du style (bleu État ou bordeaux), en version claire même si l'écran est en mode sombre
+  data.brand = document.documentElement.classList.contains("neutre") ? NEUTRAL_BLUE : "#000091";
+  const doc = `<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(head.title || "Carte")}</title>
+<link rel="stylesheet" href="${LIBS.leafletCss[0]}" integrity="${LIBS.leafletCss[1]}" crossorigin="anonymous">
+<style>
+html,body{margin:0;height:100%;font:13px/1.4 Arial,sans-serif;color:#161616}
+header{position:absolute;top:0;left:0;right:0;height:64px;box-sizing:border-box;padding:8px 14px;border-bottom:2px solid var(--b);overflow:hidden}
+header h1{margin:0;font-size:17px;color:var(--b)}header p{margin:2px 0 0;font-size:12px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#map{position:absolute;top:64px;left:0;right:0;bottom:0}
+.leaflet-container{font:12px Arial,sans-serif}
+.leaflet-tooltip.uxp,.leaflet-popup.uxp .leaflet-popup-content-wrapper{border-radius:0;border:2px solid var(--tc,#c8c8c8);box-shadow:inset 0 0 0 8px var(--tc2,#fff),0 3px 14px rgba(0,0,0,.25)}
+.leaflet-tooltip.uxp.leaflet-tooltip-top::before{border-top-color:var(--tc,#c8c8c8)}
+.leaflet-tooltip.lbl{font-size:11px;padding:1px 5px;box-shadow:none;opacity:.9}
+.map-legend{background:rgba(255,255,255,.92);padding:6px 8px;border-radius:4px;font-size:11px;line-height:1.5;max-height:180px;overflow:auto;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.map-legend b{display:block;margin-bottom:2px}
+.map-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1px solid #fff;box-shadow:0 0 0 1px #ddd}
+.qpvinfo{margin-top:3px;font-size:11px;color:#ce0500;font-weight:700}
+</style></head><body>
+<header><h1></h1><p id="lines"></p></header><div id="map"></div>
+<script src="${LIBS.leaflet[0]}" integrity="${LIBS.leaflet[1]}" crossorigin="anonymous"></script>
+<script type="application/json" id="data">${json}</script>
+<script>
+// Carte exportée depuis UX widget grist — données figées au moment de l'export.
+const D = JSON.parse(document.getElementById("data").textContent);
+document.documentElement.style.setProperty("--b", D.brand);
+document.querySelector("header h1").textContent = D.title;
+document.getElementById("lines").textContent = [...D.lines, "Exportée le " + D.date].join(" · ");
+const map = L.map("map").fitBounds(D.bounds);
+L.tileLayer(D.tiles, { attribution: D.attribution, maxZoom: 19 }).addTo(map);
+for (const [n, z, pe] of D.panes) { const p = map.createPane(n); if (z) p.style.zIndex = z; if (pe) p.style.pointerEvents = pe; }
+for (const x of D.layers) {
+  const l = x.k === "c" ? L.circleMarker(x.ll, { ...x.s, radius: x.r }) : L.geoJSON(x.g, { style: x.s, pane: x.s.pane || "overlayPane" });
+  if (x.t && x.t.c) l.bindTooltip(x.t.c, { permanent: x.t.p, direction: x.t.d || "auto", sticky: x.t.s, offset: x.t.o || [0, 0], className: (x.t.cl + (x.tc ? " uxp" : "")).trim() });
+  if (x.p && x.p.c) l.bindPopup(x.p.c, { maxWidth: x.p.w || 420, className: x.tc ? "uxp" : "" });
+  if (x.tc) {
+    const paint = (e) => { const el = (e.tooltip || e.popup).getElement(); if (el) { el.style.setProperty("--tc", x.tc[0]); el.style.setProperty("--tc2", x.tc[1]); } };
+    l.on("tooltipopen popupopen", paint);
+  }
+  l.addTo(map);
+  if (x.tc && l.isTooltipOpen && l.isTooltipOpen()) l.getTooltip().getElement()?.style.setProperty("--tc", x.tc[0]);
+}
+for (const [pos, h] of D.legends) {
+  const c = L.control({ position: pos });
+  c.onAdd = () => { const d = L.DomUtil.create("div", "map-legend"); d.innerHTML = h; L.DomEvent.disableScrollPropagation(d); return d; };
+  c.addTo(map);
+}
+<\/script></body></html>`;
+  const name = `${(head.title || "carte").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "carte"}.html`;
+  const url = URL.createObjectURL(new Blob([doc], { type: "text/html" }));
+  const a = Object.assign(document.createElement("a"), { href: url, download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  status(`Carte exportée : ${name} (${layers.length} éléments). Les données qu'il contient ne sont plus protégées par les droits de Grist.`);
+}
 // chartColors — Couleurs des textes, grilles et fonds des graphiques : celles du thème, ou claires (impression en
 //   mode sombre : la page imprimée est toujours claire, les graphiques déjà dessinés sont mis à jour)
 function chartColors(light) {
@@ -5926,6 +6166,14 @@ ${
       }
       groups.push(`<div class="mgrp"><div class="mgrp-h" title="Boutons « Tous | valeurs » dans l'en-tête du bloc">${k === 2 ? "2ᵉ filtre rapide" : "Filtre rapide"}</div>${g}</div>`);
     }
+    groups.push(
+      `<div class="mgrp"><div class="mgrp-h" title="Filtre dont l'utilisateur choisit lui-même la colonne">Filtre libre</div>${C(
+        `data-qffree="${i}"`,
+        b.qfFree,
+        "Proposer un filtre libre",
+        "Ajoute dans l'en-tête du bloc une liste « Filtrer sur… » : l'utilisateur choisit une colonne de la table, puis une de ses valeurs. Il se cumule avec les filtres rapides ; le choix est oublié à la fermeture de la page.",
+      )}</div>`,
+    );
     return groups.join("");
   })()}
   ${
@@ -5951,6 +6199,12 @@ ${
           b.mapLabelsOn,
           "Étiquettes toujours visibles",
           "Affiche l'étiquette de chaque point en permanence, au lieu de la montrer au survol.",
+        ) +
+        C(
+          `data-mexpadm="${i}"`,
+          b.mapExportAdmin,
+          "Export réservé aux administrateurs",
+          "Le bouton d'export de la carte (fichier HTML interactif) n'apparaît qu'aux administrateurs. Décochée : tous les utilisateurs peuvent exporter la carte qu'ils voient.",
         ) +
         C(
           `data-mwheel="${i}"`,
@@ -6303,6 +6557,10 @@ $("#panel").addEventListener("change", (ev) => {
   if (t.dataset.f === "qfField2") draft.blocks[Number(t.dataset.i)].qfDefault2 = "";
   if (t.dataset.f === "qfField") draft.blocks[Number(t.dataset.i)].qfExclude = [];
   if (t.dataset.f === "qfField2") draft.blocks[Number(t.dataset.i)].qfExclude2 = [];
+  if (t.dataset.qffree) {
+    draft.blocks[Number(t.dataset.qffree)].qfFree = t.checked;
+    return;
+  }
   if (t.dataset.qfx) {
     const b = draft.blocks[Number(t.dataset.qfx)],
       key = Number(t.dataset.qk) === 2 ? "qfExclude2" : "qfExclude";
@@ -6461,6 +6719,10 @@ $("#panel").addEventListener("change", (ev) => {
   }
   if (t.dataset.mlbl) {
     draft.blocks[Number(t.dataset.mlbl)].mapLabelsOn = t.checked;
+    return;
+  }
+  if (t.dataset.mexpadm) {
+    draft.blocks[Number(t.dataset.mexpadm)].mapExportAdmin = t.checked;
     return;
   }
   if (t.dataset.mwheel) {

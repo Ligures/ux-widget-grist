@@ -54,6 +54,7 @@ Chaque vue s'affiche dans un **bloc**, avec un titre et quelques commandes :
 |---|---|
 | ▾ / ▸ devant le titre | Replier ou déplier le bloc (un clic sur le titre fonctionne aussi) |
 | **Filtre rapide** (`Tous \| Public \| Privé`) | Ne montrer que les lignes d'une valeur (voir ci-dessous) |
+| Liste « Filtrer sur… » | Filtre libre : choisir une colonne, puis une de ses valeurs (si l'administrateur l'a prévu) |
 | Champ « Filtrer… » | Recherche dans les lignes du bloc (grands tableaux et listes de fiches) |
 | ⛶ | Afficher le bloc en plein écran ; ✕ ou Échap pour revenir |
 
@@ -67,6 +68,11 @@ Chaque vue s'affiche dans un **bloc**, avec un titre et quelques commandes :
 - **Rechargement** : la page revient à la valeur prévue par l'administrateur.
 - **(SO)** (sans objet) : dans le premier filtre, cette option affiche les lignes sans valeur.
 - **Une seule valeur** : si toutes les lignes du bloc ont la même valeur (par exemple uniquement « Public »), le filtre n'est pas affiché, puisqu'il ne changerait rien.
+
+**Filtre libre** (« Filtrer sur… »)
+- Choisissez une colonne de la table dans la liste : les boutons de ses valeurs apparaissent à côté, comme un filtre rapide.
+- Il se cumule avec les filtres rapides. « ✕ Retirer le filtre », en haut de la liste, l'enlève.
+- Le choix est oublié quand la page est rechargée.
 
 **Page vide** : le message « Aucune donnée, pas d'élément sélectionné » signifie qu'il faut d'abord faire un choix dans les listes de sélection.
 
@@ -95,6 +101,9 @@ Chaque vue s'affiche dans un **bloc**, avec un titre et quelques commandes :
 - **Quartiers prioritaires (QPV)** : en pointillés rouges. L'infobulle d'un établissement indique s'il est dans un QPV ou à proximité.
 - **Sélection** : cliquer sur un point le sélectionne et met à jour les blocs liés.
 - **Zoom et déplacement** : la molette fait défiler la page ; pour zoomer, gardez **Ctrl** enfoncé (⌘ sur Mac) ou utilisez les boutons + / −. Sur écran tactile, un doigt fait défiler la page et **deux doigts** déplacent et zooment la carte. En plein écran du bloc, la carte réagit directement.
+- **Zonage** : la liste de l'en-tête de la carte (Aucun zonage, Communes, Intercommunalités, Quartiers IRIS, Circonscriptions législatives, Secteurs de collège) change les zones affichées. Votre choix est mémorisé dans ce navigateur pour cette carte.
+- **Imprimer la carte seule** (icône d'imprimante dans l'en-tête de la carte) : la carte occupe toute une page A4 paysage, avec ses légendes, le titre, les sélections, les filtres et le zonage ; le cadrage de l'écran est conservé.
+- **Exporter la carte** (icône de téléchargement) : un fichier HTML à ouvrir dans un navigateur, sans Grist : carte zoomable, étiquettes, infobulles, zones et légendes, telles qu'à l'écran. Il faut une connexion Internet pour l'afficher (fond de carte). **Attention** : ce fichier contient les données visibles au moment de l'export ; une fois envoyé, il n'est plus protégé par les droits de Grist.
 - **Cadrage** : à l'ouverture, la carte montre l'ensemble des données. Le bouton **⤢**, sous les boutons de zoom, y revient après un déplacement ou un zoom.
 
 **Confidentialité** : les cartes n'envoient aucune donnée de vos tables à l'extérieur. Seuls des codes géographiques (département, communes), parfois la position d'un point sans code INSEE, et la zone affichée (fond de carte) sont transmis à des services publics. Le détail figure dans la documentation technique (README).

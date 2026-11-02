@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.4.6** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.4.7** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---
@@ -234,6 +234,7 @@ Widget personnalisé Grist séparé, pour les administrateurs : il calcule les d
 - **Politique de sécurité (CSP)** : la page n'accepte que ses propres scripts (`ux-widget.js`) et ceux de Grist et de jsDelivr ; tout script en ligne, ou injecté dans une valeur, est refusé par le navigateur. Les connexions sont limitées au site du widget, à jsDelivr et aux services géographiques publics (geo.api.gouv.fr, data.geopf.fr). `unsafe-eval` reste autorisé pour Plotly (graphiques avancés).
 - **Bibliothèques externes** : versions figées, vérifiées par empreinte d'intégrité (SRI). Un fichier altéré sur le CDN est refusé.
 - **Liens du menu** : seules les adresses `https://` sont acceptées.
+- **Export des cartes** : le fichier HTML exporté contient les points, étiquettes, infobulles et zones visibles par la personne au moment de l'export. Une fois enregistré ou envoyé, il échappe aux règles d'accès de Grist. Il charge Leaflet depuis jsDelivr (empreinte SRI) et le fond de carte depuis son service habituel. L'option « Export réservé aux administrateurs » masque le bouton aux autres utilisateurs.
 - **Données envoyées à des services tiers (cartes)** : aucune valeur des tables (noms, effectifs, IPS, étiquettes…) ne quitte le navigateur. Seuls des codes géographiques, et parfois une position, partent vers des services publics :
 
   | Service | Ce qui est envoyé | Quand |

@@ -26,6 +26,23 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.7] — Cartes : imprimer seule, exporter, zonage au choix ; filtre libre — 2026-11-02
+
+### Utilisateurs
+- *Nouveau* — **Cartes, imprimer la carte seule** : icône d'imprimante dans l'en-tête de la carte ; A4 paysage, carte à pleine page avec ses légendes, titre, sélections, filtres et zonage en tête, cadrage de l'écran conservé.
+- *Nouveau* — **Cartes, export interactif** : un fichier HTML autonome, à ouvrir dans un navigateur sans Grist (zoom, étiquettes, infobulles, zones et légendes comme à l'écran). Il contient les données visibles au moment de l'export.
+- *Nouveau* — **Cartes, zonage au choix** : liste dans l'en-tête (aucun, communes, intercommunalités, quartiers IRIS, circonscriptions législatives, secteurs de collège), mémorisée dans le navigateur pour chaque carte.
+- *Nouveau* — **Filtre libre** (« Filtrer sur… ») : l'utilisateur choisit une colonne de la table, puis une valeur ; il se cumule avec les filtres rapides.
+
+### Administrateurs
+- *Nouveau* — Encadré **Filtre libre** : case **Proposer un filtre libre** (`qfFree`), pour tout bloc qui accepte les filtres rapides.
+- *Nouveau* — Encadré **Points** des cartes : case **Export réservé aux administrateurs** (`mapExportAdmin`).
+- *Amélioré* — Le zonage de la configuration reste celui proposé au départ ; un zonage choisi par l'utilisateur reprend les couleurs par défaut (les couleurs propres à un zonage, table ou somme, ne s'appliquent qu'au zonage configuré).
+
+### Développeurs
+- *Nouveau* — Filtre libre : 3ᵉ emplacement des filtres rapides (`qfKey` `id:3`, colonne dans `S.qfFreeCol`).
+- *Nouveau* — `userZone` / `setUserZone` (`localStorage`, clé `uxwg_zone_<document>_<page>_<bloc>`) ; `mapCtlHtml` ; `printMap` (classes `printone` / `printme`, carte de 275 × 165 mm à l'écran le temps de l'impression) ; `exportMap` (calques Leaflet relus avec `eachLayer`, styles, étiquettes, infobulles, volets et légendes ; Leaflet 1.9.4 par jsDelivr avec SRI).
+
 ## [0.9.4.6] — Cartes : message « deux doigts » plus discret — 2026-11-01
 
 ### Utilisateurs

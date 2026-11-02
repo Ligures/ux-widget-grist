@@ -93,6 +93,8 @@ Les deux filtres se cumulent : *Public* et *Ecole*.
 
 Le filtre est disponible pour les tableaux, les listes de fiches, les graphiques et les cartes.
 
+**Filtre libre** (encadré du même nom) : la case **Proposer un filtre libre** ajoute dans l'en-tête du bloc une liste « Filtrer sur… » où l'utilisateur choisit lui-même une colonne de la table (pièces jointes exceptées), puis une de ses valeurs. Il se cumule avec les filtres rapides ; il n'est pas mémorisé.
+
 ### Listes de sélection
 
 Pour une vue affichée en **Liste de sélection** :
@@ -115,6 +117,7 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
 |---|---|
 | Étiquette | Colonne affichée au survol (par défaut celle de la carte Grist) |
 | Étiquettes toujours visibles | Affiche toutes les étiquettes en permanence |
+| Export réservé aux administrateurs | Le bouton d'export de la carte (fichier HTML interactif) n'apparaît qu'aux administrateurs. Par défaut, tout utilisateur peut exporter la carte qu'il voit |
 | Zoom à la molette sans Ctrl | La molette et un doigt agissent directement sur la carte (ancien comportement). Par défaut, ils font défiler la page : Ctrl + molette ou deux doigts pour la carte |
 | Couleur selon | Couleur des points selon une colonne |
 | … sinon selon | Pour les points dont la colonne « Couleur selon » est vide : couleur selon une 2ᵉ colonne (teintes différentes, légende à part, sous le nom de la colonne). Les autres points gardent leur couleur |
