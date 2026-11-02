@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.4.10).
+/* UX widget grist — feuilles de style (version 0.9.4.11).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -2119,6 +2119,7 @@ textarea.ed-input {
 /* carte imprimée seule : même taille à l'écran pendant la préparation et sur papier ; avec l'en-tête (≈ 15 mm),
    elle tient sur une page A4 paysage (186 mm utiles) */
 html.printone .block.printme > .bb > .map-box {
+  flex: none !important; /* bloc en plein écran : la carte ne s'étire plus à la hauteur de l'écran */
   width: 275mm !important;
   height: 158mm !important;
 }

@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.11] — Impression d'une carte en plein écran — 2026-11-02
+
+### Utilisateurs
+- *Corrigé* — **Carte imprimée seule depuis le plein écran** : la carte s'imprimait à moitié vide et décalée, car elle gardait la hauteur de l'écran pendant la préparation de l'impression ; elle prend maintenant la taille du papier, comme hors plein écran.
+
+### Développeurs
+- *Corrigé* — `html.printone .printme .map-box` : `flex: none !important` (le bloc agrandi est une colonne flexible qui étirait la carte).
+
 ## [0.9.4.10] — Impression et export des cartes corrigés, message d'accueil vu une fois — 2026-11-02
 
 ### Utilisateurs
