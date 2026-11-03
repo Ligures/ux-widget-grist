@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.24). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.27). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -41,6 +41,7 @@
      Bloc (blocks[i]) : id = identifiant de la vue Grist (_grist_Views_section)
  Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold
  Tableaux/fiches : colWidths, rowCount, asList, cardW, editable, addable, showEmpty, hideLabels
+ Texte (Markdown) : mdSize, mdEdit (modifiable depuis la page), mdNote (aspect bloc-notes)
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapWheel (molette sans Ctrl), mapExportAdmin, qfFree (filtre libre, tous blocs), mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
@@ -57,7 +58,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.24"; // voir CHANGELOG.md
+const VERSION = "0.9.4.27"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -1136,7 +1137,7 @@ function qfHtmlOne(b, info, allRows, k) {
       .join("")}</span></span>`;
 }
 
-// blockShell — Crée le cadre d'un bloc : en-tête (titre, compteur, recherche, export, plein écran) et zone de contenu vide.
+// blockShell — (0.9.4.27 : icône du type de vue devant le titre d'un bloc replié) Crée le cadre d'un bloc : en-tête (titre, compteur, recherche, export, plein écran) et zone de contenu vide.
 function blockShell(b, info, badge, extraHead = "", extraRow = "") {
   if (S.collapsed[b.id] === undefined) S.collapsed[b.id] = initialFold(b, info);
   const w = b.width || DEFAULT_WIDTH[info.kind] || 3;
@@ -1150,7 +1151,7 @@ function blockShell(b, info, badge, extraHead = "", extraRow = "") {
   el.setAttribute("style", blockStyle(b, info.kind));
   el.dataset.sec = b.id;
   el.innerHTML = `<div class="bh"><button class="tog" data-tog="${b.id}" title="Replier / déplier">${S.collapsed[b.id] ? "▸" : "▾"}</button>
-    <h2>${esc(info.title)}</h2>${secDescMark(info)}${extraHead}<span class="badge"></span>
+    <span class="foldico">${kindIcon(info.sec, b)}</span><h2>${esc(info.title)}</h2>${secDescMark(info)}${extraHead}<span class="badge"></span>
     <button class="max" data-max="${b.id}" title="${S.maxed === b.id ? "Réduire (Échap)" : "Plein écran"}">${S.maxed === b.id ? "✕" : "⛶"}</button></div>${extraRow ? `<div class="bh2">${extraRow}</div>` : ""}<div class="bb"></div>`;
   if (S.layoutMode) {
     el.draggable = true;
@@ -2710,7 +2711,7 @@ function mapSpec(sec) {
 }
 // isMapSection — Vrai si la vue est un widget carte.
 const isMapSection = (sec) => !!mapSpec(sec);
-/* ---------- Widget Markdown de Grist : affichage seul (pas d'édition), taille du texte réglable ---------- */
+/* ---------- Widget Markdown de Grist : affichage, taille du texte réglable ; bloc-notes modifiable (0.9.4.25) ---------- */
 // mdSpec — Colonne « Content » du widget Markdown (mapping par colId ou numéro de colonne), sinon null.
 function mdSpec(sec) {
   const cv = parseJSON(parseJSON(sec?.options).customView, null);
@@ -2744,7 +2745,8 @@ async function renderMarkdown(info, rows, body, selId, b) {
     info.fields.find((f) => ["Text", "Any"].includes(baseType(f.col)))?.col ||
     cols.find((c) => baseType(c) === "Text" && !c.colId.startsWith("gristHelper_"));
   const row = rows.find((r) => r.id === selId) || rows[0];
-  if (!col || !row) {
+  // bloc-notes sans ligne (table vide, ou rien de lié à la sélection) : la première saisie crée la ligne (0.9.4.26)
+  if (!col || (!row && !((b.mdEdit ?? !!b.mdNote) && S.canEdit && isEditableCol(col)))) {
     body.innerHTML = `<div class="msg">${col ? "Aucun texte à afficher" : "Widget Markdown : colonne du texte introuvable"}</div>`;
     return;
   }
@@ -2753,8 +2755,88 @@ async function renderMarkdown(info, rows, body, selId, b) {
     window.DOMPurify ? null : loadLib(LIBS.purify, "DOMPurify"),
   ]);
   const size = Number(b.mdSize) || 0;
-  body.innerHTML = `<div class="mdview"${size ? ` style="font-size:${size}px"` : ""}>${DOMPurify.sanitize(marked.parse(String(row[col.colId] ?? "")))}</div>`;
-  body.querySelectorAll(".mdview a[href]").forEach((a) => Object.assign(a, { target: "_blank", rel: "noopener" }));
+  const text = String(row?.[col.colId] ?? "");
+  const fs = size ? ` style="font-size:${size}px"` : "";
+  // aspect bloc-notes (mdNote) et modification depuis la page (mdEdit) se règlent séparément depuis 0.9.4.26 ;
+  // une configuration antérieure (mdNote seul) reste modifiable
+  const editable = b.mdEdit ?? !!b.mdNote;
+  if (!b.mdNote && !editable) {
+    body.innerHTML = `<div class="mdview"${fs}>${DOMPurify.sanitize(marked.parse(text))}</div>`;
+    body.querySelectorAll(".mdview a[href]").forEach((a) => Object.assign(a, { target: "_blank", rel: "noopener" }));
+    return;
+  }
+  // bloc-notes : aspect papier ; ✎ (ou double-clic) ouvre le texte Markdown brut, enregistré dans la colonne
+  const canWrite = editable && S.canEdit && isEditableCol(col);
+  const look = b.mdNote ? "mdnote" : "mdnote mdplain";
+  const show = () => {
+    body.innerHTML =
+      `<div class="${look}"${fs}>` +
+      (canWrite ? `<button type="button" class="mdnote-edit" title="Modifier le bloc-notes (ou double-clic sur le texte)" aria-label="Modifier le bloc-notes">✎</button>` : "") +
+      (text.trim()
+        ? `<div class="mdview">${DOMPurify.sanitize(marked.parse(text))}</div>`
+        : `<div class="mdnote-empty">${canWrite ? "Bloc-notes vide : cliquez sur ✎ pour écrire." : "Bloc-notes vide."}</div>`) +
+      `</div>`;
+    body.querySelectorAll(".mdview a[href]").forEach((a) => Object.assign(a, { target: "_blank", rel: "noopener" }));
+    if (!canWrite) return;
+    const note = body.querySelector(".mdnote");
+    body.querySelector(".mdnote-edit").addEventListener("click", edit);
+    note.addEventListener("dblclick", (e) => !e.target.closest("a") && edit());
+  };
+  const edit = () => {
+    S.editing = true; // les rendus attendent la fin de la saisie
+    body.innerHTML =
+      `<div class="${look} editing"${fs}><textarea class="mdnote-ta" spellcheck="true" aria-label="Texte du bloc-notes (Markdown)"></textarea>` +
+      `<div class="mdnote-bar"><span class="mdnote-hint"># titre · **gras** · *italique* · - liste · [lien](https://…) — Ctrl+Entrée : enregistrer · Échap : annuler</span>` +
+      `<button type="button" class="mdnote-cancel">Annuler</button><button type="button" class="mdnote-save">Enregistrer</button></div></div>`;
+    const ta = body.querySelector(".mdnote-ta");
+    ta.value = text;
+    const fit = () => {
+      ta.style.height = "auto";
+      ta.style.height = `${Math.max(120, ta.scrollHeight + 4)}px`;
+    };
+    fit();
+    ta.addEventListener("input", fit);
+    ta.focus();
+    const end = () => {
+      S.editing = false;
+      if (S.pendingRender) {
+        S.pendingRender = false;
+        scheduleRender();
+      }
+    };
+    const cancel = () => {
+      show();
+      end();
+    };
+    const save = () => {
+      const v = ta.value;
+      if (v === text) return cancel();
+      S.editing = false;
+      if (row) return saveValue(body.querySelector(".mdnote"), info.tableId, row.id, col, v);
+      // pas encore de ligne : création, rattachée à la sélection liée comme « + Ajouter une ligne »
+      grist.docApi
+        .applyUserActions([["AddRecord", info.tableId, null, { ...(S.linkSet?.[info.secId] || {}), [col.colId]: v }]])
+        .then((res) => {
+          if (res?.retValues?.[0]) S.sel[info.secId] = res.retValues[0];
+          delete S.cache[info.tableId];
+          delete S.byId[info.tableId];
+        })
+        .catch((e) => status(`Enregistrement impossible : ${e?.message || e}`, true))
+        .finally(() => scheduleRender());
+    };
+    body.querySelector(".mdnote-save").addEventListener("click", save);
+    body.querySelector(".mdnote-cancel").addEventListener("click", cancel);
+    ta.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        save();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        cancel();
+      }
+    });
+  };
+  show();
 }
 /* Le mapping d'un widget personnalisé est stocké par numéro de colonne (colRef) ou par colId */
 const colByKey = (cols, k) =>
@@ -3598,7 +3680,7 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
         interactive: !outline && !hoverSecond, // seul le calque qui porte l'étiquette réagit au survol
         style: (f) =>
           outline
-            ? { color: "#161616", weight: mode === "iris" ? 1.2 : 2, opacity: 0.85, dashArray: "6 4", fill: false }
+            ? { color: "#161616", weight: mode === "iris" ? 0.8 : 1, opacity: 0.7, dashArray: "4 4", fill: false } // discret (0.9.4.25)
             : noFill
               ? { color: "#3a3a3a", weight: mode === "iris" ? 1 : 1.5, opacity: 0.8, fillOpacity: 0 } // fond transparent : survol conservé
               : ({
@@ -4709,7 +4791,8 @@ async function render() {
         rows = qfApply(b, info, rows); // …puis seules les lignes choisies sont affichées
         const selId = await selectedRowId(b.id, ctx);
         const isSingle = info.kind === "single";
-        if (!rows.length && !(isSingle && S.byId[info.tableId]?.get(selId))) {
+        const noteBlk = (b.mdEdit ?? !!b.mdNote) && S.canEdit && info.kind === "custom" && isMarkdownSection(info.sec); // texte modifiable sans ligne : saisie possible
+        if (!rows.length && !noteBlk && !(isSingle && S.byId[info.tableId]?.get(selId))) {
           // diagnostic : table complète vs filtrée, et origine de la liaison
           try {
             const total = (await fetchRows(info.tableId)).length,
@@ -6438,7 +6521,7 @@ ${
         )
       : ""),(["single", "detail"].includes(s.parentKey) ? C(`data-nolab="${i}"`, b.hideLabels, "Masquer les noms des champs", "Pour ce bloc, n'affiche que les valeurs : les noms des champs restent visibles au survol d'une valeur.") : ""),(["single", "detail"].includes(s.parentKey) ? C(`data-sempty="${i}"`, b.showEmpty, "Afficher les champs vides", "Pour ce bloc seulement, montre aussi les champs sans valeur (sinon masqués selon l'option générale).") : "")].join(""))}
   ${G("Édition", "Modification des données depuis la page (droits Grist respectés).", [(isFiche ? C(`data-edit="${i}"`, b.editable, "Édition des champs", "Permet de modifier les valeurs directement dans la page (double-clic). Les règles d'accès de Grist s'appliquent : une modification interdite est refusée ; les lecteurs restent en lecture seule.") : ""),(["record", "detail"].includes(s.parentKey) ? C(`data-addr="${i}"`, b.addable, "Ajout et suppression de lignes", "Avec « Édition des champs », affiche en bas du bloc « + Ajouter une ligne » et « − Supprimer la ligne » (ligne sélectionnée, après confirmation). Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Les règles d'accès de Grist s'appliquent (droits de création et de suppression).") : "")].join(""))}
-  ${G("Texte (Markdown)", "Widget Markdown de Grist : affiché sans possibilité de modification.", s.parentKey === "custom" && isMarkdownSection(s) ? L("Taille du texte", sel("mdSize", MD_SIZES, b.mdSize || ""), "Taille des caractères du texte affiché (les titres restent proportionnés).") : "")}
+  ${G("Texte (Markdown)", "Widget Markdown de Grist : affiché tel quel, ou en bloc-notes modifiable.", s.parentKey === "custom" && isMarkdownSection(s) ? L("Taille du texte", sel("mdSize", MD_SIZES, b.mdSize || ""), "Taille des caractères du texte affiché (les titres restent proportionnés).") + C(`data-mdedit="${i}"`, b.mdEdit ?? !!b.mdNote, "Modifiable depuis la page", "Le texte se modifie depuis la page (bouton ✎ ou double-clic) : le Markdown est enregistré dans la colonne du widget, pour la ligne affichée. La colonne doit être une colonne de données (pas une formule). Les règles d'accès de Grist s'appliquent ; les lecteurs ne peuvent pas modifier.") + C(`data-mdnote="${i}"`, b.mdNote, "Aspect bloc-notes", "Affiche le texte sur un fond de papier jaune pâle, avec une marge rouge.") : "")}
   ${G("Liste de sélection", "La vue est affichée comme une liste déroulante dans l'en-tête de la page.", (isSelector(b)
       ? L(
           "Colonne affichée",
@@ -7081,6 +7164,16 @@ $("#panel").addEventListener("change", (ev) => {
   }
   if (t.dataset.edit) {
     draft.blocks[Number(t.dataset.edit)].editable = t.checked;
+    return;
+  }
+  if (t.dataset.mdnote) {
+    const b = draft.blocks[Number(t.dataset.mdnote)];
+    b.mdEdit ??= !!b.mdNote; // l'ancienne case réglait les deux : la modification reste telle quelle
+    b.mdNote = t.checked;
+    return;
+  }
+  if (t.dataset.mdedit) {
+    draft.blocks[Number(t.dataset.mdedit)].mdEdit = t.checked;
     return;
   }
   if (t.dataset.rowcount) {

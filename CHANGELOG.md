@@ -26,6 +26,37 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.27] — Icône du type de vue sur les blocs repliés — 2026-11-03
+
+### Utilisateurs
+- *Nouveau* — **Bloc replié** : l'icône du type de vue (tableau, fiche, graphique, carte, texte…) s'affiche devant son titre.
+- *Corrigé* — **Texte (Markdown) modifiable sans l'aspect bloc-notes**, sur une table vide : la saisie est possible (elle ne l'était qu'avec l'aspect bloc-notes).
+
+### Développeurs
+- *Nouveau* — `blockShell` : `<span class="foldico">` (`kindIcon`) devant le titre, visible seulement sous `.block.collapsed`.
+- *Corrigé* — Bloc Markdown sans ligne : test sur `mdEdit ?? mdNote` au lieu de `mdNote`.
+
+## [0.9.4.26] — Bloc-notes vide : saisie possible — 2026-11-03
+
+### Utilisateurs
+- *Corrigé* — **Bloc-notes** sur une table vide (ou sans note pour l'élément sélectionné) : il s'affichait « Aucune donnée », sans moyen d'écrire. Il s'affiche désormais vide avec le bouton ✎ ; le premier enregistrement crée la ligne.
+
+### Développeurs
+- *Corrigé* — `render` n'écarte plus un bloc-notes sans ligne ; `renderMarkdown` crée la ligne par `AddRecord` (valeurs de liaison `S.linkSet` comprises) au premier enregistrement.
+
+## [0.9.4.25] — Bloc-notes modifiable, second zonage plus discret — 2026-11-03
+
+### Utilisateurs
+- *Nouveau* — **Bloc-notes** : un widget Markdown peut s'afficher comme un bloc-notes (fond jaune pâle, marge rouge) et se modifier depuis la page : bouton ✎ ou double-clic, puis **Enregistrer** (Ctrl+Entrée) ou **Annuler** (Échap). Les droits Grist s'appliquent ; les lecteurs le voient sans pouvoir le modifier.
+- *Amélioré* — **Cartes, second zonage** : pointillés plus fins et plus discrets (1 px au lieu de 2, 0,8 px pour les IRIS, tirets plus courts). Le survol garde sa zone de 16 px.
+
+### Administrateurs
+- *Nouveau* — Encadré **Texte (Markdown)** d'un bloc : case **Bloc-notes modifiable**. Le texte est enregistré dans la colonne *Content* du widget (colonne de données), pour la ligne affichée. Voir le guide administrateur, « Bloc-notes ».
+
+### Développeurs
+- *Nouveau* — Option `mdNote` ; `renderMarkdown` : vue `.mdnote`, édition dans un `textarea` (`S.editing` suspend les rendus), enregistrement par `saveValue` (`UpdateRecord`) ; bouton masqué à l'impression.
+- *Amélioré* — Second zonage : `weight` 1 (IRIS 0,8), `opacity` 0,7, `dashArray` « 4 4 ».
+
 ## [0.9.4.24] — Zonage IRIS : trait plus visible, cadrage sur les quartiers — 2026-11-03
 
 ### Utilisateurs
