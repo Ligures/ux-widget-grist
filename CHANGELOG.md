@@ -32,6 +32,9 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 - *Nouveau* — **Bloc replié** : l'icône du type de vue (tableau, fiche, graphique, carte, texte…) s'affiche devant son titre.
 - *Corrigé* — **Texte (Markdown) modifiable sans l'aspect bloc-notes**, sur une table vide : la saisie est possible (elle ne l'était qu'avec l'aspect bloc-notes).
 
+### Administrateurs
+- *Corrigé* — README : fond de carte des cartes exportées en HTML (Plan IGN de la Géoplateforme quand la carte utilise OpenStreetMap), ajouté à la sécurité de l'export, aux services appelés et aux licences.
+
 ### Développeurs
 - *Nouveau* — `blockShell` : `<span class="foldico">` (`kindIcon`) devant le titre, visible seulement sous `.block.collapsed`.
 - *Corrigé* — Bloc Markdown sans ligne : test sur `mdEdit ?? mdNote` au lieu de `mdNote`.

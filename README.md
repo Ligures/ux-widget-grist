@@ -235,7 +235,7 @@ Widget personnalisé Grist séparé, pour les administrateurs : il calcule les d
 - **Politique de sécurité (CSP)** : la page n'accepte que ses propres scripts (`ux-widget.js`) et ceux de Grist et de jsDelivr ; tout script en ligne, ou injecté dans une valeur, est refusé par le navigateur. Les connexions sont limitées au site du widget, à jsDelivr et aux services géographiques publics (geo.api.gouv.fr, data.geopf.fr). `unsafe-eval` reste autorisé pour Plotly (graphiques avancés).
 - **Bibliothèques externes** : versions figées, vérifiées par empreinte d'intégrité (SRI). Un fichier altéré sur le CDN est refusé.
 - **Liens du menu** : seules les adresses `https://` sont acceptées.
-- **Export des cartes** : le fichier HTML exporté contient les points, étiquettes, infobulles et zones visibles par la personne au moment de l'export. Une fois enregistré ou envoyé, il échappe aux règles d'accès de Grist. Il charge Leaflet depuis jsDelivr (empreinte SRI) et le fond de carte depuis son service habituel. L'option « Export réservé aux administrateurs » masque le bouton aux autres utilisateurs.
+- **Export des cartes** : le fichier HTML exporté contient les points, étiquettes, infobulles et zones visibles par la personne au moment de l'export. Une fois enregistré ou envoyé, il échappe aux règles d'accès de Grist. Il charge Leaflet depuis jsDelivr (empreinte SRI). Fond de carte : quand la carte utilise OpenStreetMap, l'export prend le **Plan IGN** de la Géoplateforme (`data.geopf.fr/wmts`, couche `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2`), car les serveurs d'OpenStreetMap refusent les fichiers ouverts depuis le poste (« Access blocked ») ; un autre fond réglé dans la carte Grist est repris tel quel. L'option « Export réservé aux administrateurs » masque le bouton aux autres utilisateurs.
 - **Données envoyées à des services tiers (cartes)** : aucune valeur des tables (noms, effectifs, IPS, étiquettes…) ne quitte le navigateur. Seuls des codes géographiques, et parfois une position, partent vers des services publics :
 
   | Service | Ce qui est envoyé | Quand |
@@ -244,6 +244,7 @@ Widget personnalisé Grist séparé, pour les administrateurs : il calcule les d
   | geo.api.gouv.fr | les **coordonnées d'un point** (latitude, longitude) | seulement pour un point sans code INSEE, afin de trouver son département |
   | data.geopf.fr (IGN) | des **codes INSEE de communes** | zonage IRIS : contours des IRIS de ces communes |
   | Fond de carte (OpenStreetMap par défaut, ou le fournisseur réglé dans la carte Grist) | les numéros des tuiles affichées | toujours : le fournisseur voit la zone regardée, pas les points |
+  | data.geopf.fr (IGN), Plan IGN | les numéros des tuiles affichées | carte exportée en HTML dont le fond est OpenStreetMap dans Grist |
   | Fichiers QPV, circonscriptions, secteurs de collège | rien | lus sur le même site que le widget |
 
   Comme pour toute page web, chaque service voit aussi l'adresse IP de l'utilisateur et le site d'origine de la demande. Les bibliothèques (jsDelivr) sont téléchargées sans aucune donnée du document.
@@ -333,5 +334,5 @@ ux-widget.js
 - **Contours des communes et EPCI** : [API Découpage administratif](https://geo.api.gouv.fr), IGN / INSEE.
 - **Contours IRIS** : © IGN – INSEE, via la Géoplateforme.
 - **Circonscriptions législatives, secteurs de collège** : extraits de fichiers publiés sur data.gouv.fr, sous la licence indiquée sur leur page.
-- **Fond de carte** : © contributeurs [OpenStreetMap](https://www.openstreetmap.org/copyright).
+- **Fond de carte** : © contributeurs [OpenStreetMap](https://www.openstreetmap.org/copyright) ; cartes exportées : Plan IGN © IGN, [Licence Ouverte 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/).
 - **Icône AIA** : © 2023 Martine Peters, [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) — [Acronymes et icônes pour une utilisation transparente de l'IA](https://mpeters.uqo.ca/utilisation-transparente-de-lintelligence-artificielle/).
