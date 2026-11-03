@@ -26,6 +26,15 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.24] — Zonage IRIS : trait plus visible, cadrage sur les quartiers — 2026-11-03
+
+### Utilisateurs
+- *Amélioré* — **Cartes, zonage principal « Quartiers IRIS » limité aux quartiers des points** : trait de 2 px et fond aussi visible que celui des communes (au lieu de 1 px et d'un fond très pâle, gardés pour l'affichage de tous les IRIS des communes).
+- *Amélioré* — **Cadrage à l'ouverture** : la carte montre tous les quartiers IRIS dessinés, et plus seulement les points.
+
+### Développeurs
+- *Amélioré* — `drawZones` : `irisPts` (mode `iris`, `irisCol` renseigné, hors second zonage) → `weight: 2`, `fillOpacity: 0.18` ; `_uxExtend` appelé aussi pour les IRIS.
+
 ## [0.9.4.23] — Zonage IRIS limité aux quartiers des points — 2026-11-03
 
 ### Utilisateurs

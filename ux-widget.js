@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.23). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.24). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.23"; // voir CHANGELOG.md
+const VERSION = "0.9.4.24"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3576,6 +3576,8 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
       return { type: "MultiPolygon", coordinates: polys.flat() };
     };
     // fusion zone par zone, en rendant la main au navigateur toutes les 30 ms : la page reste réactive
+    // IRIS limités aux quartiers des points, en zonage principal (0.9.4.24) : trait et fond comme les communes
+    const irisPts = mode === "iris" && !!b.irisCol && !outline;
     const feats = [];
     let t0 = performance.now();
     for (const z of ordered) {
@@ -3601,10 +3603,10 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
               ? { color: "#3a3a3a", weight: mode === "iris" ? 1 : 1.5, opacity: 0.8, fillOpacity: 0 } // fond transparent : survol conservé
               : ({
           color: how ? "#1d3fb8" : f.properties.color,
-          weight: merged || fileZ ? 2.5 : mode === "iris" ? 1 : 1.5,
+          weight: merged || fileZ ? 2.5 : mode === "iris" ? (irisPts ? 2 : 1) : 1.5,
           opacity: 0.9,
           fillColor: f.properties.color,
-          fillOpacity: how ? 0.55 : mode === "iris" ? 0.06 : 0.18,
+          fillOpacity: how ? 0.55 : mode === "iris" && !irisPts ? 0.06 : 0.18,
         }),
         onEachFeature: (f, l) => {
           const z = f.properties;
@@ -3631,7 +3633,8 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
           onEachFeature: (f, l) => l.bindTooltip(`<b>${esc(f.properties.name)}</b>`, { sticky: true }),
         },
       ).addTo(map);
-    if (feats.length && mode !== "iris") map._uxExtend?.(layer.getBounds(), keepView); // cadrage : points + zones
+    // cadrage : points + zones (IRIS compris depuis 0.9.4.24 : tous les quartiers dessinés sont visibles à l'ouverture)
+    if (feats.length) map._uxExtend?.(layer.getBounds(), keepView);
     if (scale?.items.length && !outline) {
       const c = L.control({ position: "topright" });
       c.onAdd = () => {
