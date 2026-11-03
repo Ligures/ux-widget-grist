@@ -26,6 +26,17 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.23] — Zonage IRIS limité aux quartiers des points — 2026-11-03
+
+### Utilisateurs
+- *Amélioré* — **Cartes, zonage « Quartiers IRIS »** : la carte peut ne dessiner que les quartiers des établissements affichés ; les zones suivent les filtres et les sélections.
+
+### Administrateurs
+- *Nouveau* — Configuration d'une carte, **Rattachement : quartiers IRIS** (zonage ou second zonage IRIS) : *tous les IRIS des communes des points* (comme avant), *IRIS qui contiennent des points* (position), ou une colonne de code IRIS (9 caractères ; commune non découpée : INSEE + `0000`). Avec une colonne, chaque point est rattaché au quartier de vos données, et les points sans code reconnu sont signalés sur la carte.
+
+### Développeurs
+- *Nouveau* — Option `irisCol` (`""`, `"__pts"` ou colId, suivie au renommage) ; code IRIS lu dans `p.zc.iris` (8 chiffres complétés d'un zéro) ; `drawZones` ne garde que les zones qui ont des points.
+
 ## [0.9.4.22] — Zonage IRIS : communes non découpées — 2026-11-03
 
 ### Utilisateurs

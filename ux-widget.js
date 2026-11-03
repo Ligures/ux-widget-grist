@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.22). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.23). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -44,7 +44,7 @@
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
  Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapWheel (molette sans Ctrl), mapExportAdmin, qfFree (filtre libre, tous blocs), mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
-         qpvUrl, mapZone (communes|epci|iris|legis|college|groupe|groupe2|groupe3), mapZone2 (contours croisés), zoneHover, legisUrl, collegeUrl, legisCol, collegeCol, mapCommune, zoneColor,
+         qpvUrl, mapZone (communes|epci|iris|legis|college|groupe|groupe2|groupe3), mapZone2 (contours croisés), zoneHover, legisUrl, collegeUrl, legisCol, collegeCol, irisCol, mapCommune, zoneColor,
          zoneSum, zoneTable/zoneKey/zoneVal, grpTable/grpKey/grpCol/grpLabel (et grp2…, grp3…), mapLabelsOn
 
    RÈGLES À RESPECTER
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.22"; // voir CHANGELOG.md
+const VERSION = "0.9.4.23"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3485,6 +3485,28 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
           zones.set(z.key, z);
         }
       }
+      // IRIS des points seulement (0.9.4.23) : par leur code (colonne « Rattachement ») ou par leur position
+      if (b.irisCol) {
+        const byIris = b.irisCol !== "__pts";
+        const nIris = (v) =>
+          String(v ?? "")
+            .trim()
+            .toUpperCase()
+            .replace(/\s/g, "")
+            .replace(/^(\d{8})$/, "0$1");
+        if (byIris) {
+          const at = new Map();
+          for (const p of pts) {
+            const k = nIris(p.zc?.iris);
+            if (k) (at.get(k) || at.set(k, []).get(k)).push(p);
+          }
+          for (const z of zones.values()) {
+            z.pts = at.get(String(z.key).toUpperCase()) || [];
+            for (const p of z.pts) p.iris = z.name;
+          }
+        }
+        for (const [k, z] of zones) if (!z.pts.length) zones.delete(k);
+      }
     } else {
       for (const f of all) {
         const c = codeOf(f);
@@ -3630,8 +3652,14 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
     if (fileZ) {
       if (!zones.size) note(`${fileZ.label} : aucun point à l'intérieur des contours du fichier`);
     } else if (mode === "iris") {
-      const missing = codes.filter((c) => ![...zones.values()].some((z) => z.pts.some((p) => p.code === c))).length;
-      if (missing) note(`IRIS : ${missing} commune(s) sans contour`);
+      if (b.irisCol && b.irisCol !== "__pts") {
+        const inZ = new Set([...zones.values()].flatMap((z) => z.pts));
+        const lost = pts.filter((p) => !inZ.has(p)).length;
+        if (lost) note(`IRIS : ${lost} point(s) sans quartier reconnu (code IRIS vide ou introuvable)`);
+      } else {
+        const missing = codes.filter((c) => ![...zones.values()].some((z) => z.pts.some((p) => p.code === c))).length;
+        if (missing && !b.irisCol) note(`IRIS : ${missing} commune(s) sans contour`);
+      }
     } else {
       const missing = codes.filter((c) => !all.some((f) => codeOf(f) === c)).length;
       if (missing) note(`Zonage : ${missing} code(s) INSEE sans contour`);
@@ -3758,6 +3786,9 @@ async function renderMap(info, rows, body, jobs, selId, b = {}) {
   const zcCols = Object.entries(FILE_ZONES)
     .map(([k, Z]) => [k, b[Z.colKey] && cols.find((c) => c.colId === b[Z.colKey])])
     .filter(([, c]) => c);
+  // quartiers IRIS (0.9.4.23) : code IRIS des points lu dans une colonne
+  const irisC = b.irisCol && b.irisCol !== "__pts" && cols.find((c) => c.colId === b.irisCol);
+  if (irisC) zcCols.push(["iris", irisC]);
   await ensureRefTables(zcCols.map(([, c]) => c));
   const pts = rows
     .map((r) => {
@@ -5951,8 +5982,8 @@ $("#btnConfig").addEventListener("click", () => openConfig());
 /* Colonnes choisies dans la configuration : elles sont enregistrées par identifiant (colId), qui change quand
    on renomme une colonne dans Grist. On garde aussi leur numéro interne (colRef, stable) dans b._refs pour
    retrouver le nouvel identifiant automatiquement. */
-const COL_FIELDS = ["mapLabel", "mapColor", "mapColor2", "mapRing", "mapCommune", "selCol", "selGroup", "zoneSum", "qfField", "qfField2", "legisCol", "collegeCol", "pieColorCol"];
-const COL_SPECIAL = new Set(["", "__qpv", "__pos"]); // valeurs qui ne sont pas des colonnes
+const COL_FIELDS = ["mapLabel", "mapColor", "mapColor2", "mapRing", "mapCommune", "selCol", "selGroup", "zoneSum", "qfField", "qfField2", "legisCol", "collegeCol", "irisCol", "pieColorCol"];
+const COL_SPECIAL = new Set(["", "__qpv", "__pos", "__pts"]); // valeurs qui ne sont pas des colonnes
 // colFieldTable — Table d'une option de colonne (zoneKey / zoneVal : table choisie pour colorer les zones).
 function colFieldTable(b, f) {
   if (f === "zoneKey" || f === "zoneVal") return [...S.meta.tables.values()].find((t) => t.tableId === b.zoneTable)?.id;
@@ -6675,6 +6706,21 @@ ${
             ),
           )
           .join("") +
+        ([zoneMode(b), zoneMode(b) ? b.mapZone2 : ""].includes("iris")
+          ? L(
+              "Rattachement : quartiers IRIS",
+              sel(
+                "irisCol",
+                [
+                  ["", "tous les IRIS des communes des points"],
+                  ["__pts", "IRIS qui contiennent des points (position)"],
+                  ...colOpts(s).map(([v, t]) => [v, `IRIS des points : ${t}`]),
+                ],
+                b.irisCol || "",
+              ),
+              "Quels quartiers dessiner. « tous les IRIS des communes des points » : chaque commune découpée en entier. « IRIS qui contiennent des points » : seulement les quartiers où se trouve un point, d'après sa position. Une colonne (code IRIS à 9 caractères, ex. 290190101) : seulement les quartiers des points, d'après vos données ; une commune non découpée a pour code INSEE + 0000.",
+            )
+          : "") +
         grpHtml(b, i) +
         (needsInsee(b)
           ? L(
@@ -6943,6 +6989,7 @@ $("#panel").addEventListener("change", (ev) => {
       "mapZone2",
       "zoneHover",
       "legisCol",
+      "irisCol",
       "collegeCol",
       "zoneColor",
       "zoneSum",
