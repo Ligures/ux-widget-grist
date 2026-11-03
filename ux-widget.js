@@ -1,4 +1,4 @@
-/* UX widget grist — script (version 0.9.4.21). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script (version 0.9.4.22). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous. */
 "use strict";
 /* ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.4.21"; // voir CHANGELOG.md
+const VERSION = "0.9.4.22"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3471,6 +3471,20 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
         for (const p of z.pts) p.iris = z.name;
         zones.set(k, z);
       }
+      // communes non découpées en IRIS (0.9.4.22) : la commune entière, sous le code IRIS INSEE + « 0000 »
+      const split = new Set(irisFeats.map((f) => String(f.properties?.code_insee).toUpperCase()));
+      const whole = codes.filter((c) => !split.has(c));
+      if (whole.length) {
+        const shp = (await Promise.all([...new Set(whole.map(depOf))].map(fetchCommuneShapes))).flatMap((fc) => fc.features || []);
+        if (!map._container?.isConnected) return;
+        for (const c of whole) {
+          const f = shp.find((x) => codeOf(x) === c);
+          if (!f) continue;
+          const z = { key: `${c}0000`, name: `${f.properties.nom} (commune non découpée)`, feats: [f], pts: byCode.get(c) || [] };
+          for (const p of z.pts) p.iris = z.name;
+          zones.set(z.key, z);
+        }
+      }
     } else {
       for (const f of all) {
         const c = codeOf(f);
@@ -3616,12 +3630,8 @@ async function drawZones(map, pts, comC, keepView, b, sumC, opt = {}) {
     if (fileZ) {
       if (!zones.size) note(`${fileZ.label} : aucun point à l'intérieur des contours du fichier`);
     } else if (mode === "iris") {
-      const split = new Set(irisFeats.map((f) => String(f.properties?.code_insee).toUpperCase()));
-      if (!irisFeats.length) note("IRIS : aucune commune découpée en IRIS parmi celles des points");
-      else if (split.size < codes.length)
-        note(
-          `IRIS : ${split.size} commune(s) découpée(s) ; les ${codes.length - split.size} autres forment un seul IRIS`,
-        );
+      const missing = codes.filter((c) => ![...zones.values()].some((z) => z.pts.some((p) => p.code === c))).length;
+      if (missing) note(`IRIS : ${missing} commune(s) sans contour`);
     } else {
       const missing = codes.filter((c) => !all.some((f) => codeOf(f) === c)).length;
       if (missing) note(`Zonage : ${missing} code(s) INSEE sans contour`);

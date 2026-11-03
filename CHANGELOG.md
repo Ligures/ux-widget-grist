@@ -26,6 +26,17 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.4.22] — Zonage IRIS : communes non découpées — 2026-11-03
+
+### Utilisateurs
+- *Amélioré* — **Cartes, zonage « Quartiers IRIS »** : une commune qui n'est pas découpée en IRIS est dessinée en entier (« Nom (commune non découpée) »), au lieu de rester sans zone.
+
+### Administrateurs
+- *Amélioré* — Couleur des zones *selon une table Grist* en IRIS : une commune non découpée est reliée par le code IRIS INSEE + `0000` (ex. `291030000`), comme dans les fichiers de l'INSEE.
+
+### Développeurs
+- *Amélioré* — `drawZones`, mode `iris` : pour les codes INSEE des points sans IRIS (`type_iris<>'Z'` les exclut du WFS), contour communal de geo.api.gouv.fr (`fetchCommuneShapes`), clé `<INSEE>0000`.
+
 ## [0.9.4.21] — Second zonage au choix, regroupements lus dans une table d'établissements — 2026-11-02
 
 ### Utilisateurs

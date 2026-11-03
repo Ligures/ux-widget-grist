@@ -151,7 +151,7 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
 
 **Colorer les zones avec vos propres données** (par exemple la population des 3-10 ans par IRIS) :
 1. Importer une table dans Grist, avec une colonne de code :
-   - code IRIS à 9 caractères pour les IRIS ;
+   - code IRIS à 9 caractères pour les IRIS (commune non découpée : code INSEE suivi de `0000`) ;
    - code INSEE pour les communes ;
    - SIREN pour les EPCI ;
    - code de la circonscription (ex. `2901`) pour les circonscriptions législatives ;
