@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.5.3] — Menu : condition « si accès à » relue après une saisie — 2026-11-04
+
+### Utilisateurs
+- *Corrigé* — **Menu des pages** : un lien réglé sur « si accès à <table> » apparaît dès que l'utilisateur crée sa première ligne dans cette table (et disparaît si la table redevient vide pour lui), sans recharger le widget. Il ne réapparaissait qu'à la réouverture du document quand on naviguait dans le widget.
+
+### Développeurs
+- *Corrigé* — `S.navAccess` vidé par `docActions` et `refreshAll` (bouton Actualiser, actualisation automatique) : la condition est relue au rendu suivant du menu.
+
 ## [0.9.5.2] — Actualisation automatique — 2026-11-03
 
 ### Utilisateurs

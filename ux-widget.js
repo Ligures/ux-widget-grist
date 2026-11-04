@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.5.2). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.5.3). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.5.2"; // voir CHANGELOG.md
+const VERSION = "0.9.5.3"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -4394,6 +4394,7 @@ function fixColIds(cfg) {
 async function refreshAll(silent = false) {
   S.cache = {};
   S.byId = {};
+  S.navAccess = {}; // conditions « si accès à » du menu : relues (0.9.5.3)
   try {
     if (!silent) status("Rechargement…");
     await loadMeta();
@@ -4424,6 +4425,7 @@ const live = { tok: null, exp: 0, last: null, self: false, fails: 0, timer: null
 async function docActions(actions) {
   const r = await grist.docApi.applyUserActions(actions);
   live.self = true;
+  S.navAccess = {}; // une ligne créée ou supprimée peut faire apparaître ou disparaître une page du menu (0.9.5.3)
   return r;
 }
 // docState — Dernier état du document (numéro et empreinte de la dernière action), par l'API REST de Grist.

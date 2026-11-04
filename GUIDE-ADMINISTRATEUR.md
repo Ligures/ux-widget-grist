@@ -221,7 +221,7 @@ Section **5. Navigation entre pages**. Ce réglage est commun à toutes les conf
   - infobulle (facultative) : texte affiché au survol du lien ; sans infobulle, le survol montre l'adresse de la page, sauf avec « Changer de page dans le widget » ;
   - page Grist, ou **— ce widget —** ;
   - configuration à afficher ;
-  - visibilité : *tous*, ou *si accès à* une table (le lien n'apparaît qu'aux personnes qui voient au moins une ligne de cette table).
+  - visibilité : *tous*, ou *si accès à* une table (le lien n'apparaît qu'aux personnes qui voient au moins une ligne de cette table, quelle qu'en soit la raison : table vide, règles d'accès par ligne, lignes pas encore créées). Exemple : une page de suivi qui n'apparaît qu'une fois que l'utilisateur a créé sa première ligne dans une autre page ; le lien apparaît dès cette création, sans recharger le widget.
 
 ### Apparence
 
