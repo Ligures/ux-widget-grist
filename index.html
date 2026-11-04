@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   ╔══════════════════════════════════════════════════════════════════════════════╗
-  ║  UX widget grist — widget personnalisé Grist (version 0.9.4.27)              ║
+  ║  UX widget grist — widget personnalisé Grist (version 0.9.5.2)               ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
   Affiche sur une seule page, condensée et lisible, plusieurs vues natives d'un
   document Grist (tableaux, fiches, listes de fiches, graphiques natifs et avancés,
@@ -9,8 +9,9 @@
   des vues Grist (tables de métadonnées _grist_*) et en reproduit le rendu.
 
   Développeur : Ligures.
-  Trois fichiers, sans étape de construction (0.9.0) : index.html (structure),
-  ux-widget.css (styles), ux-widget.js (script). Le script n'est plus dans la page :
+  Sans étape de construction (0.9.0) : index.html (structure), ux-widget.css (styles),
+  ux-widget.js (script principal), et depuis 0.9.5 ux-carte.js (cartes) et ux-config.js
+  (configuration), chargés à la demande par ux-widget.js. Aucun script dans la page :
   la politique de sécurité (CSP) interdit tout script en ligne.
   Historique des versions : CHANGELOG.md · Guides : GUIDE-UTILISATEUR.md, GUIDE-ADMINISTRATEUR.md
   Hébergement : GitHub Pages, à côté de qpv-bretagne.geojson (couche QPV).
@@ -19,7 +20,8 @@
   Plan
     index.html     en-tête (menu des pages, barre d'outils, listes de sélection),
                    grille des blocs, panneau de configuration, aide.
-    ux-widget.css  styles. ux-widget.js : script (sommaire en tête).
+    ux-widget.css  styles. ux-widget.js : script principal (sommaire en tête).
+    ux-carte.js, ux-config.js : chargés par ux-widget.js avec le même ?v= (VERSION).
   Mise à jour : changer aussi le numéro ?v=… des deux liens ci-dessous (cache).
 -->
 <html lang="fr">
@@ -29,14 +31,14 @@
     <title>UX widget grist</title>
     <meta name="author" content="Ligures" />
     <!-- Politique de sécurité : aucun script en ligne ; sources limitées (Grist, jsDelivr, services géographiques publics) -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://docs.getgrist.com https://cdn.jsdelivr.net 'unsafe-eval'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' https: data: blob:; connect-src 'self' https://geo.api.gouv.fr https://data.geopf.fr https://cdn.jsdelivr.net; frame-src https:; object-src 'none'; base-uri 'self'; form-action 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://docs.getgrist.com https://cdn.jsdelivr.net 'unsafe-eval'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' https: data: blob:; connect-src 'self' https://geo.api.gouv.fr https://data.geopf.fr https://cdn.jsdelivr.net https://grist.numerique.gouv.fr https://grist.toutatice.fr https://grist.ac-rennes.fr https://*.getgrist.com; frame-src https:; object-src 'none'; base-uri 'self'; form-action 'none'" />
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script
       src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"
       integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG"
       crossorigin="anonymous"
     ></script>
-    <link rel="stylesheet" href="ux-widget.css?v=0.9.4.27" />
+    <link rel="stylesheet" href="ux-widget.css?v=0.9.5.2" />
   </head>
   <body>
     <header id="top">
@@ -94,20 +96,6 @@
             <path d="M17.5 12h.01" /></svg
           ><span class="lbl">Imprimer</span>
         </button>
-        <button
-          class="tb"
-          id="btnLayout"
-          aria-label="Disposition"
-          data-tip="Disposition : déplacer et redimensionner les blocs"
-          hidden
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="3" y="3" width="8" height="8" rx="1" />
-            <rect x="13" y="3" width="8" height="5" rx="1" />
-            <rect x="13" y="10" width="8" height="11" rx="1" />
-            <rect x="3" y="13" width="8" height="8" rx="1" /></svg
-          ><span class="lbl">Disposition</span>
-        </button>
         <button class="tb" id="btnHelp" aria-label="Aide" data-tip="Aide : guide d'utilisation et nouveautés">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="9" />
@@ -119,15 +107,6 @@
       </div>
       <div id="status">Chargement…</div>
       <div id="filters"></div>
-      <div id="lybar" hidden>
-        <span
-          ><b>Mode disposition</b> — glissez un bloc par son en-tête pour le déplacer, tirez son coin ◢ pour changer sa
-          largeur (et sa hauteur en lignes).</span
-        >
-        <span class="spacer"></span>
-        <button class="btn" id="lyCancel">Annuler</button
-        ><button class="btn primary" id="lySave">Enregistrer la disposition</button>
-      </div>
     </header>
     <div id="printhead"></div>
     <main id="grid" class="grid"></main>
@@ -173,6 +152,6 @@
       <div class="panel" id="panel"></div>
     </div>
 
-    <script src="ux-widget.js?v=0.9.4.27"></script>
+    <script src="ux-widget.js?v=0.9.5.2"></script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.4.27).
+/* UX widget grist — feuilles de style (version 0.9.5.2).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -348,86 +348,6 @@ button {
   #top.notitle #filters {
     padding-right: 0;
   }
-}
-#lybar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding: 6px 10px;
-  margin: 0 0 8px;
-  background: var(--bleu-hover);
-  border: 1px solid var(--bleu-bord);
-  border-radius: 4px;
-  font-size: 12.5px;
-}
-#lybar[hidden] {
-  display: none;
-}
-#lybar .spacer {
-  flex: 1;
-}
-.grid.layout > .block {
-  outline: 2px dashed var(--bleu-bord);
-  outline-offset: -2px;
-  position: relative !important;
-  top: auto !important;
-  overflow: hidden !important;
-  max-height: none !important;
-  align-self: start !important;
-}
-.grid.layout > .block .bh {
-  cursor: grab;
-  background: var(--bleu-hover);
-}
-/* en disposition, chaque bloc montre un aperçu de hauteur fixe : aucun débordement sur les voisins */
-.grid.layout > .block > .bb {
-  pointer-events: none;
-  opacity: 0.75;
-  display: block !important;
-  height: 150px !important;
-  max-height: 150px !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-  flex: none !important;
-}
-.grid.layout > .block.collapsed > .bb {
-  display: none !important;
-}
-.grid.layout > .block.tall > .bb {
-  height: var(--lyh, 150px) !important;
-  max-height: var(--lyh, 150px) !important;
-}
-.grid.layout > .block.dragging {
-  opacity: 0.4;
-}
-.grid.layout > .block.drop-before {
-  box-shadow: -4px 0 0 0 var(--bleu);
-}
-.grid.layout > .block.drop-after {
-  box-shadow: 4px 0 0 0 var(--bleu);
-}
-.lyr {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 18px;
-  height: 18px;
-  cursor: nwse-resize;
-  z-index: 3;
-  background: linear-gradient(135deg, transparent 50%, var(--bleu) 50%);
-  border-bottom-right-radius: 2px;
-}
-.lysize {
-  position: absolute;
-  right: 22px;
-  bottom: 2px;
-  font-size: 11px;
-  background: var(--bleu);
-  color: var(--sur-bleu);
-  padding: 0 5px;
-  border-radius: 3px;
-  z-index: 3;
 }
 #top.stuck {
   border-bottom-color: var(--bord);
@@ -2843,7 +2763,6 @@ html.printing #grid {
   }
   #top,
   #status,
-  #lybar,
   #rc,
   #rcBack,
   #help,
@@ -2886,8 +2805,7 @@ html.printing #grid {
   .bh2 .qffree,
   .bh2 .qf3m,
   .bh2 .mapctl,
-  .map-hint,
-  .lyr {
+  .map-hint {
     display: none !important;
   }
   /* filtre rapide actif : rappelé en texte à la place des boutons */

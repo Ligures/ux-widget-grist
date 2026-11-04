@@ -17,6 +17,7 @@ Ce guide s'adresse aux **administrateurs**, qui composent les pages. Il n'est af
    - [Listes de sélection](#listes-de-sélection)
    - [Cartes : réglages](#cartes--réglages)
    - [Graphiques : couleurs](#graphiques--couleurs)
+   - [Bloc-notes](#bloc-notes)
    - [Message d'accueil](#message-daccueil)
    - [Menu de navigation](#menu-de-navigation)
    - [Apparence](#apparence)
@@ -28,7 +29,7 @@ Ce guide s'adresse aux **administrateurs**, qui composent les pages. Il n'est af
 
 ## 1. Composer une page
 
-Le bouton **⚙ Configurer** et l'action **Disposition** n'apparaissent qu'aux administrateurs : les personnes qui lisent au moins une ligne de la table `W_Admin`.
+Le bouton **⚙ Configurer** n'apparaît qu'aux administrateurs : les personnes qui lisent au moins une ligne de la table `W_Admin`.
 
 ### Ouvrir la configuration
 
@@ -80,7 +81,7 @@ Le bouton **⚙ Configurer** ouvre un panneau sur la moitié droite de l'écran 
   - **Mode ultracompact** : les blocs prennent la largeur de leurs données.
   - **Combler automatiquement les espaces libres** : un petit bloc peut remonter dans un trou.
   - **Empiler les blocs sans trous** : chaque colonne s'empile indépendamment.
-- **☰ → Disposition** (hors du panneau) : on déplace les blocs à la souris et on les redimensionne par leur coin inférieur droit. Terminer par *Enregistrer* ou *Annuler*.
+- L'ordre des blocs se règle par les flèches ↑ ↓ de chaque vue, leur largeur, leur colonne et leur hauteur en lignes par les listes de la vue ; l'aperçu en haut du panneau montre le résultat.
 
 ### Filtre rapide
 
@@ -142,7 +143,7 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
 |---|---|
 | Zonage | Communes, EPCI, IRIS, circonscriptions législatives, secteurs de collège ou regroupements de communes, dessinés sous les points |
 | Regroupement 1 à 3 : table, code INSEE, colonne, libellé | Jusqu'à trois regroupements par carte (un de plus est proposé quand le précédent est complet). Chacun : table avec une ligne par commune (ex. `P_Communes`), colonne du code INSEE (ex. `CODE_COM`), colonne qui réunit les communes (ex. `CODE_RP`, réseau pédagogique ; une référence est lue par sa colonne d'affichage) et nom du zonage (ex. *Réseaux pédagogiques*). Chaque regroupement complet est proposé dans la liste « Zonage » de la carte et dans les réglages *Zonage* / *Second zonage* ; ses zones qui contiennent des points sont dessinées en entier, communes sans point comprises. Table « — » : regroupement retiré. La table peut avoir plusieurs lignes par commune (ex. `REF_ETAB`, une ligne par établissement, avec `CODE_COM` et `CODE_CIRCO`) : la commune prend la valeur la plus fréquente parmi ses lignes non vides ; une référence vers la table des communes est lue par son code INSEE. Une commune partagée entre deux zones est rattachée à une seule |
-| Second zonage (contours) | Un autre découpage tracé en pointillés noirs par-dessus le premier, pour croiser deux fonds (ex. secteurs de collège colorés + circonscriptions législatives). Nom au survol du trait |
+| Second zonage (contours) | Un autre découpage tracé en fins pointillés noirs par-dessus le premier, pour croiser deux fonds (ex. secteurs de collège colorés + circonscriptions législatives). Nom au survol du trait |
 | Étiquette au survol | Avec un second zonage : zonage dont le nom s'affiche au survol. *Zonage principal* (par défaut) ; ou *second zonage* : son nom s'affiche partout à l'intérieur de ses contours, et le principal n'a plus d'étiquette |
 | Rattachement : circonscriptions / secteurs de collège | « position des points » (défaut) : la zone dont le contour contient le point. Ou une colonne de code (ex. `2201`, UAI) : la zone désignée par vos données, même si le point est hors de son contour (commune partagée entre deux zones, commune nouvelle…) |
 | Rattachement : quartiers IRIS | *Tous les IRIS des communes des points* (défaut) ; *IRIS qui contiennent des points* (d'après leur position) ; ou une colonne de code IRIS à 9 caractères (ex. `290190101`, commune non découpée : INSEE + `0000`) : seulement les quartiers des points visibles, d'après vos données. Les points sans code reconnu sont signalés |
@@ -175,6 +176,19 @@ Sans réglage, les couleurs suivent la palette du widget dans l'ordre d'appariti
 | Couleur de repli | Couleur des catégories sans code. Vide : couleurs habituelles du widget |
 
 Priorité : correspondance, puis colonne de codes, puis couleur de repli. Un code invalide est ignoré. Les réglages sont enregistrés avec la page dans `W_Composition`.
+
+### Bloc-notes
+
+Un widget **Markdown** de Grist peut servir de bloc-notes modifiable depuis la page :
+1. Dans Grist, ajouter à la page un widget personnalisé *Markdown* sur une table de notes (par exemple `Notes`, une colonne texte `Texte`, une ligne par page ou par sujet), et associer sa colonne *Content*.
+2. Dans la configuration du widget, encadré **Texte (Markdown)** du bloc : cocher **Bloc-notes modifiable**. La **taille du texte** reste réglable.
+
+Le texte s'affiche sur un fond de papier jaune pâle. Le bouton ✎ (ou un double-clic) ouvre le texte Markdown brut ; **Enregistrer** (ou Ctrl+Entrée) l'écrit dans la colonne, pour la ligne affichée, et **Annuler** (ou Échap) l'abandonne.
+- La colonne doit être une colonne de données, pas une formule.
+- Les règles d'accès de Grist s'appliquent : une modification interdite est refusée et signalée ; les lecteurs voient le bloc-notes sans le bouton ✎.
+- Si le bloc est lié à une sélection, chaque élément sélectionné a sa propre note (la ligne affichée change avec la sélection).
+- Table vide, ou aucune note pour l'élément sélectionné : le bloc-notes s'affiche vide, et le premier enregistrement crée la ligne (rattachée à la sélection liée). Inutile de créer des lignes vides à l'avance.
+- Case décochée : le texte est affiché en lecture seule, sans l'aspect bloc-notes.
 
 ### Message d'accueil
 
@@ -222,6 +236,11 @@ Sans choix, le widget s'affiche en style État. Le choix vaut pour toutes les pa
 - **Toujours clair** / **Toujours sombre** : impose un mode à tous.
 
 En mode sombre, les couleurs choisies dans Grist (pastilles, mises en forme conditionnelles, couleurs des graphiques) sont reprises telles quelles ; le fond de carte reste clair, légèrement assombri. L'impression est toujours en couleurs claires.
+
+**Actualisation automatique** (même section) : intervalle auquel le widget vérifie si le document a été modifié ailleurs (dans une autre table, depuis une vue native de Grist, par un autre utilisateur). Si oui, il relit les données et redessine la page, en gardant la position de défilement.
+- **Toutes les 20 s** par défaut ; de 10 s à 2 minutes, ou **désactivée** (seul ⟳ Actualiser relit alors les données).
+- Rien n'est vérifié tant que l'onglet est caché, qu'une saisie ou un bloc-notes est ouvert, ou que la configuration est ouverte ; au retour sur l'onglet, la vérification est immédiate.
+- La vérification est une petite requête à l'API de Grist (état du document). Elle ne fonctionne que sur les instances autorisées dans la politique de sécurité de `index.html` (`grist.numerique.gouv.fr`, `grist.toutatice.fr`, `grist.ac-rennes.fr`, `*.getgrist.com`) ; pour une autre instance, ajouter son adresse à `connect-src`.
 
 ### Enregistrer
 

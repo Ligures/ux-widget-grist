@@ -26,292 +26,77 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
-## [0.9.4.27] — Icône du type de vue sur les blocs repliés — 2026-11-03
+## [0.9.5.2] — Actualisation automatique — 2026-11-03
 
 ### Utilisateurs
-- *Nouveau* — **Bloc replié** : l'icône du type de vue (tableau, fiche, graphique, carte, texte…) s'affiche devant son titre.
-- *Corrigé* — **Texte (Markdown) modifiable sans l'aspect bloc-notes**, sur une table vide : la saisie est possible (elle ne l'était qu'avec l'aspect bloc-notes).
+- *Nouveau* — **Actualisation automatique** : une modification faite ailleurs (autre table, vue native de Grist, autre utilisateur) apparaît d'elle-même après quelques secondes, sans cliquer sur ⟳ Actualiser. La position de défilement est gardée ; rien ne bouge pendant une saisie.
 
 ### Administrateurs
-- *Corrigé* — README : fond de carte des cartes exportées en HTML (Plan IGN de la Géoplateforme quand la carte utilise OpenStreetMap), ajouté à la sécurité de l'export, aux services appelés et aux licences.
+- *Nouveau* — Configuration, **4. Affichage → Actualisation automatique** : toutes les 10 s à 2 minutes (20 s par défaut) ou désactivée ; commun à toutes les pages.
+- *Sécurité* — `index.html` : `connect-src` autorise les instances Grist `grist.numerique.gouv.fr`, `grist.toutatice.fr`, `grist.ac-rennes.fr` et `*.getgrist.com` (lecture de l'état du document). Une autre instance doit y être ajoutée, sinon l'actualisation automatique reste inactive (message dans la console).
 
 ### Développeurs
-- *Nouveau* — `blockShell` : `<span class="foldico">` (`kindIcon`) devant le titre, visible seulement sous `.block.collapsed`.
-- *Corrigé* — Bloc Markdown sans ligne : test sur `mdEdit ?? mdNote` au lieu de `mdNote`.
+- *Nouveau* — `liveStart` / `liveCheck` / `docState` : `GET <baseUrl>/states?auth=<jeton>` (jeton de `getAccessToken({ readOnly: true })`, renouvelé avant expiration), comparaison du dernier état (`n:h`), `refreshAll(true)` silencieux si changement ; pas de vérification si l'onglet est caché, pendant `S.editing` ou avec la configuration ouverte ; vérification au retour sur l'onglet (`visibilitychange`) ; arrêt après 3 échecs consécutifs.
+- *Nouveau* — `docActions` remplace les appels directs à `applyUserActions` : une modification faite par le widget ne déclenche pas de second rendu.
+- *Nouveau* — Option `nav.refresh` (secondes : 0, 10, 20, 30, 60, 120 ; absente = 20).
 
-## [0.9.4.26] — Bloc-notes vide : saisie possible — 2026-11-03
-
-### Utilisateurs
-- *Corrigé* — **Bloc-notes** sur une table vide (ou sans note pour l'élément sélectionné) : il s'affichait « Aucune donnée », sans moyen d'écrire. Il s'affiche désormais vide avec le bouton ✎ ; le premier enregistrement crée la ligne.
-
-### Développeurs
-- *Corrigé* — `render` n'écarte plus un bloc-notes sans ligne ; `renderMarkdown` crée la ligne par `AddRecord` (valeurs de liaison `S.linkSet` comprises) au premier enregistrement.
-
-## [0.9.4.25] — Bloc-notes modifiable, second zonage plus discret — 2026-11-03
-
-### Utilisateurs
-- *Nouveau* — **Bloc-notes** : un widget Markdown peut s'afficher comme un bloc-notes (fond jaune pâle, marge rouge) et se modifier depuis la page : bouton ✎ ou double-clic, puis **Enregistrer** (Ctrl+Entrée) ou **Annuler** (Échap). Les droits Grist s'appliquent ; les lecteurs le voient sans pouvoir le modifier.
-- *Amélioré* — **Cartes, second zonage** : pointillés plus fins et plus discrets (1 px au lieu de 2, 0,8 px pour les IRIS, tirets plus courts). Le survol garde sa zone de 16 px.
+## [0.9.5.1] — Mode Disposition à la souris retiré — 2026-11-03
 
 ### Administrateurs
-- *Nouveau* — Encadré **Texte (Markdown)** d'un bloc : case **Bloc-notes modifiable**. Le texte est enregistré dans la colonne *Content* du widget (colonne de données), pour la ligne affichée. Voir le guide administrateur, « Bloc-notes ».
+- *Retiré* — **☰ → Disposition** (déplacer et redimensionner les blocs à la souris). La disposition se règle dans le panneau ⚙ : flèches ↑ ↓, largeur, colonne et hauteur en lignes de chaque vue, avec l'aperçu en haut du panneau. Les dispositions déjà enregistrées ne changent pas.
 
 ### Développeurs
-- *Nouveau* — Option `mdNote` ; `renderMarkdown` : vue `.mdnote`, édition dans un `textarea` (`S.editing` suspend les rendus), enregistrement par `saveValue` (`UpdateRecord`) ; bouton masqué à l'impression.
-- *Amélioré* — Second zonage : `weight` 1 (IRIS 0,8), `opacity` 0,7, `dashArray` « 4 4 ».
+- *Retiré* — `enterLayout`, `exitLayout`, `layoutRowsCss`, glisser-déposer et poignée de redimensionnement (`.lyr`), `S.layoutMode`, bouton `#btnLayout` et barre `#lybar` d'`index.html`, styles `.grid.layout` (environ 200 lignes de script, 80 de styles).
 
-## [0.9.4.24] — Zonage IRIS : trait plus visible, cadrage sur les quartiers — 2026-11-03
+## [0.9.5.0] — Script découpé en trois fichiers, chargés à la demande — 2026-11-03
 
-### Utilisateurs
-- *Amélioré* — **Cartes, zonage principal « Quartiers IRIS » limité aux quartiers des points** : trait de 2 px et fond aussi visible que celui des communes (au lieu de 1 px et d'un fond très pâle, gardés pour l'affichage de tous les IRIS des communes).
-- *Amélioré* — **Cadrage à l'ouverture** : la carte montre tous les quartiers IRIS dessinés, et plus seulement les points.
-
-### Développeurs
-- *Amélioré* — `drawZones` : `irisPts` (mode `iris`, `irisCol` renseigné, hors second zonage) → `weight: 2`, `fillOpacity: 0.18` ; `_uxExtend` appelé aussi pour les IRIS.
-
-## [0.9.4.23] — Zonage IRIS limité aux quartiers des points — 2026-11-03
+Palier 0.9.5 ; les livraisons 0.9.4.0 à 0.9.4.27 sont regroupées dans « 0.9.4 » ci-dessous.
 
 ### Utilisateurs
-- *Amélioré* — **Cartes, zonage « Quartiers IRIS »** : la carte peut ne dessiner que les quartiers des établissements affichés ; les zones suivent les filtres et les sélections.
+- *Amélioré* — **Ouverture des pages sans carte** : le code des cartes (environ 1 550 lignes) n'est plus chargé ni analysé ; celui de la configuration (environ 1 300 lignes) ne l'est qu'à l'ouverture de ⚙. Aucun changement visible.
 
 ### Administrateurs
-- *Nouveau* — Configuration d'une carte, **Rattachement : quartiers IRIS** (zonage ou second zonage IRIS) : *tous les IRIS des communes des points* (comme avant), *IRIS qui contiennent des points* (position), ou une colonne de code IRIS (9 caractères ; commune non découpée : INSEE + `0000`). Avec une colonne, chaque point est rattaché au quartier de vos données, et les points sans code reconnu sont signalés sur la carte.
+- *Nouveau* — Deux fichiers à déposer à côté de `index.html` : **`ux-carte.js`** (cartes) et **`ux-config.js`** (panneau de configuration). Sans eux, les cartes et la configuration ne s'ouvrent pas (message dans la barre d'état). Rien à changer dans Grist.
 
 ### Développeurs
-- *Nouveau* — Option `irisCol` (`""`, `"__pts"` ou colId, suivie au renommage) ; code IRIS lu dans `p.zc.iris` (8 chiffres complétés d'un zéro) ; `drawZones` ne garde que les zones qui ont des points.
+- *Nouveau* — `ux-widget.js` (cœur, environ 5 100 lignes) charge les autres parties par `loadPart("carte" | "config")` : balise `<script>` du même site, même `?v=` que `VERSION`, une seule fois par page ; les trois fichiers partagent l'espace global (fonctions et `const` de premier niveau). `render` attend `ux-carte.js` quand la page contient une carte ; `openConfig` charge `ux-carte.js` puis `ux-config.js`, puis appelle `openConfigPanel`.
+- *Amélioré* — Découpage sans modification du code déplacé ; dépendances vérifiées par analyse du code : le cœur n'appelle les cartes que depuis `render` et les commandes des cartes, et la configuration que par `openConfig`. CSP inchangée (`script-src 'self'`).
 
-## [0.9.4.22] — Zonage IRIS : communes non découpées — 2026-11-03
+## [0.9.4] — Cartes (impression, export, zonages, regroupements, IRIS), bloc-notes, filtre libre — 2026-10-29 → 2026-11-03
+
+Regroupe les livraisons 0.9.4.0 à 0.9.4.27.
 
 ### Utilisateurs
-- *Amélioré* — **Cartes, zonage « Quartiers IRIS »** : une commune qui n'est pas découpée en IRIS est dessinée en entier (« Nom (commune non découpée) »), au lieu de rester sans zone.
+- *Nouveau* — **Icône de la page** (celle du lien de menu) devant le titre de la page, ou devant les listes de sélection quand la page n'a pas de titre ; masquée sur smartphone, reprise à l'impression.
+- *Nouveau* — **Cartes, imprimer la carte seule** (icône d'imprimante) : A4 paysage sur une page, légendes complètes, titre puis sélections, filtres, zonages et date sur une ligne. Une carte en plein écran garde son étendue, une carte plus petite son centre et son zoom ; le fond de carte s'imprime aussi sur imprimante.
+- *Nouveau* — **Cartes, export interactif** : fichier HTML autonome (zoom, étiquettes, infobulles, zones, légendes), avec le Plan IGN quand la carte utilise OpenStreetMap.
+- *Nouveau* — **Cartes, zonage et second zonage au choix** dans l'en-tête de la carte (aucun, communes, intercommunalités, IRIS, circonscriptions législatives, secteurs de collège, regroupements configurés) ; choix gardés jusqu'à la fermeture de l'onglet, puis retour aux zonages de la configuration. Second zonage en fins pointillés.
+- *Nouveau* — **Cartes, regroupements de communes** (jusqu'à trois par carte, par exemple réseaux pédagogiques, circonscriptions IEN) : chaque zone qui contient des points est dessinée en entier, communes sans école comprises.
+- *Nouveau* — **Bloc-notes** : un widget Markdown peut se modifier depuis la page (✎ ou double-clic, Ctrl+Entrée, Échap), avec ou sans aspect papier ; sur une table vide, le premier enregistrement crée la ligne.
+- *Nouveau* — **Filtre libre** (« Filtrer sur… ») : une colonne au choix, puis une ou plusieurs valeurs ; avec les outils de la carte, sur une seconde ligne de l'en-tête.
+- *Nouveau* — **Bloc replié** : icône du type de vue devant son titre.
+- *Amélioré* — **Cartes, gestes** : la molette fait défiler la page, **Ctrl + molette** zoome ; sur écran tactile, un doigt fait défiler la page, deux doigts déplacent la carte (message discret) ; zoom par demi-niveaux.
+- *Amélioré* — **Zonages plus rapides** : dessinés après la page et les points, fusion des communes environ six fois plus rapide, contours des communes gardés 30 jours dans le navigateur.
+- *Amélioré* — **Zonage IRIS** : communes non découpées dessinées en entier ; possibilité de ne dessiner que les quartiers des points (trait et fond plus visibles) ; la carte s'ouvre cadrée sur tous les quartiers.
+- *Amélioré* — **Message d'accueil** : vu une fois, il ne revient que si son texte change.
+- *Corrigé* — **Graphiques avancés** : couleurs des barres à plusieurs séries et des séries regroupées, noms de séries, agrégations (moyenne, somme…) calculées comme dans Grist, étiquettes arrondies.
+- *Corrigé* — **Regroupement lu dans une table d'établissements** : la commune prend la valeur la plus fréquente parmi ses lignes renseignées (les lignes vides n'effacent plus la commune).
 
 ### Administrateurs
-- *Amélioré* — Couleur des zones *selon une table Grist* en IRIS : une commune non découpée est reliée par le code IRIS INSEE + `0000` (ex. `291030000`), comme dans les fichiers de l'INSEE.
+- *Nouveau* — **Cartes, encadré « Zones sous les points »** :
+  - **Regroupement 1 à 3** : table (une ou plusieurs lignes par commune), code INSEE (texte ou référence), colonne de regroupement, libellé ; utilisable comme zonage, second zonage, ou au choix de l'utilisateur ;
+  - **Rattachement : quartiers IRIS** : tous les IRIS des communes, IRIS qui contiennent des points, ou colonne de code IRIS (commune non découpée : INSEE + `0000`).
+- *Nouveau* — Encadré **Points** : **Zoom à la molette sans Ctrl** (`mapWheel`), **Export réservé aux administrateurs** (`mapExportAdmin`).
+- *Nouveau* — Encadré **Filtre libre** : **Proposer un filtre libre** (`qfFree`), **Colonnes proposées** (`qfFreeCols`).
+- *Nouveau* — Encadré **Texte (Markdown)** : **Modifiable depuis la page** (`mdEdit`) et **Aspect bloc-notes** (`mdNote`) ; voir le guide administrateur, « Bloc-notes ».
+- *Amélioré* — Couleur des zones *selon une table Grist* : une référence est rendue par son texte ; IRIS non découpé relié par INSEE + `0000`.
+- *Amélioré* — README : fond de carte des cartes exportées (Plan IGN) dans la sécurité, les services appelés et les licences.
 
 ### Développeurs
-- *Amélioré* — `drawZones`, mode `iris` : pour les codes INSEE des points sans IRIS (`type_iris<>'Z'` les exclut du WFS), contour communal de geo.api.gouv.fr (`fetchCommuneShapes`), clé `<INSEE>0000`.
-
-## [0.9.4.21] — Second zonage au choix, regroupements lus dans une table d'établissements — 2026-11-02
-
-### Utilisateurs
-- *Nouveau* — **Cartes** : une seconde liste dans l'en-tête choisit le **second zonage** (contours en pointillés par-dessus le premier), par exemple réseaux pédagogiques colorés + circonscriptions IEN. Gardé jusqu'à la fermeture de l'onglet, comme le premier ; l'en-tête imprimé l'indique (« Contours : … »).
-- *Corrigé* — **Regroupement lu dans une table d'établissements** (ex. `REF_ETAB` : `CODE_COM`, `CODE_CIRCO`) : des communes avec établissement manquaient au tracé. La dernière ligne de la commune l'emportait, même vide (collège sans circonscription…) ; la commune prend désormais la valeur la plus fréquente parmi ses lignes non vides.
-
-### Administrateurs
-- *Amélioré* — Regroupements : la colonne du code INSEE peut être une référence vers la table des communes, même affichée par le nom de la commune (le code INSEE est lu dans la ligne référencée).
-
-### Développeurs
-- *Nouveau* — `userZone(id, k)` / `setUserZone(id, v, k)` : k = 2 pour le second zonage (`S.zoneSel2`, clé `…_2` en `sessionStorage`) ; `renderMap` remplace `mapZone2` par ce choix.
-- *Amélioré* — `tableMap(table, code, valeur, group)` : en mode regroupement, vote majoritaire par commune sur les lignes non vides, et code INSEE cherché dans la ligne référencée quand la référence s'affiche autrement.
-
-## [0.9.4.20] — Zonage d'origine à chaque ouverture — 2026-11-02
-
-### Utilisateurs
-- *Amélioré* — **Cartes** : le zonage choisi dans la liste « Zonage » est gardé jusqu'à la fermeture de l'onglet, et non plus d'une visite à l'autre ; à la réouverture du document, la carte reprend le zonage prévu par sa configuration.
-
-### Développeurs
-- *Amélioré* — `userZone` / `setUserZone` : `sessionStorage` au lieu de `localStorage` ; l'ancienne clé `uxwg_zone_…` est effacée de `localStorage` à la lecture.
-
-## [0.9.4.19] — Plusieurs regroupements de communes par carte — 2026-11-02
-
-### Utilisateurs
-- *Nouveau* — **Cartes** : la liste « Zonage » peut proposer jusqu'à trois regroupements de communes (par exemple réseaux pédagogiques et circonscriptions IEN).
-
-### Administrateurs
-- *Nouveau* — Configuration d'une carte, « Zones sous les points » : réglages *Regroupement 1*, *2*, *3* (table des communes, code INSEE, colonne, libellé), toujours visibles ; un regroupement de plus apparaît quand le précédent est complet. Un regroupement complet est proposé aux utilisateurs même s'il n'est pas le zonage par défaut, et peut être choisi comme *Zonage* ou *Second zonage*.
-
-### Développeurs
-- *Nouveau* — Zonages `groupe2` et `groupe3`, options `grp2Table`/`grp2Key`/`grp2Col`/`grp2Label` et `grp3…` (colonnes suivies au renommage) ; aides `isGrp`, `grpN`, `grpF`, `grpOpt`, `grpChoices`.
-
-## [0.9.4.18] — Zonage mémorisé qui n'existe plus — 2026-11-02
-
-### Utilisateurs
-- *Corrigé* — **Cartes** : un zonage choisi dans la liste « Zonage » puis retiré de la configuration (par exemple un regroupement de communes) n'est plus appliqué. La carte reprend le zonage prévu, au lieu d'afficher « table, colonne du code INSEE et colonne de regroupement à choisir » sans aucun contour.
-
-### Développeurs
-- *Corrigé* — `userZone(id)` ne renvoie qu'un choix présent dans `zoneChoices(b)` de la carte.
-
-## [0.9.4.17] — Zonage différé et plus rapide — 2026-11-02
-
-### Utilisateurs
-- *Amélioré* — **Cartes avec zonage** : la page et les points s'affichent d'abord, les zones ensuite, sans bloquer la page. La fusion des communes (réseaux, EPCI) est environ six fois plus rapide, et les contours des communes sont gardés 30 jours dans le navigateur au lieu d'être téléchargés à chaque ouverture.
-
-### Développeurs
-- *Nouveau* — `dissolve(geoms)` : fusion par annulation des côtés communs et enchaînement des côtés restants en anneaux (Polygon multi-anneaux, remplissage pair-impair) ; `polygon-clipping` ne sert plus qu'en repli.
-- *Nouveau* — `cachedJson(url, jours)` : réponses de geo.api.gouv.fr dans le Cache Storage (`uxwg-geo-1`, 30 jours), repli sur un téléchargement simple.
-- *Amélioré* — `drawZones` attend `requestIdleCallback` (1,5 s au plus) puis rend la main au navigateur toutes les 30 ms pendant la fusion.
-
-## [0.9.4.16] — Zonage par regroupement de communes (réseaux pédagogiques) — 2026-11-02
-
-### Utilisateurs
-- *Nouveau* — **Cartes : zonage par regroupement de communes**, par exemple les réseaux pédagogiques. Chaque réseau qui contient des écoles affichées est dessiné en entier (communes sans école comprises), avec une couleur par réseau. Il figure dans la liste « Zonage » de la carte sous le nom choisi par l'administrateur.
-
-### Administrateurs
-- *Nouveau* — Configuration d'une carte, zonage *regroupements de communes (table Grist)* : table des communes (ex. `P_Communes`), colonne du code INSEE (ex. `CODE_COM`), colonne de regroupement (ex. `CODE_RP` ; une référence est lue par sa colonne d'affichage) et libellé (ex. *Réseaux pédagogiques*). Utilisable aussi comme second zonage (contours) et avec toutes les couleurs des zones (nombre de points, somme, table Grist reliée par le nom du regroupement).
-
-### Développeurs
-- *Nouveau* — Zonage `groupe` : options `grpTable`, `grpKey`, `grpCol`, `grpLabel` (colonnes suivies au renommage) ; `drawZones` lit la table par `tableMap`, charge les contours des départements de toutes les communes des groupes concernés et les fusionne (`polygon-clipping`), comme les EPCI. `zoneChoices(b)` : liste « Zonage » de la carte (le regroupement seulement s'il est configuré).
-- *Amélioré* — `zoneTableValues` s'appuie sur `tableMap(table, code, valeur)` : code INSEE numérique à 4 chiffres complété d'un zéro ; une référence est rendue par son texte, plus par son identifiant.
-
-## [0.9.4.15] — Fond de carte sur imprimante : retour au rendu de la 0.9.4.10 — 2026-11-02
-
-### Utilisateurs
-- *Corrigé* — **Carte imprimée seule, sur imprimante** : le fond de carte s'imprime de nouveau, comme en 0.9.4.10. Une carte affichée en plein écran garde son étendue (zoom ajusté au format de la page) ; une carte plus petite garde son centre et son zoom.
-
-### Développeurs
-- *Retiré* — `tilesSnapshot` (copie des tuiles dans un canevas), réduction CSS `.printscale` (`transform: scale`) et neutralisation de `will-change` à l'impression : ces ajouts (0.9.4.12 à 0.9.4.14) privaient l'imprimante du fond de carte.
-- *Amélioré* — `printMap` : carte toujours au format 275 × 158 mm ; plein écran → `fitBounds` de l'étendue affichée avec `zoomSnap = 0` (zoom fractionnaire, rétabli après l'impression).
-
-## [0.9.4.14] — Fond de carte et légende à l'impression sur imprimante — 2026-11-02
-
-### Utilisateurs
-- *Corrigé* — **Carte imprimée seule, sur imprimante** : le fond de carte est recopié en une seule image avant l'impression ; il s'imprime comme dans le PDF.
-- *Corrigé* — **Légendes des cartes à l'impression** : complètes, au lieu d'être coupées à la hauteur de leur zone de défilement.
-
-### Développeurs
-- *Nouveau* — `tilesSnapshot` : tuiles chargées recopiées dans un canevas (×2) placé dans le volet des tuiles, couches de tuiles masquées à l'impression ; canevas retiré après l'impression.
-- *Corrigé* — Impression : `.map-legend` sans hauteur maximale ; `canvas.print-tiles` exclu de la règle `max-width: 100 %` des graphiques.
-
-## [0.9.4.13] — Fond de carte à l'impression — 2026-11-02
-
-### Utilisateurs
-- *Corrigé* — **Carte imprimée seule** : le fond de carte s'imprime en entier. L'impression attend que toutes ses tuiles soient chargées (8 secondes au plus), et le cadrage n'est plus refait pendant la préparation.
-
-### Développeurs
-- *Corrigé* — `printMap` : attente de l'évènement `load` de la couche de tuiles (`tileLayer.isLoading()`), drapeau `S.mapPrinting` qui suspend le recadrage automatique (`ResizeObserver`) ; à l'impression, `will-change` et transitions des tuiles Leaflet neutralisés (Chrome n'imprime pas toujours ces calques).
-
-## [0.9.4.12] — Carte imprimée au zoom de l'écran — 2026-11-02
-
-### Utilisateurs
-- *Corrigé* — **Carte imprimée seule** : le zoom choisi à l'écran est conservé. Une carte plus grande que la page (plein écran) est imprimée exactement comme à l'écran, réduite à la taille du papier ; une carte plus petite est agrandie au format de la page, avec le même centre et le même zoom.
-
-### Développeurs
-- *Corrigé* — `printMap` : carte plus grande que la zone imprimable (275 × 158 mm) laissée à sa taille d'écran et réduite par `transform: scale()` (classe `printscale`, variables `--pw`, `--ph`, `--pk`), sans recadrage ; sinon agrandie au format papier avec `setView` (centre et zoom).
-
-## [0.9.4.11] — Impression d'une carte en plein écran — 2026-11-02
-
-### Utilisateurs
-- *Corrigé* — **Carte imprimée seule depuis le plein écran** : la carte s'imprimait à moitié vide et décalée, car elle gardait la hauteur de l'écran pendant la préparation de l'impression ; elle prend maintenant la taille du papier, comme hors plein écran.
-
-### Développeurs
-- *Corrigé* — `html.printone .printme .map-box` : `flex: none !important` (le bloc agrandi est une colonne flexible qui étirait la carte).
-
-## [0.9.4.10] — Impression et export des cartes corrigés, message d'accueil vu une fois — 2026-11-02
-
-### Utilisateurs
-- *Corrigé* — **Carte imprimée seule** : toute la zone visible à l'écran figure sur le papier (le cadrage s'adapte au format de la page au lieu de garder le même zoom, qui coupait le haut et le bas).
-- *Corrigé* — **Carte exportée** : le fond de carte s'affiche (Plan IGN, à la place d'OpenStreetMap, qui refuse les fichiers ouverts depuis le poste : « Access blocked ») ; les points sont dessinés au-dessus des zones, et un élément qui ne peut pas être affiché n'empêche plus les suivants.
-- *Amélioré* — **Message d'accueil** : vu une fois, il ne revient que si son texte est modifié — ni à la visite suivante, ni après une mise à jour du widget ou un enregistrement de la configuration. La case « Ne plus afficher ce message » disparaît ; Aide → « Message d'accueil » le réaffiche.
-
-### Administrateurs
-- *Amélioré* — `index.html` : fenêtre d'accueil sans case à cocher, avec une phrase d'explication (à déposer avec `ux-widget.js`).
-
-### Développeurs
-- *Corrigé* — `printMap` : `fitBounds` sur la zone visible avant impression ; `exportMap` : tuiles `data.geopf.fr` (WMTS `PLANIGNV2`) quand la source est `tile.openstreetmap.org`, cercles triés après les polygones, `try/catch` par calque.
-- *Amélioré* — Empreinte du message d'accueil enregistrée à chaque fermeture, aussi sous une clé de secours (`uxwg_welcome_doc`) quand l'identifiant du document n'a pas pu être lu à temps.
-
-## [0.9.4.9] — Filtre libre à plusieurs valeurs, seconde ligne d'en-tête — 2026-11-02
-
-### Utilisateurs
-- *Amélioré* — **Filtre libre** : plusieurs valeurs peuvent être cochées ; le choix s'applique à la fermeture de la liste ou par **Appliquer** (**Toutes** décoche tout). Le bouton résume le choix (« Brest, Morlaix », ou « 3 valeurs »).
-- *Amélioré* — **En-tête des blocs** : le filtre libre et les outils de la carte (zonage, impression, export) passent sur une seconde ligne ; le titre reste lisible.
-
-### Développeurs
-- *Amélioré* — `blockShell(…, extraRow)` crée la ligne `.bh2` ; filtre libre : `qfRowHtml`, `qfMultiHtml`, `qf3Open` / `qf3Close`, valeurs dans `S.qf["<bloc>:3"]` (tableau, vide = toutes).
-
-## [0.9.4.8] — Cartes : impression sur une page, zoom progressif, filtre libre restreint — 2026-11-02
-
-### Utilisateurs
-- *Corrigé* — **Carte imprimée seule** : elle tient sur une page A4 paysage ; les choix (sélections, filtres, zonage, date) sont réunis sur une ligne sous le titre.
-- *Amélioré* — **Zoom des cartes plus progressif** : demi-niveaux aux boutons + / −, molette et pincement deux fois plus doux, cadrage plus fin ; de même dans les cartes exportées.
-- *Amélioré* — **Smartphone** : ni impression de la carte seule, ni zonage au choix, ni filtre libre (l'export reste proposé).
-
-### Administrateurs
-- *Nouveau* — **Filtre libre** : liste **Colonnes proposées** à cocher (`qfFreeCols`) ; aucune cochée : toutes les colonnes.
-
-### Développeurs
-- *Amélioré* — `MAP_ZOOM` (`zoomSnap` 0,25, `zoomDelta` 0,5, `wheelPxPerZoomLevel` 120) ; carte imprimée de 275 × 158 mm ; classe `qf3` du 3ᵉ filtre ; `qfFreeCandidates`.
-
-## [0.9.4.7] — Cartes : imprimer seule, exporter, zonage au choix ; filtre libre — 2026-11-02
-
-### Utilisateurs
-- *Nouveau* — **Cartes, imprimer la carte seule** : icône d'imprimante dans l'en-tête de la carte ; A4 paysage, carte à pleine page avec ses légendes, titre, sélections, filtres et zonage en tête, cadrage de l'écran conservé.
-- *Nouveau* — **Cartes, export interactif** : un fichier HTML autonome, à ouvrir dans un navigateur sans Grist (zoom, étiquettes, infobulles, zones et légendes comme à l'écran). Il contient les données visibles au moment de l'export.
-- *Nouveau* — **Cartes, zonage au choix** : liste dans l'en-tête (aucun, communes, intercommunalités, quartiers IRIS, circonscriptions législatives, secteurs de collège), mémorisée dans le navigateur pour chaque carte.
-- *Nouveau* — **Filtre libre** (« Filtrer sur… ») : l'utilisateur choisit une colonne de la table, puis une valeur ; il se cumule avec les filtres rapides.
-
-### Administrateurs
-- *Nouveau* — Encadré **Filtre libre** : case **Proposer un filtre libre** (`qfFree`), pour tout bloc qui accepte les filtres rapides.
-- *Nouveau* — Encadré **Points** des cartes : case **Export réservé aux administrateurs** (`mapExportAdmin`).
-- *Amélioré* — Le zonage de la configuration reste celui proposé au départ ; un zonage choisi par l'utilisateur reprend les couleurs par défaut (les couleurs propres à un zonage, table ou somme, ne s'appliquent qu'au zonage configuré).
-
-### Développeurs
-- *Nouveau* — Filtre libre : 3ᵉ emplacement des filtres rapides (`qfKey` `id:3`, colonne dans `S.qfFreeCol`).
-- *Nouveau* — `userZone` / `setUserZone` (`localStorage`, clé `uxwg_zone_<document>_<page>_<bloc>`) ; `mapCtlHtml` ; `printMap` (classes `printone` / `printme`, carte de 275 × 165 mm à l'écran le temps de l'impression) ; `exportMap` (calques Leaflet relus avec `eachLayer`, styles, étiquettes, infobulles, volets et légendes ; Leaflet 1.9.4 par jsDelivr avec SRI).
-
-## [0.9.4.6] — Cartes : message « deux doigts » plus discret — 2026-11-01
-
-### Utilisateurs
-- *Amélioré* — **Cartes sur écran tactile** : le message « Utilisez deux doigts pour déplacer la carte » n'apparaît plus à la fin d'un geste à deux doigts (quand un doigt se lève avant l'autre), ni pour un petit mouvement ; au plus une fois toutes les 30 secondes.
-
-### Développeurs
-- *Amélioré* — `mapGestures` : geste suivi de `touchstart` à `touchend` (multi-doigts mémorisé jusqu'au lever du dernier doigt), seuil de 40 px, intervalle de 30 s.
-
-## [0.9.4.5] — Cartes : la page défile sans zoomer la carte — 2026-11-01
-
-### Utilisateurs
-- *Amélioré* — **Cartes** : la molette fait défiler la page au lieu de zoomer ; **Ctrl + molette** (⌘ sur Mac, ou pincement du pavé tactile) zoome. Sur écran tactile, **un doigt** fait défiler la page et **deux doigts** déplacent et zooment la carte. Un court message le rappelle. Les boutons + / − et le double-clic zooment toujours ; en plein écran du bloc, la carte est entièrement libre.
-
-### Administrateurs
-- *Nouveau* — Encadré **Points** des cartes : case **Zoom à la molette sans Ctrl** (`mapWheel`) pour retrouver l'ancien comportement sur un bloc.
-
-### Développeurs
-- *Nouveau* — `mapGestures` : molette sans Ctrl arrêtée en phase de capture avant Leaflet ; glisser désactivé au toucher (la page défile, `touch-action` de Leaflet), le pincement de Leaflet déplace et zoome ; carte libre si `.block.maxed` (recalcul à l'évènement `resize` de la carte).
-
-## [0.9.4.4] — Agrégations des graphiques avancés — 2026-10-31
-
-### Utilisateurs
-- *Corrigé* — **Graphiques avancés avec agrégation** (moyenne, somme… par année, par exemple) : les valeurs sont agrégées comme dans Grist, une barre par catégorie, au lieu d'empiler chaque ligne ; les étiquettes montrent la valeur agrégée, arrondie au dixième.
-
-### Développeurs
-- *Corrigé* — `fixAggregate` : une transformation `aggregate` dont le regroupement est vide ou porte sur une colonne agrégée elle-même regroupe par l'axe des catégories (`groups: "x"`, ou `"y"` en barres horizontales) ; étiquettes reprenant les valeurs : `texttemplate` sur la valeur agrégée.
-
-## [0.9.4.3] — Couleurs des séries regroupées des graphiques avancés — 2026-10-29
-
-### Utilisateurs
-- *Corrigé* — **Graphiques avancés dont les séries viennent d'une colonne de regroupement** (« Split » de l'éditeur, cas des graphiques natifs convertis) : chaque série prend la couleur choisie, d'après son nom renommé ou sa valeur ; la colonne de codes et la couleur de repli s'appliquent aussi.
-
-### Développeurs
-- *Corrigé* — `renderAdvChart` : transformation `groupby` colorée par `styles[].value.marker.color` (cible = valeur du groupe ; nom lu dans `styles[].value.name`), au lieu d'une couleur par barre.
-
-## [0.9.4.2] — Couleurs des barres des graphiques avancés — 2026-10-29
-
-### Utilisateurs
-- *Corrigé* — **Graphiques avancés en barres à plusieurs séries** (par exemple convertis depuis un graphique natif) : les couleurs choisies s'appliquent ; les séries sans nom prennent dans la légende le nom de leur colonne au lieu de « trace 0 ».
-
-### Développeurs
-- *Corrigé* — `renderAdvChart` : une trace sans `name` est rapprochée de la correspondance des couleurs par le libellé de sa colonne de valeurs (`ysrc`, ou `xsrc` en barres horizontales) ; catégories imbriquées (plusieurs colonnes d'axe) assemblées en une étiquette par barre.
-
-## [0.9.4.1] — Icône devant le titre de la page — 2026-10-29
-
-### Utilisateurs
-- *Amélioré* — **Icône de la page** : quand la page affiche un titre, l'icône le précède, à sa taille, comme sur le lien du menu. Sans titre, elle reste devant les listes de sélection.
-
-### Développeurs
-- *Amélioré* — `pageIcon("ticon")` dans `#title` ; `picon` réservé aux pages sans titre.
-
-## [0.9.4.0] — Icône de la page — 2026-10-29
-
-Palier 0.9.4 ; les livraisons 0.9.3.0 à 0.9.3.14 sont regroupées dans « 0.9.3 » ci-dessous.
-
-### Utilisateurs
-- *Nouveau* — **Icône de la page** : l'icône du lien de menu de la page s'affiche en tête de page, avant les listes de sélection, à leur hauteur et dans la couleur du thème ; seule, s'il n'y a pas de liste. Elle est masquée sur smartphone et reprise dans l'en-tête imprimé.
-
-### Administrateurs
-- *Nouveau* — Rien à régler : l'icône est celle saisie pour le lien de la page dans **Menu des pages** (champ « Icône (code SVG) »). Une page sans icône dans le menu n'en affiche pas.
-
-### Développeurs
-- *Nouveau* — `pageIcon()` : icône de l'élément de `nav.items` dont `cfg` est la configuration affichée, nettoyée par `safeSvg` ; classes `picon` (en-tête, 48 px) et `phicon` (impression, 40 px).
+- *Nouveau* — `printMap` (carte au format 275 × 158 mm, `fitBounds` avec `zoomSnap = 0` pour une carte plus grande que la page, attente des tuiles) ; `exportMap` (calques relus avec `eachLayer`, WMTS `PLANIGNV2` à la place d'OSM, Leaflet par jsDelivr avec SRI).
+- *Nouveau* — Zonages : `groupe`, `groupe2`, `groupe3` (`grp…`, `grp2…`, `grp3…`), `tableMap(…, group)` (vote majoritaire, code INSEE lu dans la ligne référencée), `dissolve` (annulation des côtés communs), `cachedJson` (Cache Storage, 30 jours), `drawZones` différé (`requestIdleCallback`, pause toutes les 30 ms) ; `irisCol` ; `userZone(id, k)` en `sessionStorage` (k = 2 : second zonage), choix retiré de la configuration ignoré.
+- *Nouveau* — `mapGestures`, `MAP_ZOOM` ; filtre libre (`qfKey` `id:3`, `qfRowHtml`, ligne `.bh2`) ; `renderMarkdown` : `mdEdit` / `mdNote`, `textarea` sous `S.editing`, `UpdateRecord` ou `AddRecord` ; `.foldico` (`kindIcon`) ; `fixAggregate`, couleurs `groupby` de `renderAdvChart`.
+- *Retiré* — Copie des tuiles dans un canevas et réduction CSS à l'impression (essais 0.9.4.12 à 0.9.4.14), qui privaient l'imprimante du fond de carte.
 
 ## [0.9.3] — Message d'accueil, mode sombre, icônes du menu, distancier routier — 2026-10-25 → 2026-10-27
 

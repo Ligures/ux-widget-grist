@@ -29,7 +29,7 @@ En haut de la page, de gauche à droite et de haut en bas :
 
 - **Menu des pages** : un clic affiche une autre page. Seules les pages auxquelles vous avez accès apparaissent. Une icône peut précéder le nom d'une page ; elle est aussi rappelée devant le titre de la page, ou, sans titre, avant les listes de sélection (sauf sur smartphone).
 - **Boutons directs**, à gauche du menu ☰ :
-  - **⟳ Actualiser** : recharge les données et la configuration des vues ;
+  - **⟳ Actualiser** : recharge les données et la configuration des vues. Le plus souvent inutile : le widget se met à jour seul quelques secondes après une modification faite ailleurs (autre table, autre utilisateur) ;
   - **⚙ Configurer** : réservé aux administrateurs.
 - **Menu ☰** (en haut à droite, sur écran étroit) : il ouvre la liste des autres actions. Sur grand écran, il n'y a pas de menu : toutes les actions sont des icônes dans la barre, avec leur nom au survol. L'infobulle du menu et celle de l'Aide indiquent la version du widget.
 
@@ -39,7 +39,6 @@ En haut de la page, de gauche à droite et de haut en bas :
   | Imprimer | Imprime la page ou l'enregistre en PDF |
   | Aide | Ouvre ce guide ; l'onglet Nouveautés présente les évolutions du widget |
   | Plein écran | Réservé aux administrateurs |
-  | Disposition | Réservé aux administrateurs |
 
   Une pastille rouge sur ☰ signale une nouvelle version du widget : elle disparaît après lecture de l'onglet Nouveautés.
 - **Listes de sélection** (par exemple Département, Circonscription, École) : choisir une valeur filtre les blocs de la page.
@@ -91,6 +90,7 @@ Chaque vue s'affiche dans un **bloc**, avec un titre et quelques commandes :
 - **Supprimer une ligne**, si le bloc le propose : cliquer sur la ligne, puis sur **− Supprimer la ligne**. Le bouton demande confirmation (« Confirmer la suppression ? », ligne surlignée en rouge) : cliquer une seconde fois dans les 4 secondes. La suppression se fait aussi dans Grist ; elle peut être annulée dans Grist (Annuler).
   - Les valeurs calculées (formules) ne sont pas modifiables.
   - Une modification refusée par les droits est signalée.
+- **Bloc-notes** (texte sur fond jaune pâle), si vos droits le permettent : bouton ✎ en haut à droite ou double-clic sur le texte, saisie (`# titre`, `**gras**`, `- liste`…), puis **Enregistrer** (Ctrl+Entrée) ou **Annuler** (Échap).
 
 ### Cartes
 
