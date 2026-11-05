@@ -26,6 +26,22 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.5.8] — Interrupteurs, page conservée après un rechargement par Grist — 2026-11-05
+
+### Utilisateurs
+- *Nouveau* — **Booléens affichés en interrupteur** quand la colonne est réglée ainsi dans Grist (« Interrupteur » / Switch) ; sinon, la coche habituelle. Un clic sur la valeur la bascule toujours, si le bloc est modifiable.
+- *Corrigé* — **Navigation dans le widget** : après une modification qui pousse Grist à recharger le widget (par exemple dans la table des utilisateurs utilisée par les règles d'accès), le widget revient sur la page où l'on était, et non plus sur la page d'accueil.
+
+### Développeurs
+- *Nouveau* — `htmlOf` : `<span class="sw">` pour un `Bool` dont `widgetOptions.widget` vaut `Switch` (couleurs gardées à l'impression).
+- *Nouveau* — `pageKey` : page affichée (mode « Changer de page dans le widget ») gardée en `sessionStorage` par `switchConfig`, reprise par `init` si elle est encore lisible ; la page d'accueil ne s'impose qu'à l'ouverture de l'onglet.
+
+## [0.9.5.7] — Menu des pages : un cadre par lien, tables par ordre alphabétique — 2026-11-05
+
+### Administrateurs
+- *Amélioré* — Configuration, **Menu des pages** : chaque lien est encadré et numéroté. 1re ligne : libellé, aperçu de l'icône, visibilité (*visible : tous* / *si accès à…*) et flèches ↑ ↓ ✕ ; 2e ligne : page, configuration, infobulle, code de l'icône. La visibilité ne peut plus être prise pour celle du lien voisin.
+- *Amélioré* — Liste *si accès à…* : tables par ordre alphabétique.
+
 ## [0.9.5.6] — Diagnostic des blocs qui ont des données — 2026-11-05
 
 ### Administrateurs

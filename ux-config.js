@@ -1,4 +1,4 @@
-/* UX widget grist — panneau de configuration ⚙ (version 0.9.5.6). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — panneau de configuration ⚙ (version 0.9.5.8). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé à la demande par ux-widget.js (openConfig → loadPart("config")), après ux-carte.js dont il utilise les
    réglages de zonage. Partage l'espace global de ux-widget.js, qui doit être chargé avant.
    Contenu : brouillon de configuration (draft), réglages par bloc (renderConfig), couleurs des cartes et des
@@ -846,28 +846,34 @@ ${
 }
 <div>${draftNav.items
   .map(
-    (x, i) => `<div class="mn">
-  <input type="text" data-mnlabel="${i}" value="${esc(x.label || "")}" placeholder="Libellé" title="Texte du lien dans le menu (vide : nom de la page)" style="width:120px">
-  <span class="mnico">${icoPreview(x.icon)}</span><input type="text" data-mnicon="${i}" value="${esc(x.icon || "")}" placeholder="Icône (code SVG)" title="Facultatif : collez le code d'une icône SVG (ouvrir le fichier .svg dans un éditeur de texte, tout copier). Elle s'affiche devant le libellé, dans la couleur du lien." style="width:110px">
-  <input type="text" data-mntip="${i}" value="${esc(x.tip || "")}" placeholder="Infobulle" title="Texte affiché au survol du lien (facultatif)" style="width:180px">
+    (x, i) => `<div class="mn mncard">
+  <div class="mnl"><b class="mnn">${i + 1}</b>
+  <input type="text" data-mnlabel="${i}" value="${esc(x.label || "")}" placeholder="Libellé" title="Texte du lien dans le menu (vide : nom de la page)" style="width:150px">
+  <span class="mnico">${icoPreview(x.icon)}</span>
+  <select data-mnneed="${i}" title="Afficher ce lien seulement aux utilisateurs qui voient au moins une ligne de cette table (règles d'accès). « tous » : le lien est masqué seulement si aucune table de la page n'est lisible."><option value="">visible : tous</option>${[
+    ...m.tables.values(),
+  ]
+    .filter((t) => t.tableId && !t.tableId.startsWith("_grist") && !t.summarySourceTable)
+    .sort((a, b) => COLL.compare(a.tableId, b.tableId))
+    .map(
+      (t) =>
+        `<option value="${esc(t.tableId)}" ${t.tableId === x.needTable ? "selected" : ""}>si accès à ${esc(t.tableId)}</option>`,
+    )
+    .join("")}</select>
+  <span class="mnsp"></span>
+  <button class="icon-btn" data-mnup="${i}" title="Monter">↑</button><button class="icon-btn" data-mndown="${i}" title="Descendre">↓</button><button class="icon-btn" data-mnrm="${i}" title="Retirer du menu">✕</button></div>
+  <div class="mnl">
   <select data-mnview="${i}" title="Page Grist ouverte par ce lien. En mode « Changer de page dans le widget », elle est facultative : le lien affiche simplement la configuration choisie.">${draftNav.inWidget ? `<option value="0" ${!m.pages.some((pg) => pg.viewId === x.viewId) ? "selected" : ""}>— ce widget —</option>` : ""}${m.pages.map((pg) => `<option value="${pg.viewId}" ${pg.viewId === x.viewId ? "selected" : ""}>${esc(pg.name)}</option>`).join("")}</select>
   <select data-mncfg="${i}" title="Configuration affichée sur cette page (sert à surligner la page courante et au changement de page dans le widget)"><option value="">— config —</option>${(
     S.stored || []
   )
     .map((c) => `<option value="${esc(c.name)}" ${c.name === x.cfg ? "selected" : ""}>${esc(c.name)}</option>`)
     .join("")}</select>
-  <select data-mnneed="${i}" title="Afficher ce lien seulement aux utilisateurs qui voient au moins une ligne de cette table (règles d'accès). « tous » : le lien est masqué seulement si aucune table de la page n'est lisible."><option value="">visible : tous</option>${[
-    ...m.tables.values(),
-  ]
-    .filter((t) => t.tableId && !t.tableId.startsWith("_grist") && !t.summarySourceTable)
-    .map(
-      (t) =>
-        `<option value="${esc(t.tableId)}" ${t.tableId === x.needTable ? "selected" : ""}>si accès à ${esc(t.tableId)}</option>`,
-    )
-    .join("")}</select>
+  <input type="text" data-mntip="${i}" value="${esc(x.tip || "")}" placeholder="Infobulle" title="Texte affiché au survol du lien (facultatif)" style="width:180px">
+  <input type="text" data-mnicon="${i}" value="${esc(x.icon || "")}" placeholder="Icône (code SVG)" title="Facultatif : collez le code d'une icône SVG (ouvrir le fichier .svg dans un éditeur de texte, tout copier). Elle s'affiche devant le libellé, dans la couleur du lien." style="width:110px">
   ${m.pages.some((pg) => pg.viewId === x.viewId) || (draftNav.inWidget && x.cfg) ? "" : `<span style="color:var(--rouge)">${draftNav.inWidget ? "choisir une config" : `page introuvable (n°${x.viewId})`}</span>`}
   ${m.pages.some((pg) => pg.viewId === x.viewId) ? `<small style="color:var(--muet)">p/${x.viewId}</small>` : ""}
-  <button class="icon-btn" data-mnup="${i}" title="Monter">↑</button><button class="icon-btn" data-mndown="${i}" title="Descendre">↓</button><button class="icon-btn" data-mnrm="${i}" title="Retirer du menu">✕</button>
+  </div>
 </div>`,
   )
   .join("")}</div>

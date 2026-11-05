@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.5.6).
+/* UX widget grist — feuilles de style (version 0.9.5.8).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -309,6 +309,33 @@ button {
   padding: 4px 0;
   border-bottom: 1px solid var(--bord-doux);
   font-size: 12px;
+}
+/* lien du menu dans la configuration (0.9.5.7) : un cadre par lien ; 1re ligne : numéro, libellé, icône, visibilité,
+   flèches ; 2e ligne : page, configuration, infobulle, code de l'icône */
+.mn.mncard {
+  display: block;
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--bord);
+  border-radius: 6px;
+  background: var(--doux);
+}
+.mncard .mnl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.mncard .mnl + .mnl {
+  margin-top: 5px;
+  padding-left: 22px;
+}
+.mncard .mnn {
+  min-width: 16px;
+  color: var(--bleu);
+}
+.mncard .mnsp {
+  flex: 1;
 }
 #top {
   position: sticky;
@@ -1990,6 +2017,40 @@ textarea.ed-input {
 }
 .ko {
   color: var(--muet2);
+}
+/* booléen réglé « interrupteur » dans Grist (0.9.5.8) */
+.sw {
+  display: inline-block;
+  position: relative;
+  width: 26px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--bord);
+  vertical-align: middle;
+  transition: background 0.15s;
+}
+.sw i {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: left 0.15s;
+}
+.sw.on {
+  background: var(--vert);
+}
+.sw.on i {
+  left: 14px;
+}
+@media print {
+  .sw {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
 
 /* Graphiques */

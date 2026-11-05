@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.5.6). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.5.8). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.5.6"; // voir CHANGELOG.md
+const VERSION = "0.9.5.8"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -531,7 +531,13 @@ function chip(val, opts) {
 function htmlOf(f, v) {
   const t = baseType(f.col);
   if (isErr(v)) return `<span style="color:var(--rouge)">${esc(textOf(f.col, f.opts, v))}</span>`;
-  if (t === "Bool") return v ? '<span class="ok">✔</span>' : '<span class="ko">—</span>';
+  // booléen : interrupteur si la colonne est réglée ainsi dans Grist (0.9.5.8), sinon coche
+  if (t === "Bool")
+    return f.opts?.widget === "Switch"
+      ? `<span class="sw${v ? " on" : ""}" role="img" aria-label="${v ? "Oui" : "Non"}"><i></i></span>`
+      : v
+        ? '<span class="ok">✔</span>'
+        : '<span class="ko">—</span>';
   if (t === "Choice" && !isEmpty(v)) return chip(v, f.opts);
   if (t === "ChoiceList" && isList(v))
     return v
@@ -4635,11 +4641,19 @@ function prefetchOthers() {
   setTimeout(() => others.reduce((p, c) => p.then(() => prefetch(c.cfg)), Promise.resolve()), 800);
 }
 // switchConfig — Change de configuration dans le widget (menu « changer de page dans le widget »).
+// pageKey — Page affichée dans cet onglet (0.9.5.8) : retrouvée si le widget redémarre (Grist recharge le widget
+//   quand une modification change les droits, par exemple dans la table des attributs d'utilisateur).
+const pageKey = () => `uxwg_page_${S.docKey || "doc"}`;
 function switchConfig(name) {
   S.collapsed = {};
   const x = (S.stored || []).find((c) => c.name === name);
   if (!x || x.name === S.cfg.name) return;
   S.cfg = { ...DEFAULTS, ...x.cfg, name: x.name };
+  try {
+    sessionStorage.setItem(pageKey(), x.name);
+  } catch {
+    /* stockage indisponible */
+  }
   S.maxed = null;
   $("#backdrop")?.classList.remove("on");
   document.body.style.overflow = "";
@@ -4941,6 +4955,17 @@ async function init() {
     // dans le widget », et sert de page par défaut quand le widget n'a pas de configuration enregistrée
     const home = S.nav.home && S.stored.find((x) => x.name === S.nav.home);
     if (home && cfgReadable(home.name) && (S.nav.inWidget || !hit)) hit = home;
+    // pages changées dans le widget : après un redémarrage (rechargement par Grist, Ctrl+F5), la page où l'on était
+    if (S.nav.inWidget) {
+      let back = null;
+      try {
+        back = sessionStorage.getItem(pageKey());
+      } catch {
+        /* stockage indisponible */
+      }
+      const prev = back && S.stored.find((x) => x.name === back);
+      if (prev && cfgReadable(prev.name)) hit = prev;
+    }
     if (!hit && !opt.blocks?.length) {
       // options du widget absentes : on reconnaît la config par la table du widget
       const same = S.stored.filter((x) => x.cfg.dataTable && x.cfg.dataTable === S.ext.tableId);
