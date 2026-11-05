@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.5.6] — Diagnostic des blocs qui ont des données — 2026-11-05
+
+### Administrateurs
+- *Amélioré* — **Console du navigateur** : la ligne « [UX widget] page … calculée » liste les blocs qui ont des lignes, avec leur nombre (« blocs avec des lignes : Historique (5) ; … »). Elle explique pourquoi un bloc réglé « Seulement si la page a d'autres données » reste affiché. Les listes de sélection n'entrent pas dans ce compte.
+
+### Développeurs
+- *Amélioré* — Retrait des blocs `.needothers` déplacé avant le message de diagnostic, qui les compte parmi les « vides masqués ».
+
 ## [0.9.5.5] — Bloc vide affiché seulement si la page a d'autres données — 2026-11-05
 
 ### Administrateurs
