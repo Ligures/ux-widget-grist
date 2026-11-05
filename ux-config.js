@@ -1,4 +1,4 @@
-/* UX widget grist — panneau de configuration ⚙ (version 0.9.5.4). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — panneau de configuration ⚙ (version 0.9.5.5). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé à la demande par ux-widget.js (openConfig → loadPart("config")), après ux-carte.js dont il utilise les
    réglages de zonage. Partage l'espace global de ux-widget.js, qui doit être chargé avant.
    Contenu : brouillon de configuration (draft), réglages par bloc (renderConfig), couleurs des cartes et des
@@ -344,7 +344,7 @@ ${
       b.startFold || "",
     ),
     "État du bloc à l'ouverture de la page. Un bloc replié n'affiche que son titre ; un clic sur le titre le déplie.",
-  )),(C(`data-nl="${i}"`, b.newLine, "À la ligne", "Le bloc commence une nouvelle rangée, même s'il reste de la place à droite du bloc précédent.")),(C(`data-stk="${i}"`, b.sticky, "Figer à l'écran", "Le bloc reste visible pendant que l'on fait défiler un bloc voisin plus long.")),(C(`data-asel="${i}"`, isSelector(b), "Liste de sélection", "Affiche cette vue sous forme de liste déroulante dans l'en-tête : choisir une valeur pilote les blocs liés, comme un sélecteur."))].join(""))}
+  )),(C(`data-nl="${i}"`, b.newLine, "À la ligne", "Le bloc commence une nouvelle rangée, même s'il reste de la place à droite du bloc précédent.")),(C(`data-stk="${i}"`, b.sticky, "Figer à l'écran", "Le bloc reste visible pendant que l'on fait défiler un bloc voisin plus long.")),(C(`data-needo="${i}"`, b.needOthers, "Seulement si la page a d'autres données", "Quand ce bloc n'a aucune ligne (par exemple un tableau de saisie encore vide), il n'apparaît que si au moins un autre bloc de la page en a. Une page entièrement vide ne le montre donc pas ; dès qu'un autre bloc a des données, il s'affiche, avec « + Ajouter une ligne » s'il le propose.")),(C(`data-asel="${i}"`, isSelector(b), "Liste de sélection", "Affiche cette vue sous forme de liste déroulante dans l'en-tête : choisir une valeur pilote les blocs liés, comme un sélecteur."))].join(""))}
   ${G("Tableau", "Réglages propres aux tableaux.", (s.parentKey === "record" ? C(`data-rowcount="${i}"`, b.rowCount !== false, "Nombre de lignes", "Affiche en bas à droite du tableau le nombre de lignes (avec la recherche du bloc : « 12 sur 686 lignes »).") : "") + (s.parentKey === "record"
       ? L(
           "Largeur des colonnes",
@@ -1040,6 +1040,10 @@ $("#panel").addEventListener("change", (ev) => {
   }
   if (t.dataset.rowcount) {
     draft.blocks[Number(t.dataset.rowcount)].rowCount = t.checked;
+    return;
+  }
+  if (t.dataset.needo) {
+    draft.blocks[Number(t.dataset.needo)].needOthers = t.checked;
     return;
   }
   if (t.dataset.nolab) {

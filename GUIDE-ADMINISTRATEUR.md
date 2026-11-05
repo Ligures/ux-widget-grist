@@ -55,7 +55,7 @@ Le bouton **⚙ Configurer** ouvre un panneau sur la moitié droite de l'écran 
    - Les flèches ↑ ↓ règlent l'ordre ; ✕ retire le bloc (la vue Grist n'est pas supprimée).
    - Les réglages de chaque bloc sont **repliés par défaut** : restent visibles son titre, ses flèches, sa largeur, sa colonne et son nombre de lignes. ▸ / ▾ déplie ou replie un bloc ; **Tout déplier** et **Tout replier** agissent sur tous. Une vue que l'on vient d'ajouter s'ouvre dépliée.
    - Déplié, un bloc présente ses réglages dans des encadrés titrés, toujours dans le même ordre :
-     - **Affichage**, commun à toutes les vues : taille, état à l'ouverture, « À la ligne », « Figer à l'écran », « Liste de sélection » ;
+     - **Affichage**, commun à toutes les vues : taille, état à l'ouverture, « À la ligne », « Figer à l'écran », « Seulement si la page a d'autres données », « Liste de sélection » ;
      - puis les encadrés propres au type de vue, s'il y a lieu : **Tableau**, **Fiches**, **Édition**, **Liste de sélection**, **Couleurs du graphique**, **Filtre rapide**, et pour les cartes **Points**, **Contour des points**, **QPV**, **Zones sous les points**.
    - Chaque bloc a ses réglages :
 
@@ -66,6 +66,7 @@ Le bouton **⚙ Configurer** ouvre un panneau sur la moitié droite de l'écran 
 | À l'ouverture | Bloc replié ou déplié à l'arrivée sur la page |
 | À la ligne | Le bloc commence une nouvelle rangée |
 | Figer à l'écran | Le bloc reste visible pendant le défilement d'un bloc voisin. Plusieurs blocs figés d'une même colonne s'empilent. Un bloc déplié trop haut défile à l'intérieur de son cadre ; un bloc dont même l'en-tête ne tient plus défile normalement, sous les autres |
+| Seulement si la page a d'autres données | Quand le bloc n'a aucune ligne (par exemple un tableau de saisie encore vide, avec « + Ajouter une ligne »), il n'apparaît que si au moins un autre bloc de la page en a. Une page entièrement vide ne le montre pas |
 | Édition des champs | Autorise la modification des valeurs (droits Grist respectés) |
 | Ajout et suppression de lignes | Tableaux et listes de fiches, avec « Édition des champs » : boutons « + Ajouter une ligne » et « − Supprimer la ligne » en bas du bloc. Si le bloc est lié à une sélection, la nouvelle ligne y est rattachée. Le bloc reste affiché même vide. Droits de création et de suppression Grist requis : sinon l'action est refusée avec un message |
 | Masquer les noms des champs | Fiches et listes de fiches : seules les valeurs sont affichées ; le nom du champ apparaît au survol de la valeur |

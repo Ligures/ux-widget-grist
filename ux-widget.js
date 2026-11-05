@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.5.4). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.5.5). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -42,7 +42,7 @@
      { name, title, blocks: [...], flux, dense, masonry, hideEmptyFields,
  hideEmptyBlocks, tableMaxHeight, chartHeight, dataTable }
      Bloc (blocks[i]) : id = identifiant de la vue Grist (_grist_Views_section)
- Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold
+ Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold, needOthers
  Tableaux/fiches : colWidths, rowCount, asList, cardW, editable, addable, showEmpty, hideLabels
  Texte (Markdown) : mdSize, mdEdit (modifiable depuis la page), mdNote (aspect bloc-notes)
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.5.4"; // voir CHANGELOG.md
+const VERSION = "0.9.5.5"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3431,6 +3431,7 @@ async function render() {
 
   let current = "",
     shown = 0,
+    withData = 0, // blocs qui ont au moins une ligne (option « seulement si la page a d'autres données »)
     interrupted = false;
   const skipped = { unsupported: [], empty: [] }; // diagnostic : pourquoi un bloc n'est pas affiché
   const t0 = performance.now();
@@ -3495,11 +3496,13 @@ async function render() {
           }
           const el = blockShell(b, info, KIND[info.kind], qfCtl, row2); // le filtre reste affiché pour revenir à « Tous »
           el.classList.add("empty");
+          if (b.needOthers) el.classList.add("needothers"); // retiré après coup si aucun autre bloc n'a de données
           el.querySelector(".bb").textContent = "Aucune donnée";
           if (blockAddable(b, info)) el.querySelector(".bb").insertAdjacentHTML("beforeend", addBtn(b, false));
           frag.append(el);
           continue;
         }
+        if (rows.length) withData++;
         const searchable =
           (info.kind === "record" || info.kind === "detail" || (info.kind === "single" && b.asList)) &&
           rows.length > 12;
@@ -3555,6 +3558,12 @@ async function render() {
     );
   }
   if (stale()) return;
+  // bloc vide réglé « seulement si la page a d'autres données » (0.9.5.5) : retiré quand aucun autre bloc n'en a
+  if (!withData)
+    [...frag.children].filter((el) => el.classList.contains("needothers")).forEach((el) => {
+      skipped.empty.push(el.querySelector("h2")?.textContent || "");
+      el.remove();
+    });
   // jamais de page blanche : message simple (le détail reste dans la console)
   if (!frag.childElementCount) {
     const d = document.createElement("div");

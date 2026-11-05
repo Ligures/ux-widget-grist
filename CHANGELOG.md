@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.5.5] — Bloc vide affiché seulement si la page a d'autres données — 2026-11-05
+
+### Administrateurs
+- *Nouveau* — Encadré **Affichage** de chaque vue : case **Seulement si la page a d'autres données**. Un bloc sans ligne (par exemple un tableau de saisie, qui reste affiché vide pour proposer « + Ajouter une ligne ») n'apparaît que si au moins un autre bloc de la page a des données.
+
+### Développeurs
+- *Nouveau* — Option `needOthers` : `render` compte les blocs qui ont des lignes (`withData`) ; sans aucun, les blocs vides marqués `.needothers` sont retirés avant l'affichage (et signalés dans le diagnostic de la console).
+
 ## [0.9.5.4] — Impression : tableau trop large pour sa place — 2026-11-05
 
 ### Utilisateurs
