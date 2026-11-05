@@ -1,4 +1,4 @@
-/* UX widget grist — cartes (version 0.9.5.3). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — cartes (version 0.9.5.4). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé à la demande par ux-widget.js (loadPart("carte")) quand la page contient une carte, ou à l'ouverture de la
    configuration. Partage l'espace global de ux-widget.js (objet S, esc, textOf…), qui doit être chargé avant.
    Contenu : conversions de coordonnées et codes communes ; contours (geo.api.gouv.fr, IRIS de l'IGN, fichiers

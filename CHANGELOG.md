@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.5.4] — Impression : tableau trop large pour sa place — 2026-11-05
+
+### Utilisateurs
+- *Corrigé* — **Impression d'une page** : un tableau plus large que la place de son bloc (beaucoup de colonnes, bloc de 2/3 par exemple) débordait sur le bloc voisin, qui s'imprimait par-dessus. Le bloc prend désormais toute la largeur de la page, et le bloc voisin passe en dessous.
+
+### Développeurs
+- *Corrigé* — `markPrintBig` : classe `printwide` quand un `.tbl-wrap` (ou `.cartes`) défile horizontalement ou dépasse la largeur du bloc sur papier (277 mm × largeur / 6) ; à l'impression, `.block.printwide` en `display: block`, largeur entière.
+
 ## [0.9.5.3] — Menu : condition « si accès à » relue après une saisie — 2026-11-04
 
 ### Utilisateurs

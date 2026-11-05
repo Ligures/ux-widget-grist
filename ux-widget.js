@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.5.3). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.5.4). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.5.3"; // voir CHANGELOG.md
+const VERSION = "0.9.5.4"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -4027,11 +4027,19 @@ async function printPage() {
 }
 // markPrintBig — Repère les blocs plus hauts qu'une page : à l'impression ils partent à la ligne
 // et se coupent d'une page à l'autre (contenu complet mesuré, sans la hauteur limitée de l'écran).
+//   Bloc trop large (0.9.5.4) : un tableau plus large que la place du bloc sur le papier (A4 paysage, 277 mm utiles)
+//   débordait sur les blocs voisins ; il prend alors toute la largeur de la page (printwide).
 function markPrintBig() {
+  const pageW = (277 * 96) / 25.4;
   document.querySelectorAll("#grid > .block").forEach((el) => {
     const inner = [...el.querySelectorAll(":scope > .bb, .tbl-wrap, .cartes")].map((x) => x.scrollHeight + 40);
     const h = Math.max(el.offsetHeight, ...inner);
     el.classList.toggle("printbig", h > 600);
+    const span = Number(getComputedStyle(el).getPropertyValue("--span")) || 6;
+    const room = (pageW * span) / 6 - 12;
+    const wide =
+      span < 6 && [...el.querySelectorAll(".tbl-wrap, .cartes")].some((x) => x.scrollWidth > x.clientWidth + 2 || x.scrollWidth > room);
+    el.classList.toggle("printwide", wide);
   });
 }
 window.addEventListener("beforeprint", markPrintBig); // impression lancée par Ctrl+P
