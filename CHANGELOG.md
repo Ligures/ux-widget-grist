@@ -26,6 +26,19 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.5.9] — Écran de chargement — 2026-11-07
+
+### Utilisateurs
+- *Nouveau* — **Écran de chargement** à l'ouverture du widget et quand Grist le recharge : image (GIF animé possible), titre et texte réglés par l'administrateur, étape en cours (« Lecture des données : 7 / 12 », « Mise en forme : … ») et barre de progression. Il n'apparaît que si le chargement dure plus de 0,4 s, et reste alors au moins 0,8 s, sans clignoter.
+
+### Administrateurs
+- *Nouveau* — Section **Message d'accueil → Écran de chargement** : image (GIF, PNG, JPEG ou WebP, 300 Ko au plus, enregistrée dans `_Navigation`), titre, texte, bouton **Aperçu**.
+- *Amélioré* — `index.html` contient l'écran de chargement : à déposer avec les scripts.
+
+### Développeurs
+- *Nouveau* — `#splash` (statique dans `index.html`, affiché par une animation CSS retardée de 0,4 s) ; `splashFill`, `splashStep`, `splashHide` (au moins 0,8 s d'affichage, fondu, garde-fou à 60 s, aussi en cas d'erreur ou de choix de configuration) ; `splashPreview` ; `prefetch(cfg, onStep)` pour la progression ; `nav.splash` (`img` en `data:image/…;base64`, `title`, `text`), copie par document en `localStorage` (`uxwg_splash_<doc>`).
+- *Amélioré* — `init` demande l'identifiant du document dès le départ, en parallèle des autres lectures.
+
 ## [0.9.5.8] — Interrupteurs, page conservée après un rechargement par Grist — 2026-11-05
 
 ### Utilisateurs

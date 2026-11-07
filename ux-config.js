@@ -1,4 +1,4 @@
-/* UX widget grist — panneau de configuration ⚙ (version 0.9.5.8). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — panneau de configuration ⚙ (version 0.9.5.9). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé à la demande par ux-widget.js (openConfig → loadPart("config")), après ux-carte.js dont il utilise les
    réglages de zonage. Partage l'espace global de ux-widget.js, qui doit être chargé avant.
    Contenu : brouillon de configuration (draft), réglages par bloc (renderConfig), couleurs des cartes et des
@@ -827,6 +827,15 @@ ${L("Hauteur maximale des tableaux (px)", `<input type="number" id="cMaxH" min="
     <section class="cs adv"><h4>Message d'accueil <small>— affiché au démarrage, à tous les utilisateurs</small></h4>
 ${L("Texte (Markdown)", `<textarea id="cWelcome" rows="6" style="width:100%" placeholder="## Bienvenue&#10;Ce tableau de bord présente…&#10;&#10;+++ En savoir plus&#10;Texte replié, affiché au clic sur le titre.&#10;+++">${esc(draftNav.welcome || "")}</textarea>`, "Texte en Markdown (titres #, gras **, listes -, liens [texte](https://…)) affiché dans une fenêtre à l'ouverture du widget. Partie repliable : une ligne « +++ Titre » (ou « +++! Titre » pour qu'elle soit dépliée au départ), le texte, puis une ligne « +++ ». Chaque personne le voit une fois ; il ne revient que si le texte est modifié (Aide → « Message d'accueil » le réaffiche). Vide : pas de message.")}
 <button class="icon-btn" id="cWelcomePrev" title="Afficher le message tel que le verront les utilisateurs">Aperçu</button>
+<h5 class="cs-sub">Écran de chargement <small>— à l'ouverture du widget et quand Grist le recharge, si le chargement dure plus de 0,4 s</small></h5>
+${L(
+  "Image (GIF animé, PNG, JPEG ou WebP)",
+  `${draftNav.splash?.img ? `<img src="${esc(draftNav.splash.img)}" alt="" style="max-height:60px;max-width:160px;vertical-align:middle;margin-right:6px">` : ""}<input type="file" id="cSplFile" accept="image/gif,image/png,image/jpeg,image/webp">${draftNav.splash?.img ? ` <button class="icon-btn" id="cSplRm" title="Retirer l'image">Retirer</button>` : ""}`,
+  "Image affichée pendant le chargement, par exemple un GIF animé. 300 Ko au plus : elle est enregistrée dans le document (ligne _Navigation de W_Composition) et relue à chaque ouverture. Le navigateur de chaque utilisateur en garde une copie pour l'afficher dès le début aux ouvertures suivantes.",
+)}
+${L("Titre", `<input type="text" id="cSplTitle" value="${esc(draftNav.splash?.title || "")}" placeholder="Ex. Tableau de bord de la carte scolaire" style="width:100%">`, "Titre affiché sous l'image. Vide : pas de titre.")}
+${L("Texte", `<textarea id="cSplText" rows="3" style="width:100%" placeholder="Ex. Données mises à jour chaque lundi.">${esc(draftNav.splash?.text || "")}</textarea>`, "Texte court affiché sous le titre (les retours à la ligne sont conservés). Vide : pas de texte.")}
+<button class="icon-btn" id="cSplPrev" title="Afficher l'écran de chargement tel que le verront les utilisateurs (4 s, ou clic pour fermer)">Aperçu</button>
     </section>
     <section class="cs adv"><h4>5. Navigation entre pages <small>— menu commun à toutes les configurations</small></h4>
 ${L("Adresse du document", `<input type="text" id="cMnUrl" value="${esc(draftNav.url)}" placeholder="https://…/o/organisation/document" style="width:100%">`, "Adresse de base du document Grist (https uniquement), utilisée pour construire les liens vers les pages.")}
@@ -1145,6 +1154,21 @@ $("#panel").addEventListener("change", (ev) => {
   if (t.id === "cRefresh") draftNav.refresh = Number(t.value);
   if (t.id === "cMnHome") draftNav.home = t.value;
   if (t.id === "cWelcome") draftNav.welcome = t.value;
+  if (t.id === "cSplTitle") draftNav.splash = { ...(draftNav.splash || {}), title: t.value.trim() };
+  if (t.id === "cSplText") draftNav.splash = { ...(draftNav.splash || {}), text: t.value.trim() };
+  if (t.id === "cSplFile" && t.files?.[0]) {
+    const f = t.files[0];
+    if (!/^image\/(gif|png|jpeg|webp)$/.test(f.type)) return status("Image : GIF, PNG, JPEG ou WebP seulement", true);
+    if (f.size > SPLASH_MAX)
+      return status(`Image trop lourde (${Math.round(f.size / 1024)} Ko) : 300 Ko au plus, elle est relue à chaque ouverture`, true);
+    const rd = new FileReader();
+    rd.onload = () => {
+      draftNav.splash = { ...(draftNav.splash || {}), img: String(rd.result) };
+      renderConfig();
+    };
+    rd.readAsDataURL(f);
+    return;
+  }
   if (t.dataset.fml) draft.forms[Number(t.dataset.fml)].label = t.value.trim();
   if (t.dataset.fmt) draft.forms[Number(t.dataset.fmt)].tip = t.value.trim();
   if (t.dataset.fmtab) draft.forms[Number(t.dataset.fmtab)].tab = t.checked;
@@ -1168,6 +1192,18 @@ $("#panel").addEventListener("click", async (ev) => {
     [draft.blocks[i], draft.blocks[j]] = [draft.blocks[j], draft.blocks[i]];
     renderConfig();
   };
+  if (t.id === "cSplRm") {
+    draftNav.splash = { ...(draftNav.splash || {}), img: "" };
+    return renderConfig();
+  }
+  if (t.id === "cSplPrev") {
+    draftNav.splash = {
+      ...(draftNav.splash || {}),
+      title: ($("#cSplTitle")?.value ?? draftNav.splash?.title ?? "").trim(),
+      text: ($("#cSplText")?.value ?? draftNav.splash?.text ?? "").trim(),
+    };
+    return splashPreview(draftNav.splash);
+  }
   if (t.id === "cWelcomePrev") {
     draftNav.welcome = $("#cWelcome")?.value ?? draftNav.welcome;
     return showWelcome(true, draftNav.welcome);

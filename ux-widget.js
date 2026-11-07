@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.5.8). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.5.9). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.5.8"; // voir CHANGELOG.md
+const VERSION = "0.9.5.9"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3428,7 +3428,7 @@ async function render() {
   // toutes les tables en parallèle avant le calcul des blocs ; code des cartes chargé si la page en a une (0.9.5)
   const needMap = blocks.some((b) => isMapSection(getInfo(b.id)?.sec));
   await Promise.all([
-    prefetch(S.cfg),
+    prefetch(S.cfg, SPL.on ? (k, n) => splashStep(`Lecture des données : ${k} / ${n}`, 0.35 + (0.5 * k) / n) : null),
     needMap ? loadPart("carte").catch((e) => status(`Cartes indisponibles : ${e.message}`, true)) : null,
   ]);
   if (stale()) return;
@@ -3437,6 +3437,7 @@ async function render() {
 
   let current = "",
     shown = 0,
+    splashI = 0, // blocs mis en forme (progression de l'écran de chargement)
     withData = 0; // blocs qui ont au moins une ligne (option « seulement si la page a d'autres données »)
   const dataNames = []; // leurs titres, pour le diagnostic de la console
   let
@@ -3454,6 +3455,7 @@ async function render() {
         continue;
       }
       current = info.title;
+      if (SPL.on) splashStep(`Mise en forme : ${info.title}`, 0.85 + (0.13 * ++splashI) / blocks.length);
       await new Promise((r) => setTimeout(r, 0)); // rend la main : l'indicateur et les clics restent actifs
       if (stale()) {
         interrupted = true;
@@ -4579,6 +4581,16 @@ async function readNav() {
       mode: n.mode === "clair" || n.mode === "sombre" ? n.mode : "", // "" : comme le système
       home: n.home || "", // configuration ouverte à l'arrivée (mode « changer de page dans le widget »)
       welcome: typeof n.welcome === "string" ? n.welcome : "", // message d'accueil (Markdown)
+      // écran de chargement : image (data:image/…, 300 Ko au plus), titre, texte
+      ...(n.splash && typeof n.splash === "object"
+        ? {
+            splash: {
+              img: typeof n.splash.img === "string" && n.splash.img.length < SPLASH_MAX * 1.4 ? n.splash.img : "",
+              title: typeof n.splash.title === "string" ? n.splash.title : "",
+              text: typeof n.splash.text === "string" ? n.splash.text : "",
+            },
+          }
+        : {}),
       // actualisation automatique (s) ; absente = valeur par défaut (20 s)
       ...(REFRESH_CHOICES.some(([v]) => v === n.refresh) ? { refresh: n.refresh } : {}),
     };
@@ -4623,11 +4635,15 @@ function sectionsOf(cfg) {
   return [...ids];
 }
 /* Charge en parallèle (au lieu d'une table après l'autre) toutes les tables utiles */
-function prefetch(cfg) {
+function prefetch(cfg, onStep) {
+  const ids = sectionsOf(cfg);
+  let k = 0;
   return Promise.all(
-    sectionsOf(cfg).map((id) => {
+    ids.map((id) => {
       const info = getInfo(id);
-      return info?.tableId ? prepareSection(info).catch(() => null) : null;
+      return Promise.resolve(info?.tableId ? prepareSection(info).catch(() => null) : null).then(() =>
+        onStep?.(++k, ids.length),
+      );
     }),
   );
 }
@@ -4932,15 +4948,99 @@ function showConfigChooser(list) {
   );
 }
 // init — Démarrage : métadonnées, configurations enregistrées, menu, droits, puis premier rendu.
+/* ---------- Écran de chargement (0.9.5.9) ----------
+   #splash (index.html) s'affiche à l'ouverture du widget et à chaque rechargement par Grist, seulement si le
+   chargement dépasse 0,4 s (délai CSS) ; une fois visible, il le reste au moins 0,8 s. Il montre l'image, le titre et
+   le texte réglés dans la configuration (nav.splash), l'étape en cours et une barre de progression. Le réglage
+   arrive avec les données ; une copie gardée dans le navigateur (localStorage, par document) l'affiche dès le
+   début aux ouvertures suivantes. Retiré à la fin du premier rendu, en cas d'erreur, ou au bout de 60 s. */
+const SPL = { t0: performance.now(), on: true };
+const SPLASH_MAX = 300 * 1024; // taille maximale de l'image (le réglage est relu à chaque ouverture)
+const splashKey = () => `uxwg_splash_${S.docKey || "doc"}`;
+const splashOk = (sp) => !!sp && typeof sp === "object";
+// splashFill — Image, titre et texte de l'écran de chargement (el : #splash, ou l'aperçu de la configuration).
+function splashFill(sp, el = $("#splash")) {
+  if (!el || !splashOk(sp)) return;
+  const img = el.querySelector(".spl-img"),
+    h = el.querySelector(".spl-title"),
+    p = el.querySelector(".spl-text");
+  const okImg = typeof sp.img === "string" && /^data:image\/(gif|png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(sp.img);
+  img.hidden = !okImg;
+  if (okImg) img.src = sp.img;
+  h.textContent = sp.title || "";
+  h.hidden = !sp.title;
+  p.textContent = sp.text || "";
+  p.hidden = !sp.text;
+}
+// splashStep — Étape en cours et progression (0 à 1).
+function splashStep(label, frac) {
+  if (!SPL.on) return;
+  const el = $("#splash");
+  if (!el) return;
+  el.querySelector(".spl-step").textContent = label;
+  if (frac != null) el.querySelector(".spl-bar i").style.width = `${Math.round(Math.min(1, Math.max(0, frac)) * 100)}%`;
+}
+// splashHide — Retire l'écran : aussitôt s'il n'a pas encore paru, sinon après 0,8 s d'affichage au moins, en fondu.
+function splashHide() {
+  if (!SPL.on) return;
+  SPL.on = false;
+  const el = $("#splash");
+  if (!el) return;
+  const t = performance.now() - SPL.t0;
+  if (t < 400) return el.remove();
+  setTimeout(
+    () => {
+      el.classList.add("out");
+      setTimeout(() => el.remove(), 350);
+    },
+    Math.max(0, 1200 - t),
+  );
+}
+setTimeout(splashHide, 60000); // garde-fou : jamais bloqué sur l'écran de chargement
+// splashPreview — Aperçu de l'écran de chargement depuis la configuration (3 s, ou clic pour fermer).
+function splashPreview(sp) {
+  const el = document.createElement("div");
+  el.className = "splash spl-preview";
+  el.innerHTML = SPLASH_HTML;
+  splashFill(sp, el);
+  el.querySelector(".spl-step").textContent = "Aperçu : lecture des données : 7 / 12";
+  el.querySelector(".spl-bar i").style.width = "62%";
+  document.body.appendChild(el);
+  const close = () => el.remove();
+  el.addEventListener("click", close);
+  setTimeout(close, 4000);
+}
+const SPLASH_HTML = `<div class="spl-card"><img class="spl-img" alt="" hidden /><h1 class="spl-title" hidden></h1><p class="spl-text" hidden></p><div class="spl-bar"><i></i></div><div class="spl-step">Chargement…</div></div>`;
 async function init() {
   try {
+    // identifiant du document (sélections partagées, écran de chargement gardé pour ce document) : demandé tout de suite
+    const keyP = guessDocUrl().then((u) => {
+      S.docKey = /\/doc\/([^/?#]+)/.exec(u)?.[1] || "";
+      try {
+        if (SPL.on) splashFill(JSON.parse(localStorage.getItem(splashKey()) || "null"));
+      } catch {
+        /* copie absente ou illisible */
+      }
+    });
+    splashStep("Lecture de la structure du document…", 0.05);
     await loadMeta();
+    splashStep("Lecture des pages et du menu…", 0.2);
     // La table W_Composition fait foi : elle survit aux changements de code du widget
     S.stored = await readStoredConfigs();
     S.nav = await readNav();
+    splashFill(S.nav.splash);
+    keyP.then(() => {
+      try {
+        if (splashOk(S.nav.splash)) localStorage.setItem(splashKey(), JSON.stringify(S.nav.splash));
+        else localStorage.removeItem(splashKey());
+      } catch {
+        /* stockage plein ou indisponible : l'écran s'affichera sans image au début */
+      }
+    });
     liveStart();
+    splashStep("Vérification des droits…", 0.3);
     S.isAdmin = await checkAdmin();
-    S.docKey = /\/doc\/([^/?#]+)/.exec(await guessDocUrl())?.[1] || ""; // pour les sélections partagées
+    await keyP; // pour les sélections partagées
     applyTheme(S.nav.theme);
     $("#btnConfig").hidden = !S.isAdmin;
     $("#btnSingle").hidden = !S.isAdmin; // plein écran : réservé aux administrateurs (vue par défaut des utilisateurs)
@@ -4975,6 +5075,7 @@ async function init() {
         // seul un administrateur choisit ; un utilisateur n'est jamais interrogé
         if (S.isAdmin) {
           S.ready = true;
+          splashHide();
           return showConfigChooser(same.length ? same : S.stored);
         }
         hit = same[0] || S.stored.find((x) => cfgReadable(x.name)) || S.stored[0];
@@ -4983,6 +5084,7 @@ async function init() {
     if (hit) S.cfg = { ...DEFAULTS, ...hit.cfg, name: hit.name };
     S.ready = true;
     await render();
+    splashHide();
     showWelcome(); // message d'accueil, s'il y en a un et s'il n'a pas été masqué
     const tot = S.fetchLog.reduce((x, [, ms]) => x + ms, 0);
     console.info(
@@ -4994,6 +5096,7 @@ async function init() {
           .join(", "),
     );
   } catch (e) {
+    splashHide();
     status(e.message || String(e), true);
   }
 }

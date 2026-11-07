@@ -208,6 +208,14 @@ Choisir une circonscription dans la liste en haut de la page.
 
 Chaque personne voit le message **une fois** : à sa fermeture, le navigateur mémorise l'empreinte du texte. Il ne revient que si le texte est modifié — pas après une mise à jour du widget ni un enregistrement de la configuration. Aide → **Message d'accueil** le réaffiche à la demande. Laisser le texte vide supprime le message.
 
+**Écran de chargement** (même section) : affiché à l'ouverture du widget et quand Grist le recharge (par exemple après une modification des droits), si le chargement dure plus de 0,4 s ; il reste alors visible au moins 0,8 s, pour ne pas clignoter.
+- **Image** : GIF animé, PNG, JPEG ou WebP, **300 Ko au plus**. Elle est enregistrée dans le document (ligne `_Navigation` de `W_Composition`) et relue à chaque ouverture ; d'où la limite de taille. **Retirer** l'enlève.
+- **Titre** et **Texte** : affichés sous l'image (le texte garde ses retours à la ligne).
+- Dessous, l'étape en cours (« Lecture des données : 7 / 12 », « Mise en forme : … ») et une barre de progression.
+- **Aperçu** montre l'écran 4 secondes (un clic le ferme).
+
+Le navigateur de chaque personne garde une copie de l'image et des textes : dès la deuxième ouverture, ils s'affichent dès le début du chargement. À la toute première, l'écran commence sans eux et les montre dès que la configuration est lue. Sans réglage, l'écran ne montre que l'étape et la barre.
+
 ### Menu de navigation
 
 Section **5. Navigation entre pages**. Ce réglage est commun à toutes les configurations.
