@@ -26,6 +26,15 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.5.10] — Liens vers les vues natives, pour les administrateurs — 2026-11-08
+
+### Administrateurs
+- *Nouveau* — **Vues natives** en bas de chaque page : un lien vers chaque page Grist qui contient les vues affichées (titres des vues en infobulle). Visible des seuls administrateurs, masqué à l'impression. Adresse : celle du menu des pages, sinon celle du document.
+- *Amélioré* — `index.html` contient le pied de page : à déposer avec les scripts.
+
+### Développeurs
+- *Nouveau* — `renderNativeLinks` (appelée par `render`), `#nativeLinks` ; `S.docUrl` (adresse du document lue avec le jeton d'accès).
+
 ## [0.9.5.9] — Écran de chargement — 2026-11-07
 
 ### Utilisateurs

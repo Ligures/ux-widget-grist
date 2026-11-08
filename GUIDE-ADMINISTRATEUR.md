@@ -29,7 +29,7 @@ Ce guide s'adresse aux **administrateurs**, qui composent les pages. Il n'est af
 
 ## 1. Composer une page
 
-Le bouton **⚙ Configurer** n'apparaît qu'aux administrateurs : les personnes qui lisent au moins une ligne de la table `W_Admin`.
+Le bouton **⚙ Configurer** n'apparaît qu'aux administrateurs : les personnes qui lisent au moins une ligne de la table `W_Admin`. Eux seuls voient aussi, en bas de chaque page, la ligne **Vues natives** : un lien vers chaque page Grist qui contient les vues affichées (leurs titres en infobulle ; clic du milieu : nouvel onglet).
 
 ### Ouvrir la configuration
 

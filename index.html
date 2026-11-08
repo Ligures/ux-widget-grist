@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   ╔══════════════════════════════════════════════════════════════════════════════╗
-  ║  UX widget grist — widget personnalisé Grist (version 0.9.5.9)               ║
+  ║  UX widget grist — widget personnalisé Grist (version 0.9.5.10)              ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
   Affiche sur une seule page, condensée et lisible, plusieurs vues natives d'un
   document Grist (tableaux, fiches, listes de fiches, graphiques natifs et avancés,
@@ -38,7 +38,7 @@
       integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG"
       crossorigin="anonymous"
     ></script>
-    <link rel="stylesheet" href="ux-widget.css?v=0.9.5.9" />
+    <link rel="stylesheet" href="ux-widget.css?v=0.9.5.10" />
   </head>
   <body>
     <!-- écran de chargement (0.9.5.9) : visible si le chargement dépasse 0,4 s, retiré par ux-widget.js (splashHide) -->
@@ -120,6 +120,7 @@
     </header>
     <div id="printhead"></div>
     <main id="grid" class="grid"></main>
+    <footer id="nativeLinks" hidden></footer>
     <div id="rcBack"></div>
     <div id="rc" role="dialog" aria-modal="true"></div>
     <div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle" hidden>
@@ -162,6 +163,6 @@
       <div class="panel" id="panel"></div>
     </div>
 
-    <script src="ux-widget.js?v=0.9.5.9"></script>
+    <script src="ux-widget.js?v=0.9.5.10"></script>
   </body>
 </html>

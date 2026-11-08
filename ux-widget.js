@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.5.9). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.5.10). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.5.9"; // voir CHANGELOG.md
+const VERSION = "0.9.5.10"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3599,6 +3599,7 @@ async function render() {
   S.mapTeardown = false;
   S.maps = [];
   grid.replaceChildren(frag);
+  renderNativeLinks(blocks);
   if (S.maxed && !grid.querySelector(".maxed")) {
     // bloc plein écran disparu (vue retirée, bloc vide masqué…)
     S.maxed = null;
@@ -4846,6 +4847,37 @@ function hostView(cfgName) {
   }
   return first;
 }
+// renderNativeLinks — Pied de page réservé aux administrateurs (0.9.5.10) : liens vers les pages natives de Grist
+//   qui contiennent les vues affichées (une entrée par page, ses vues en infobulle). Adresse : celle du menu,
+//   sinon celle du document déduite du jeton d'accès. Ouvre la page Grist à la place du widget (clic du milieu :
+//   nouvel onglet).
+function renderNativeLinks(blocks) {
+  const el = $("#nativeLinks");
+  if (!el) return;
+  const base = safeBase(S.nav?.url) || safeBase(S.docUrl);
+  const m = S.meta;
+  if (!S.isAdmin || !base || !m) {
+    el.hidden = true;
+    return;
+  }
+  const byPage = new Map();
+  for (const b of blocks) {
+    const sec = m.sections.get(b.id);
+    if (!sec || !m.pageOfView.has(sec.parentId)) continue; // vue hors des pages (données brutes, fiche)
+    if (!byPage.has(sec.parentId)) byPage.set(sec.parentId, []);
+    byPage.get(sec.parentId).push(getInfo(b.id)?.title || `#${b.id}`);
+  }
+  el.hidden = !byPage.size;
+  el.innerHTML = byPage.size
+    ? `<span class="nl-h" title="Réservé aux administrateurs : pages Grist qui contiennent les vues de cette page">Vues natives :</span> ` +
+      [...byPage]
+        .map(
+          ([vid, titles]) =>
+            `<a href="${esc(pageUrl(base, vid))}" target="_top" title="${esc(`Vues : ${titles.join(" ; ")}`)}">${esc(m.pageOfView.get(vid))}</a>`,
+        )
+        .join(" · ")
+    : "";
+}
 // pnavToggle — Ouvre / ferme la liste des pages (smartphone).
 function pnavToggle(open = !$("#pnav").classList.contains("open")) {
   $("#pnav").classList.toggle("open", open);
@@ -5016,6 +5048,7 @@ async function init() {
     // identifiant du document (sélections partagées, écran de chargement gardé pour ce document) : demandé tout de suite
     const keyP = guessDocUrl().then((u) => {
       S.docKey = /\/doc\/([^/?#]+)/.exec(u)?.[1] || "";
+      S.docUrl = u || ""; // adresse du document (liens vers les pages natives, pied de page des administrateurs)
       try {
         if (SPL.on) splashFill(JSON.parse(localStorage.getItem(splashKey()) || "null"));
       } catch {

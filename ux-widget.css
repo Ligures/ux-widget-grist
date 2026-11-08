@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.5.9).
+/* UX widget grist — feuilles de style (version 0.9.5.10).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1634,6 +1634,25 @@ dd[data-kind="sel"][data-ed] {
   width: 100%;
 }
 /* message d'accueil (0.9.3) */
+/* pied de page des administrateurs (0.9.5.10) : liens vers les pages natives de Grist */
+#nativeLinks {
+  margin: 14px 8px 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--bord);
+  font-size: 11.5px;
+  color: var(--muet);
+}
+#nativeLinks a {
+  color: var(--bleu);
+  text-decoration: none;
+}
+#nativeLinks a:hover {
+  text-decoration: underline;
+}
+#nativeLinks .nl-h {
+  font-weight: 600;
+  cursor: help;
+}
 /* sous-titre d'une section de la configuration */
 .cs-sub {
   margin: 12px 0 6px;
@@ -1798,6 +1817,9 @@ dd[data-kind="sel"][data-ed] {
   font-size: 13px;
 }
 @media print {
+  #nativeLinks {
+    display: none !important;
+  }
   .splash {
     display: none !important;
   }
