@@ -26,122 +26,52 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
-## [0.9.5.11] — Avertissements en bas à droite, avec le commentaire des règles d'accès — 2026-11-09
+## [0.9.6.0] — Maintenance et accès fermé — 2026-11-09
+
+Palier 0.9.6 ; les livraisons 0.9.5.0 à 0.9.5.11 sont regroupées dans « 0.9.5 » ci-dessous.
 
 ### Utilisateurs
-- *Amélioré* — **Modification, ajout ou suppression refusés** : l'avertissement s'affiche en bas à droite, comme dans Grist (fermeture au clic sur ✕, ou seul au bout de 9 s), au lieu de la ligne d'état en haut. Il reprend le commentaire de la règle d'accès qui a bloqué l'action, quand Grist le transmet ; sinon un texte générique.
+- *Nouveau* — **Écran de maintenance** : pendant une maintenance, le widget affiche « Maintenance en cours », le message des administrateurs et l'heure de retour prévue, au lieu d'une page blanche. À la fin de la maintenance, la page normale revient d'elle-même.
+- *Nouveau* — **Accès non ouvert** : une personne à qui le document est partagé mais qui ne peut lire aucune page voit un message (par exemple : qui contacter pour obtenir des droits).
 
 ### Administrateurs
-- *Amélioré* — Le commentaire saisi sur une règle d'accès (bulle 💬 dans les règles de Grist) devient le texte de l'avertissement dans le widget.
+- *Nouveau* — Table **`W_Messages`** (une ligne) : `Maintenance` (booléen), `Message_maintenance` (Markdown), `Fin_prevue` (date et heure, facultatif), `Message_sans_acces` (Markdown). Elle doit rester lisible par tous : règle d'accès propre, placée avant les autres. Voir le guide administrateur, « Maintenance et accès fermé ».
+- *Nouveau* — **Bandeau « Maintenance active »** en haut des pages pour les administrateurs, qui continuent à voir le site normalement.
+- *Sécurité* — Un utilisateur qui ne voit ni `W_Admin` ni `W_Composition` parce que les règles d'accès les lui cachent (maintenance, droits retirés) n'est plus pris pour un administrateur en cours d'installation : le mode installation ne s'applique que si aucune table n'est cachée.
+- *Amélioré* — `index.html` contient le bandeau : à déposer avec les scripts.
 
 ### Développeurs
-- *Nouveau* — `toast(titre, texte, kind, ms)` (`#toasts`, trois messages au plus, masqué à l'impression) ; `aclMemo` lit `e.details.memos` (erreur `ACL_DENY` de Grist) ; `actionFailed` remplace les messages d'erreur de `saveValue`, `addRow`, `delRow` et du bloc-notes.
+- *Nouveau* — `readMessages`, `noReadablePage` (aucune configuration avec des blocs lisibles ; sans configuration lisible : fermé si `W_Messages` existe ou si rien n'est lisible), `showGate` (`S.gated`, classe `html.gated`, Markdown nettoyé par DOMPurify, image de l'écran de chargement gardée en mémoire), `setMaintBanner` (`#maintBanner`) ; `render` ne fait rien sous `S.gated` ; `refreshAll` (bouton Actualiser, actualisation automatique) relance `init` pour sortir de l'écran.
+- *Sécurité* — `checkAdmin` : tables à `tableId` vide dans `_grist_Tables` (cachées par les règles d'accès) et `W_Composition` invisible → pas d'administration.
 
-## [0.9.5.10] — Liens vers les vues natives, pour les administrateurs — 2026-11-08
+## [0.9.5] — Code découpé, actualisation automatique, écran de chargement, avertissements comme dans Grist — 2026-11-03 → 2026-11-09
 
-### Administrateurs
-- *Nouveau* — **Vues natives** en bas de chaque page : un lien vers chaque page Grist qui contient les vues affichées (titres des vues en infobulle). Visible des seuls administrateurs, masqué à l'impression. Adresse : celle du menu des pages, sinon celle du document.
-- *Amélioré* — `index.html` contient le pied de page : à déposer avec les scripts.
-
-### Développeurs
-- *Nouveau* — `renderNativeLinks` (appelée par `render`), `#nativeLinks` ; `S.docUrl` (adresse du document lue avec le jeton d'accès).
-
-## [0.9.5.9] — Écran de chargement — 2026-11-07
+Regroupe les livraisons 0.9.5.0 à 0.9.5.11.
 
 ### Utilisateurs
-- *Nouveau* — **Écran de chargement** à l'ouverture du widget et quand Grist le recharge : image (GIF animé possible), titre et texte réglés par l'administrateur, étape en cours (« Lecture des données : 7 / 12 », « Mise en forme : … ») et barre de progression. Il n'apparaît que si le chargement dure plus de 0,4 s, et reste alors au moins 0,8 s, sans clignoter.
+- *Nouveau* — **Actualisation automatique** : une modification faite ailleurs (autre table, vue native, autre utilisateur) apparaît d'elle-même après quelques secondes ; rien ne bouge pendant une saisie.
+- *Nouveau* — **Écran de chargement** à l'ouverture et quand Grist recharge le widget : image (GIF animé possible), titre, texte, étape en cours et barre de progression ; seulement si le chargement dépasse 0,4 s.
+- *Nouveau* — **Booléens en interrupteur** quand la colonne est réglée ainsi dans Grist.
+- *Nouveau* — **Avertissements en bas à droite**, comme dans Grist, pour une modification, un ajout ou une suppression refusés, avec le commentaire de la règle d'accès quand Grist le transmet.
+- *Corrigé* — **Navigation dans le widget** : après un rechargement par Grist (modification des droits…), le widget reste sur la page où l'on était.
+- *Corrigé* — **Menu** : un lien « si accès à <table> » apparaît dès la première ligne créée dans cette table, sans recharger.
+- *Corrigé* — **Impression** : un tableau trop large pour la place de son bloc prend toute la largeur au lieu de déborder sur le bloc voisin.
 
 ### Administrateurs
-- *Nouveau* — Section **Message d'accueil → Écran de chargement** : image (GIF, PNG, JPEG ou WebP, 300 Ko au plus, enregistrée dans `_Navigation`), titre, texte, bouton **Aperçu**.
-- *Amélioré* — `index.html` contient l'écran de chargement : à déposer avec les scripts.
+- *Nouveau* — **Fichiers** : le script est découpé en `ux-widget.js` (cœur), `ux-carte.js` (cartes, chargé seulement sur une page qui en contient) et `ux-config.js` (configuration, chargé à l'ouverture de ⚙). Les cinq fichiers sont à déposer ensemble.
+- *Nouveau* — **4. Affichage → Actualisation automatique** : 10 s à 2 min (20 s par défaut) ou désactivée. `connect-src` de `index.html` autorise `grist.numerique.gouv.fr`, `grist.toutatice.fr`, `grist.ac-rennes.fr` et `*.getgrist.com` ; une autre instance doit y être ajoutée.
+- *Nouveau* — **Message d'accueil → Écran de chargement** : image (300 Ko au plus, enregistrée dans `_Navigation`), titre, texte, aperçu.
+- *Nouveau* — Case **Seulement si la page a d'autres données** (encadré Affichage d'une vue) : un bloc vide n'apparaît que si un autre bloc de la page a des lignes.
+- *Nouveau* — **Vues natives** : en bas de chaque page, pour les administrateurs, liens vers les pages Grist qui contiennent les vues affichées.
+- *Amélioré* — **Menu des pages** : un cadre numéroté par lien (visibilité sur la ligne du libellé), tables de la liste *si accès à…* par ordre alphabétique.
+- *Amélioré* — Console du navigateur : la ligne « page … calculée » liste les blocs qui ont des lignes.
+- *Retiré* — Mode **Disposition** à la souris (☰ → Disposition) : la disposition se règle dans ⚙.
 
 ### Développeurs
-- *Nouveau* — `#splash` (statique dans `index.html`, affiché par une animation CSS retardée de 0,4 s) ; `splashFill`, `splashStep`, `splashHide` (au moins 0,8 s d'affichage, fondu, garde-fou à 60 s, aussi en cas d'erreur ou de choix de configuration) ; `splashPreview` ; `prefetch(cfg, onStep)` pour la progression ; `nav.splash` (`img` en `data:image/…;base64`, `title`, `text`), copie par document en `localStorage` (`uxwg_splash_<doc>`).
-- *Amélioré* — `init` demande l'identifiant du document dès le départ, en parallèle des autres lectures.
-
-## [0.9.5.8] — Interrupteurs, page conservée après un rechargement par Grist — 2026-11-05
-
-### Utilisateurs
-- *Nouveau* — **Booléens affichés en interrupteur** quand la colonne est réglée ainsi dans Grist (« Interrupteur » / Switch) ; sinon, la coche habituelle. Un clic sur la valeur la bascule toujours, si le bloc est modifiable.
-- *Corrigé* — **Navigation dans le widget** : après une modification qui pousse Grist à recharger le widget (par exemple dans la table des utilisateurs utilisée par les règles d'accès), le widget revient sur la page où l'on était, et non plus sur la page d'accueil.
-
-### Développeurs
-- *Nouveau* — `htmlOf` : `<span class="sw">` pour un `Bool` dont `widgetOptions.widget` vaut `Switch` (couleurs gardées à l'impression).
-- *Nouveau* — `pageKey` : page affichée (mode « Changer de page dans le widget ») gardée en `sessionStorage` par `switchConfig`, reprise par `init` si elle est encore lisible ; la page d'accueil ne s'impose qu'à l'ouverture de l'onglet.
-
-## [0.9.5.7] — Menu des pages : un cadre par lien, tables par ordre alphabétique — 2026-11-05
-
-### Administrateurs
-- *Amélioré* — Configuration, **Menu des pages** : chaque lien est encadré et numéroté. 1re ligne : libellé, aperçu de l'icône, visibilité (*visible : tous* / *si accès à…*) et flèches ↑ ↓ ✕ ; 2e ligne : page, configuration, infobulle, code de l'icône. La visibilité ne peut plus être prise pour celle du lien voisin.
-- *Amélioré* — Liste *si accès à…* : tables par ordre alphabétique.
-
-## [0.9.5.6] — Diagnostic des blocs qui ont des données — 2026-11-05
-
-### Administrateurs
-- *Amélioré* — **Console du navigateur** : la ligne « [UX widget] page … calculée » liste les blocs qui ont des lignes, avec leur nombre (« blocs avec des lignes : Historique (5) ; … »). Elle explique pourquoi un bloc réglé « Seulement si la page a d'autres données » reste affiché. Les listes de sélection n'entrent pas dans ce compte.
-
-### Développeurs
-- *Amélioré* — Retrait des blocs `.needothers` déplacé avant le message de diagnostic, qui les compte parmi les « vides masqués ».
-
-## [0.9.5.5] — Bloc vide affiché seulement si la page a d'autres données — 2026-11-05
-
-### Administrateurs
-- *Nouveau* — Encadré **Affichage** de chaque vue : case **Seulement si la page a d'autres données**. Un bloc sans ligne (par exemple un tableau de saisie, qui reste affiché vide pour proposer « + Ajouter une ligne ») n'apparaît que si au moins un autre bloc de la page a des données.
-
-### Développeurs
-- *Nouveau* — Option `needOthers` : `render` compte les blocs qui ont des lignes (`withData`) ; sans aucun, les blocs vides marqués `.needothers` sont retirés avant l'affichage (et signalés dans le diagnostic de la console).
-
-## [0.9.5.4] — Impression : tableau trop large pour sa place — 2026-11-05
-
-### Utilisateurs
-- *Corrigé* — **Impression d'une page** : un tableau plus large que la place de son bloc (beaucoup de colonnes, bloc de 2/3 par exemple) débordait sur le bloc voisin, qui s'imprimait par-dessus. Le bloc prend désormais toute la largeur de la page, et le bloc voisin passe en dessous.
-
-### Développeurs
-- *Corrigé* — `markPrintBig` : classe `printwide` quand un `.tbl-wrap` (ou `.cartes`) défile horizontalement ou dépasse la largeur du bloc sur papier (277 mm × largeur / 6) ; à l'impression, `.block.printwide` en `display: block`, largeur entière.
-
-## [0.9.5.3] — Menu : condition « si accès à » relue après une saisie — 2026-11-04
-
-### Utilisateurs
-- *Corrigé* — **Menu des pages** : un lien réglé sur « si accès à <table> » apparaît dès que l'utilisateur crée sa première ligne dans cette table (et disparaît si la table redevient vide pour lui), sans recharger le widget. Il ne réapparaissait qu'à la réouverture du document quand on naviguait dans le widget.
-
-### Développeurs
-- *Corrigé* — `S.navAccess` vidé par `docActions` et `refreshAll` (bouton Actualiser, actualisation automatique) : la condition est relue au rendu suivant du menu.
-
-## [0.9.5.2] — Actualisation automatique — 2026-11-03
-
-### Utilisateurs
-- *Nouveau* — **Actualisation automatique** : une modification faite ailleurs (autre table, vue native de Grist, autre utilisateur) apparaît d'elle-même après quelques secondes, sans cliquer sur ⟳ Actualiser. La position de défilement est gardée ; rien ne bouge pendant une saisie.
-
-### Administrateurs
-- *Nouveau* — Configuration, **4. Affichage → Actualisation automatique** : toutes les 10 s à 2 minutes (20 s par défaut) ou désactivée ; commun à toutes les pages.
-- *Sécurité* — `index.html` : `connect-src` autorise les instances Grist `grist.numerique.gouv.fr`, `grist.toutatice.fr`, `grist.ac-rennes.fr` et `*.getgrist.com` (lecture de l'état du document). Une autre instance doit y être ajoutée, sinon l'actualisation automatique reste inactive (message dans la console).
-
-### Développeurs
-- *Nouveau* — `liveStart` / `liveCheck` / `docState` : `GET <baseUrl>/states?auth=<jeton>` (jeton de `getAccessToken({ readOnly: true })`, renouvelé avant expiration), comparaison du dernier état (`n:h`), `refreshAll(true)` silencieux si changement ; pas de vérification si l'onglet est caché, pendant `S.editing` ou avec la configuration ouverte ; vérification au retour sur l'onglet (`visibilitychange`) ; arrêt après 3 échecs consécutifs.
-- *Nouveau* — `docActions` remplace les appels directs à `applyUserActions` : une modification faite par le widget ne déclenche pas de second rendu.
-- *Nouveau* — Option `nav.refresh` (secondes : 0, 10, 20, 30, 60, 120 ; absente = 20).
-
-## [0.9.5.1] — Mode Disposition à la souris retiré — 2026-11-03
-
-### Administrateurs
-- *Retiré* — **☰ → Disposition** (déplacer et redimensionner les blocs à la souris). La disposition se règle dans le panneau ⚙ : flèches ↑ ↓, largeur, colonne et hauteur en lignes de chaque vue, avec l'aperçu en haut du panneau. Les dispositions déjà enregistrées ne changent pas.
-
-### Développeurs
-- *Retiré* — `enterLayout`, `exitLayout`, `layoutRowsCss`, glisser-déposer et poignée de redimensionnement (`.lyr`), `S.layoutMode`, bouton `#btnLayout` et barre `#lybar` d'`index.html`, styles `.grid.layout` (environ 200 lignes de script, 80 de styles).
-
-## [0.9.5.0] — Script découpé en trois fichiers, chargés à la demande — 2026-11-03
-
-Palier 0.9.5 ; les livraisons 0.9.4.0 à 0.9.4.27 sont regroupées dans « 0.9.4 » ci-dessous.
-
-### Utilisateurs
-- *Amélioré* — **Ouverture des pages sans carte** : le code des cartes (environ 1 550 lignes) n'est plus chargé ni analysé ; celui de la configuration (environ 1 300 lignes) ne l'est qu'à l'ouverture de ⚙. Aucun changement visible.
-
-### Administrateurs
-- *Nouveau* — Deux fichiers à déposer à côté de `index.html` : **`ux-carte.js`** (cartes) et **`ux-config.js`** (panneau de configuration). Sans eux, les cartes et la configuration ne s'ouvrent pas (message dans la barre d'état). Rien à changer dans Grist.
-
-### Développeurs
-- *Nouveau* — `ux-widget.js` (cœur, environ 5 100 lignes) charge les autres parties par `loadPart("carte" | "config")` : balise `<script>` du même site, même `?v=` que `VERSION`, une seule fois par page ; les trois fichiers partagent l'espace global (fonctions et `const` de premier niveau). `render` attend `ux-carte.js` quand la page contient une carte ; `openConfig` charge `ux-carte.js` puis `ux-config.js`, puis appelle `openConfigPanel`.
-- *Amélioré* — Découpage sans modification du code déplacé ; dépendances vérifiées par analyse du code : le cœur n'appelle les cartes que depuis `render` et les commandes des cartes, et la configuration que par `openConfig`. CSP inchangée (`script-src 'self'`).
+- *Nouveau* — `loadPart("carte" | "config")` : scripts du même site, même `?v=`, espace global partagé ; `openConfig` → `openConfigPanel`.
+- *Nouveau* — `liveStart` / `liveCheck` / `docState` (`GET <baseUrl>/states?auth=<jeton>`), `docActions` (modifications du widget sans second rendu), `nav.refresh`.
+- *Nouveau* — `#splash` (`splashFill`, `splashStep`, `splashHide`, `splashPreview`, `nav.splash`, copie en `localStorage`), `prefetch(cfg, onStep)`.
+- *Nouveau* — `toast`, `aclMemo` (`e.details.memos`), `actionFailed` ; `renderNativeLinks`, `S.docUrl` ; `pageKey` (page gardée en `sessionStorage`) ; option `needOthers` ; classe `printwide`.
 
 ## [0.9.4] — Cartes (impression, export, zonages, regroupements, IRIS), bloc-notes, filtre libre — 2026-10-29 → 2026-11-03
 

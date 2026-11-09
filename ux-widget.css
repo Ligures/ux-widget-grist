@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.5.11).
+/* UX widget grist — feuilles de style (version 0.9.6.0).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1634,6 +1634,68 @@ dd[data-kind="sel"][data-ed] {
   width: 100%;
 }
 /* message d'accueil (0.9.3) */
+/* maintenance et accès fermé (0.9.6) */
+html.gated #pnav,
+html.gated #filters,
+html.gated #nativeLinks,
+html.gated #btnConfig,
+html.gated #btnSingle,
+html.gated #btnFold,
+html.gated #btnPrint {
+  display: none !important;
+}
+.gate {
+  grid-column: 1 / -1; /* toute la largeur de la grille des blocs */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 24px 16px;
+}
+.gate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(560px, 100%);
+  padding: 24px;
+  text-align: center;
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+.gate-ico {
+  font-size: 34px;
+  line-height: 1;
+}
+.gate-card h1 {
+  margin: 0;
+  font-size: 19px;
+  color: var(--bleu);
+}
+.gate-msg {
+  color: var(--texte2);
+  font-size: 13.5px;
+}
+.gate-fin {
+  margin: 4px 0 0;
+  font-weight: 600;
+  color: var(--texte);
+}
+#maintBanner {
+  margin: 4px 8px 6px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--jaune-bord);
+  background: var(--jaune-clair);
+  color: var(--texte);
+  font-size: 12.5px;
+}
+#maintBanner[hidden] {
+  display: none;
+}
 /* avertissements en bas à droite, comme dans Grist (0.9.5.11) */
 #toasts {
   position: fixed;

@@ -19,6 +19,7 @@ Ce guide s'adresse aux **administrateurs**, qui composent les pages. Il n'est af
    - [Graphiques : couleurs](#graphiques--couleurs)
    - [Bloc-notes](#bloc-notes)
    - [Message d'accueil](#message-daccueil)
+   - [Maintenance et accès fermé](#maintenance-et-accès-fermé)
    - [Menu de navigation](#menu-de-navigation)
    - [Apparence](#apparence)
    - [Enregistrer](#enregistrer)
@@ -215,6 +216,25 @@ Chaque personne voit le message **une fois** : à sa fermeture, le navigateur m�
 - **Aperçu** montre l'écran 4 secondes (un clic le ferme).
 
 Le navigateur de chaque personne garde une copie de l'image et des textes : dès la deuxième ouverture, ils s'affichent dès le début du chargement. À la toute première, l'écran commence sans eux et les montre dès que la configuration est lue. Sans réglage, l'écran ne montre que l'étape et la barre.
+
+### Maintenance et accès fermé
+
+Le widget lit une petite table **`W_Messages`**, à créer une fois, avec une seule ligne :
+
+| Colonne | Type | Rôle |
+|---|---|---|
+| `Maintenance` | Booléen | Cochée : les utilisateurs voient l'écran de maintenance |
+| `Message_maintenance` | Texte (Markdown possible) | Texte de l'écran de maintenance |
+| `Fin_prevue` | Date et heure (facultatif) | Affichée : « Retour prévu : vendredi 13 novembre 2026 à 20:00 » |
+| `Message_sans_acces` | Texte (Markdown possible) | Texte affiché aux personnes qui ne peuvent lire aucune page (ex. qui contacter) |
+
+**Règle d'accès** : `W_Messages` doit rester **lisible par tous**, même pendant la maintenance. Donnez-lui une règle propre (lecture pour tous, modification réservée aux propriétaires), placée **avant** la règle de maintenance.
+
+**Pendant une maintenance** : cochez `Maintenance`, écrivez le message, puis activez votre règle habituelle. Les utilisateurs voient « Maintenance en cours », le message et l'heure de retour prévue. Les administrateurs voient le site normalement, avec un bandeau jaune « Maintenance active ». À la fin, décochez `Maintenance` et retirez la règle : la page normale revient d'elle-même (Grist recharge le widget quand les droits changent, sinon l'actualisation automatique s'en charge).
+
+**Accès non ouvert** : une personne à qui le document est partagé, mais qui ne peut lire aucune page configurée (par exemple parce que son email ne figure pas dans la table des utilisateurs), voit « Accès non ouvert » et `Message_sans_acces`. Une personne à qui le document n'est pas partagé n'atteint pas le widget : Grist l'arrête avant.
+
+Sans `W_Messages`, un texte par défaut s'affiche seulement quand rien n'est lisible du tout.
 
 ### Menu de navigation
 

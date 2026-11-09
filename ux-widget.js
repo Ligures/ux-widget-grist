@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.5.11). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.0). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.5.11"; // voir CHANGELOG.md
+const VERSION = "0.9.6.0"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3410,7 +3410,7 @@ async function propagateUp(secId, rowId, depth) {
 
 // render — RENDU PRINCIPAL. Recalcule toute la page ; un rendu plus récent annule le précédent (renderSeq).
 async function render() {
-  if (!S.ready || !S.meta || S.choosing) return;
+  if (!S.ready || !S.meta || S.choosing || S.gated) return;
   fixColIds(S.cfg); // colonnes renommées dans Grist depuis l'enregistrement de la configuration
   if (S.editing) {
     S.pendingRender = true;
@@ -4448,6 +4448,14 @@ function fixColIds(cfg) {
 }
 // refreshAll — Bouton Actualiser : vide les caches et relit métadonnées, configuration et données.
 async function refreshAll(silent = false) {
+  // écran de maintenance ou d'accès fermé (0.9.6) : tout le démarrage est refait (la situation a pu changer)
+  if (S.gated) {
+    S.gated = null;
+    document.documentElement.classList.remove("gated");
+    S.cache = {};
+    S.byId = {};
+    return init();
+  }
   S.cache = {};
   S.byId = {};
   S.navAccess = {}; // conditions « si accès à » du menu : relues (0.9.5.3)
@@ -4525,6 +4533,87 @@ function liveStart() {
   }
 }
 document.addEventListener("visibilitychange", () => !document.hidden && liveCheck()); // retour sur l'onglet
+/* ---------- Maintenance et accès fermé (0.9.6) ----------
+   Table W_Messages (une ligne), laissée lisible par tous par une règle d'accès placée avant les autres :
+   Maintenance (booléen), Message_maintenance, Fin_prevue (date et heure), Message_sans_acces (Markdown).
+   - Maintenance cochée : les utilisateurs voient l'écran de maintenance ; les administrateurs voient le site, avec
+     un bandeau « Maintenance active ».
+   - Sans maintenance, un utilisateur qui ne peut lire aucune page configurée (tables techniques mises à part) voit
+     l'écran « accès non ouvert ».
+   Sans W_Messages : un texte par défaut, seulement quand rien n'est lisible du tout. */
+const MSG_TABLE = "W_Messages";
+// readMessages — Ligne de W_Messages, ou null si la table est absente ou illisible.
+async function readMessages() {
+  try {
+    if (S.meta?.visibleTables && !S.meta.visibleTables.has(MSG_TABLE)) return null;
+    const r = toRows(await grist.docApi.fetchTable(MSG_TABLE))[0];
+    if (!r) return null;
+    const txt = (v) => (typeof v === "string" ? v.trim() : "");
+    return {
+      maint: !!r.Maintenance,
+      msgMaint: txt(r.Message_maintenance),
+      fin: typeof r.Fin_prevue === "number" && r.Fin_prevue > 0 ? r.Fin_prevue : null,
+      msgNo: txt(r.Message_sans_acces),
+    };
+  } catch {
+    return null;
+  }
+}
+// noReadablePage — Vrai si l'utilisateur ne peut lire aucune page configurée (ni rien du tout, sans W_Messages).
+function noReadablePage(gate) {
+  const pages = (S.stored || []).filter((x) => !x.name.startsWith("_") && x.cfg?.blocks?.length);
+  if (pages.length) return !pages.some((x) => cfgReadable(x.name));
+  // aucune configuration lisible : W_Composition est fermée à cet utilisateur (ou le document n'est pas configuré)
+  const vis = [...(S.meta?.visibleTables || [])].filter((t) => t !== MSG_TABLE);
+  return !!gate || !vis.length;
+}
+// finText — « Retour prévu : lundi 10 novembre 2026 à 14:00 ».
+const finText = (sec) =>
+  sec
+    ? `Retour prévu : ${new Date(sec * 1000).toLocaleString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).replace(" ", " ")}`
+    : "";
+// showGate — Écran de maintenance ou d'accès fermé, à la place des pages.
+async function showGate(kind, g) {
+  splashHide();
+  S.ready = true;
+  S.gated = kind;
+  document.documentElement.classList.add("gated");
+  const maint = kind === "maint";
+  const text =
+    (maint ? g?.msgMaint : g?.msgNo) ||
+    (maint
+      ? "Le document est en cours de maintenance. Réessayez dans quelques minutes."
+      : "Votre compte n'a pas encore accès aux pages de ce document. Adressez-vous à un administrateur.");
+  let html = esc(text).replace(/\n/g, "<br>");
+  try {
+    await Promise.all([
+      window.marked ? null : loadLib(LIBS.marked, "marked"),
+      window.DOMPurify ? null : loadLib(LIBS.purify, "DOMPurify"),
+    ]);
+    html = DOMPurify.sanitize(marked.parse(text));
+  } catch {
+    /* Markdown indisponible : texte brut */
+  }
+  let img = "";
+  try {
+    const sp = JSON.parse(localStorage.getItem(splashKey()) || "null"); // image de l'écran de chargement, si gardée
+    if (sp?.img && /^data:image\/(gif|png|jpeg|webp);base64,/i.test(sp.img)) img = `<img class="spl-img" alt="" src="${esc(sp.img)}">`;
+  } catch {
+    /* rien */
+  }
+  $("#pnav").replaceChildren();
+  $("#filters").replaceChildren();
+  $("#grid").innerHTML = `<div class="gate"><div class="gate-card">${img}<div class="gate-ico" aria-hidden="true">${maint ? "🛠" : "🔒"}</div><h1>${maint ? "Maintenance en cours" : "Accès non ouvert"}</h1><div class="gate-msg mdview">${html}</div>${maint && g?.fin ? `<p class="gate-fin">${esc(finText(g.fin))}</p>` : ""}</div></div>`;
+  $("#grid").querySelectorAll(".gate-msg a[href]").forEach((a) => Object.assign(a, { target: "_blank", rel: "noopener" }));
+  status("");
+}
+// setMaintBanner — Bandeau des administrateurs pendant une maintenance (g : ligne de W_Messages, ou null).
+function setMaintBanner(g) {
+  const el = $("#maintBanner");
+  if (!el) return;
+  el.hidden = !g;
+  el.textContent = g ? `🛠 Maintenance active : les utilisateurs voient le message de maintenance${g.fin ? ` (${finText(g.fin).toLowerCase()})` : ""}. Décochez « Maintenance » dans ${MSG_TABLE} pour rouvrir.` : "";
+}
 /* Droit de configurer : contrôlé par une table témoin W_Admin, protégée par une règle d'accès.
    - seuls ceux qui en lisent au moins une ligne peuvent configurer ;
    - exception : document encore sans configuration (installation). W_Admin est alors créée au premier
@@ -4547,6 +4636,10 @@ async function checkAdmin() {
   try {
     const tables = await grist.docApi.listTables();
     if (tables.includes(ADMIN_TABLE)) return false; // table visible mais vide pour cet utilisateur
+    // tables cachées par les règles d'accès (Grist vide leur tableId) et W_Composition invisible : le document est
+    // configuré mais fermé à cet utilisateur (maintenance, accès non ouvert) — jamais un mode installation (0.9.6)
+    const hidden = [...(S.meta?.tables?.values() || [])].some((t) => !t.tableId);
+    if (hidden && !tables.includes(CFG_TABLE)) return false;
     // installation : aucune configuration enregistrée (en dehors des lignes techniques « _… »)
     const stored = tables.includes(CFG_TABLE) ? toRows(await grist.docApi.fetchTable(CFG_TABLE)) : [];
     const configured = stored.some((r) => !String(r.Nom || "").startsWith("_"));
@@ -5097,6 +5190,11 @@ async function init() {
     S.isAdmin = await checkAdmin();
     await keyP; // pour les sélections partagées
     applyTheme(S.nav.theme);
+    // maintenance et accès fermé (0.9.6) : table W_Messages, lisible par tous
+    const gate = await readMessages();
+    if (gate?.maint && !S.isAdmin) return showGate("maint", gate);
+    if (!S.isAdmin && noReadablePage(gate)) return showGate("noaccess", gate);
+    setMaintBanner(gate?.maint && S.isAdmin ? gate : null);
     $("#btnConfig").hidden = !S.isAdmin;
     $("#btnSingle").hidden = !S.isAdmin; // plein écran : réservé aux administrateurs (vue par défaut des utilisateurs)
     try {
