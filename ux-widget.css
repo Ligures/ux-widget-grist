@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.5.10).
+/* UX widget grist — feuilles de style (version 0.9.5.11).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1634,6 +1634,76 @@ dd[data-kind="sel"][data-ed] {
   width: 100%;
 }
 /* message d'accueil (0.9.3) */
+/* avertissements en bas à droite, comme dans Grist (0.9.5.11) */
+#toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(360px, calc(100vw - 32px));
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 10px 10px 12px;
+  border-radius: 6px;
+  background: #262633;
+  color: #fff;
+  font-size: 12.5px;
+  line-height: 1.45;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  animation: toastIn 0.2s ease;
+  transition: opacity 0.25s, transform 0.25s;
+}
+.toast.err {
+  border-left: 4px solid #e1000f;
+}
+.toast.info {
+  border-left: 4px solid #6a6af4;
+}
+.toast.out {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.toast-ico {
+  flex: none;
+  font-size: 15px;
+  line-height: 1.2;
+}
+.toast.err .toast-ico {
+  color: #ff8b8b;
+}
+.toast-body {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.toast-body b {
+  display: block;
+  margin-bottom: 2px;
+}
+.toast-x {
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: #bbb;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.toast-x:hover {
+  color: #fff;
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
 /* pied de page des administrateurs (0.9.5.10) : liens vers les pages natives de Grist */
 #nativeLinks {
   margin: 14px 8px 10px;
@@ -1817,6 +1887,9 @@ dd[data-kind="sel"][data-ed] {
   font-size: 13px;
 }
 @media print {
+  #toasts {
+    display: none !important;
+  }
   #nativeLinks {
     display: none !important;
   }

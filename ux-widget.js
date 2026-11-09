@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.5.10). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.5.11). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.5.10"; // voir CHANGELOG.md
+const VERSION = "0.9.5.11"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -2271,6 +2271,45 @@ function openMultiPicker(anchor, items, current, choiceOpts, onDone, onCancel) {
   draw();
   inp.focus();
 }
+/* ---------- Avertissements en bas à droite, comme dans Grist (0.9.5.11) ----------
+   Refus d'une modification : le commentaire de la règle d'accès (« memo », saisi dans les règles d'accès de Grist)
+   est affiché quand Grist le transmet avec l'erreur ; sinon un texte par défaut. */
+// toast — Message temporaire en bas à droite (kind : "err" ou "info"), fermé au clic ou après ms.
+function toast(title, text = "", kind = "err", ms = 9000) {
+  let box = $("#toasts");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "toasts";
+    box.setAttribute("aria-live", "assertive");
+    document.body.appendChild(box);
+  }
+  const t = document.createElement("div");
+  t.className = `toast ${kind}`;
+  t.setAttribute("role", kind === "err" ? "alert" : "status");
+  t.innerHTML = `<span class="toast-ico" aria-hidden="true">${kind === "err" ? "⚠" : "ℹ"}</span><div class="toast-body"><b>${esc(title)}</b>${text ? `<div>${esc(text)}</div>` : ""}</div><button type="button" class="toast-x" aria-label="Fermer">✕</button>`;
+  const close = () => {
+    t.classList.add("out");
+    setTimeout(() => t.remove(), 250);
+  };
+  t.querySelector(".toast-x").addEventListener("click", close);
+  box.appendChild(t);
+  while (box.children.length > 3) box.firstElementChild.remove(); // trois messages au plus
+  setTimeout(close, ms);
+}
+// aclMemo — Commentaire(s) de la règle d'accès qui a refusé l'action, si Grist les transmet avec l'erreur.
+function aclMemo(e) {
+  const d = e?.details || e?.cause?.details || {};
+  const memos = [d.memos, d.memo, e?.memos].flat().filter((x) => typeof x === "string" && x.trim());
+  return [...new Set(memos.map((x) => x.trim()))].join(" — ");
+}
+const isDenied = (e) => /access|acc[eè]s|permission|denied|blocked|refus/i.test(String(e?.message || e));
+// actionFailed — Avertissement après un refus ou un échec d'enregistrement (what : « Modification », « Ajout »…).
+function actionFailed(e, what, detail = "") {
+  const memo = aclMemo(e);
+  if (isDenied(e) || memo)
+    toast(`${what} refusée`.replace("Ajout refusée", "Ajout refusé"), memo || `Vos droits ne permettent pas cette action${detail ? ` (${detail})` : ""}.`);
+  else toast(`${what} impossible`, String(e?.message || e));
+}
 // saveValue — Enregistre une valeur dans Grist (UpdateRecord). Les règles d'accès de Grist peuvent refuser.
 async function saveValue(el, tableId, rid, col, value) {
   el.classList.add("saving");
@@ -2285,13 +2324,8 @@ async function saveValue(el, tableId, rid, col, value) {
       }
     status("");
   } catch (e) {
-    const msg = String(e?.message || e);
-    status(
-      /access|acc[eè]s|permission|denied|blocked/i.test(msg)
-        ? `Modification refusée par les règles d'accès (${col.label || col.colId})`
-        : `Enregistrement impossible : ${msg}`,
-      true,
-    );
+    status("");
+    actionFailed(e, "Modification", `colonne « ${col.label || col.colId} »`);
   }
   S.pendingRender = false;
   scheduleRender();
@@ -2850,7 +2884,7 @@ async function renderMarkdown(info, rows, body, selId, b) {
           delete S.cache[info.tableId];
           delete S.byId[info.tableId];
         })
-        .catch((e) => status(`Enregistrement impossible : ${e?.message || e}`, true))
+        .catch((e) => actionFailed(e, "Modification", "bloc-notes"))
         .finally(() => scheduleRender());
     };
     body.querySelector(".mdnote-save").addEventListener("click", save);
@@ -3740,13 +3774,7 @@ async function addRow(secId, btn) {
       }
     }
   } catch (e) {
-    const msg = String(e?.message || e);
-    status(
-      /access|acc[eè]s|permission|denied|blocked/i.test(msg)
-        ? "Ajout refusé par les règles d'accès"
-        : `Ajout impossible : ${msg}`,
-      true,
-    );
+    actionFailed(e, "Ajout", "ajout de ligne");
     btn.disabled = false;
   }
 }
@@ -3783,13 +3811,7 @@ async function delRow(secId, btn) {
     scheduleRender();
     setTimeout(() => status("Ligne supprimée"), 400);
   } catch (e) {
-    const msg = String(e?.message || e);
-    status(
-      /access|acc[eè]s|permission|denied|blocked/i.test(msg)
-        ? "Suppression refusée par les règles d'accès"
-        : `Suppression impossible : ${msg}`,
-      true,
-    );
+    actionFailed(e, "Suppression", "suppression de ligne");
     btn.disabled = false;
   }
 }

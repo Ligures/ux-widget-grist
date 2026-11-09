@@ -26,6 +26,17 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.5.11] — Avertissements en bas à droite, avec le commentaire des règles d'accès — 2026-11-09
+
+### Utilisateurs
+- *Amélioré* — **Modification, ajout ou suppression refusés** : l'avertissement s'affiche en bas à droite, comme dans Grist (fermeture au clic sur ✕, ou seul au bout de 9 s), au lieu de la ligne d'état en haut. Il reprend le commentaire de la règle d'accès qui a bloqué l'action, quand Grist le transmet ; sinon un texte générique.
+
+### Administrateurs
+- *Amélioré* — Le commentaire saisi sur une règle d'accès (bulle 💬 dans les règles de Grist) devient le texte de l'avertissement dans le widget.
+
+### Développeurs
+- *Nouveau* — `toast(titre, texte, kind, ms)` (`#toasts`, trois messages au plus, masqué à l'impression) ; `aclMemo` lit `e.details.memos` (erreur `ACL_DENY` de Grist) ; `actionFailed` remplace les messages d'erreur de `saveValue`, `addRow`, `delRow` et du bloc-notes.
+
 ## [0.9.5.10] — Liens vers les vues natives, pour les administrateurs — 2026-11-08
 
 ### Administrateurs
