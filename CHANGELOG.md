@@ -26,6 +26,15 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.1] — Légende des graphiques avancés dans les blocs étroits — 2026-11-10
+
+### Utilisateurs
+- *Corrigé* — **Graphiques avancés dans un bloc étroit** : la légende ne recouvre plus les barres. Sous 480 px de large, elle passe au-dessus du graphique, en petits caractères ; jusqu'à 700 px, elle reste à droite en plus petit. Elle s'adapte quand la largeur change (plein écran, fenêtre).
+- *Corrigé* — **Impression** : les graphiques avancés sont redessinés à la largeur de leur bloc sur le papier (ils gardaient leur largeur d'écran et se coupaient à droite), avec la légende adaptée à cette largeur.
+
+### Développeurs
+- *Nouveau* — `legendKind(largeur)` (« top » < 480 px, « small » < 700 px, « normal ») et `legendFor(légende du graphique, kind)` ; `ResizeObserver` du graphique : `Plotly.relayout` de la légende au changement de palier ; `beforeprint` / `afterprint` : `width` et légende selon la largeur du bloc sur A4 paysage (`--span`, `printwide`), puis retour à `autosize`.
+
 ## [0.9.6.0] — Maintenance et accès fermé — 2026-11-09
 
 Palier 0.9.6 ; les livraisons 0.9.5.0 à 0.9.5.11 sont regroupées dans « 0.9.5 » ci-dessous.

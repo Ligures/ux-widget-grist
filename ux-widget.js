@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.0). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.1). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.0"; // voir CHANGELOG.md
+const VERSION = "0.9.6.1"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3335,7 +3335,6 @@ async function renderAdvChart(info, rows, body, jobs) {
     ax.zerolinecolor ??= cssVar("--bord") || "#ddd";
     ax.linecolor ??= cssVar("--bord") || "#ddd";
   }
-  if (layout.legend) layout.legend = { ...layout.legend, bgcolor: layout.legend.bgcolor ?? "rgba(0,0,0,0)" };
   delete layout.width;
   // camemberts : quand les parts portent déjà leur nom, la légende fait double emploi et recouvrait les étiquettes
   // placées à l'extérieur : elle est masquée (sauf si la légende est explicitement demandée dans le graphique)
@@ -3345,14 +3344,77 @@ async function renderAdvChart(info, rows, body, jobs) {
   body.innerHTML = '<div class="plot-box"></div>';
   const el = body.querySelector(".plot-box");
   delete layout.height;
+  // légende adaptée à la largeur (0.9.6.1) : au-dessus du graphique et en petit dans un bloc étroit, pour ne plus
+  // recouvrir les barres ; celle du graphique sinon. Recalculée au redimensionnement et pour l'impression.
+  el._uxLegend = layout.legend ? { ...layout.legend } : {};
+  el._uxLegendKind = legendKind(body.clientWidth || 600);
+  layout.legend = legendFor(el._uxLegend, el._uxLegendKind);
   jobs.push(async () => {
     await loadPlotly();
     new ResizeObserver(() => {
-      if (el.isConnected && el.data) Plotly.Plots.resize(el);
+      if (!el.isConnected || !el.data || el._uxPrinting) return;
+      const k = legendKind(el.clientWidth);
+      if (k !== el._uxLegendKind) {
+        el._uxLegendKind = k;
+        Plotly.relayout(el, { legend: legendFor(el._uxLegend, k) });
+      } else Plotly.Plots.resize(el);
     }).observe(el);
     await Plotly.newPlot(el, data, layout, { displayModeBar: false, responsive: true });
   });
 }
+// legendKind — Présentation de la légende selon la largeur du graphique : "top" (étroit), "small", "normal".
+const legendKind = (w) => (w < 480 ? "top" : w < 700 ? "small" : "normal");
+// legendFor — Légende Plotly : celle du graphique (base), rendue plus petite ou placée au-dessus selon kind.
+function legendFor(base, kind) {
+  const font = { ...(base.font || {}) };
+  if (kind === "normal") return { ...base, bgcolor: base.bgcolor ?? "rgba(0,0,0,0)" };
+  font.size = kind === "top" ? 9 : 10;
+  if (kind === "small") return { ...base, font, bgcolor: base.bgcolor ?? "rgba(0,0,0,0)" };
+  return {
+    ...base,
+    font,
+    orientation: "h",
+    x: 0,
+    xanchor: "left",
+    y: 1.02,
+    yanchor: "bottom",
+    bgcolor: "rgba(0,0,0,0)",
+    itemwidth: 30,
+    tracegroupgap: 0,
+  };
+}
+// légende des graphiques avancés à l'impression : selon la largeur du bloc sur le papier (A4 paysage, 277 mm utiles)
+window.addEventListener("beforeprint", () => {
+  if (!window.Plotly) return;
+  const pageW = (277 * 96) / 25.4;
+  document.querySelectorAll(".plot-box").forEach((el) => {
+    if (!el.data || !el._uxLegend) return;
+    const blk = el.closest(".block");
+    const span = Number(getComputedStyle(blk || el).getPropertyValue("--span")) || 6;
+    const wide = blk?.classList.contains("printwide");
+    el._uxPrinting = true;
+    // largeur du bloc sur le papier : le graphique y est redessiné (sinon il garde sa largeur d'écran et se coupe)
+    const w = Math.round(wide ? pageW - 20 : (pageW * span) / 6 - 24);
+    try {
+      Plotly.relayout(el, { width: w, legend: legendFor(el._uxLegend, legendKind(w)) });
+    } catch {
+      /* graphique non dessiné */
+    }
+  });
+});
+window.addEventListener("afterprint", () => {
+  if (!window.Plotly) return;
+  document.querySelectorAll(".plot-box").forEach((el) => {
+    if (!el._uxPrinting) return;
+    el._uxPrinting = false;
+    el._uxLegendKind = legendKind(el.clientWidth);
+    try {
+      Plotly.relayout(el, { width: null, autosize: true, legend: legendFor(el._uxLegend, el._uxLegendKind) }).then(() => Plotly.Plots.resize(el));
+    } catch {
+      /* graphique retiré */
+    }
+  });
+});
 
 /* Sélection des widgets natifs de la page (ex. listes déroulantes en cascade).
    Grist transmet au widget la ligne choisie dans le widget qu'il « sélectionne par » ;
