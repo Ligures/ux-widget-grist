@@ -26,6 +26,19 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.8] — Sous-titre des blocs, nouvel en-tête de pliage — 2026-11-11
+
+### Utilisateurs
+- *Nouveau* — **Sous-titre** : un bloc peut afficher une ligne de texte en gris sous son titre.
+- *Amélioré* — **Pliage des blocs** : chevron à droite de l'en-tête (vers le bas : replié, vers le haut : déplié) ; un clic n'importe où sur l'en-tête plie ou déplie le bloc, et plus seulement quand il est replié. Un bloc replié a un fond coloré, plus de liseré à gauche ; un bloc déplié n'a aucun effet. Le titre est en bleu dans les deux cas, l'icône du type de vue reste affichée sur les blocs repliés. La mention « Afficher ▸ » disparaît.
+
+### Administrateurs
+- *Nouveau* — ⚙ → réglages du bloc → **Affichage** : champ **Sous-titre**.
+
+### Développeurs
+- *Nouveau* — `b.sub` ; en-tête `.bh` : `.foldico`, `.bht` (`h2` + `.bsub`), …, `.max`, `.tog` (chevron SVG `TOG_ICON`, tourné par CSS selon `.collapsed`, plus de texte ▸/▾ à mettre à jour).
+- *Amélioré* — clic sur `.block:not(.maxed) > .bh` hors commandes (`button, input, select, label, a, .qf, .qfs, .search, .secinfo`) → bascule du pliage.
+
 ## [0.9.6.7] — Pages du menu en boutons de la barre d'outils — 2026-11-11
 
 ### Utilisateurs

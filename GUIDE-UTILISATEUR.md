@@ -51,7 +51,7 @@ Chaque vue s'affiche dans un **bloc**, avec un titre et quelques commandes :
 
 | Élément | Rôle |
 |---|---|
-| ▾ / ▸ devant le titre | Replier ou déplier le bloc (un clic sur le titre fonctionne aussi) |
+| Chevron ⌃ / ⌄ à droite de l'en-tête | Replier ou déplier le bloc ; un clic n'importe où sur l'en-tête (titre, sous-titre) fonctionne aussi. Un bloc replié a un fond coloré et l'icône de son type de vue |
 | **Filtre rapide** (`Tous \| Public \| Privé`) | Ne montrer que les lignes d'une valeur (voir ci-dessous) |
 | Liste « Filtrer sur… » | Filtre libre : choisir une colonne, puis une de ses valeurs (si l'administrateur l'a prévu) |
 | Champ « Filtrer… » | Recherche dans les lignes du bloc (grands tableaux et listes de fiches) |

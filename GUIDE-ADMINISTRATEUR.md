@@ -56,13 +56,14 @@ Le bouton **⚙ Configurer** ouvre un panneau sur la moitié droite de l'écran 
    - Les flèches ↑ ↓ règlent l'ordre ; ✕ retire le bloc (la vue Grist n'est pas supprimée).
    - Les réglages de chaque bloc sont **repliés par défaut** : restent visibles son titre, ses flèches, sa largeur, sa colonne et son nombre de lignes. ▸ / ▾ déplie ou replie un bloc ; **Tout déplier** et **Tout replier** agissent sur tous. Une vue que l'on vient d'ajouter s'ouvre dépliée.
    - Déplié, un bloc présente ses réglages dans des encadrés titrés, toujours dans le même ordre :
-     - **Affichage**, commun à toutes les vues : taille, état à l'ouverture, « À la ligne », « Figer à l'écran », « Seulement si la page a d'autres données », « Liste de sélection » ;
+     - **Affichage**, commun à toutes les vues : sous-titre, taille, état à l'ouverture, « À la ligne », « Figer à l'écran », « Seulement si la page a d'autres données », « Liste de sélection » ;
      - puis les encadrés propres au type de vue, s'il y a lieu : **Tableau**, **Fiches**, **Édition**, **Liste de sélection**, **Couleurs du graphique**, **Filtre rapide**, et pour les cartes **Points**, **Contour des points**, **QPV**, **Zones sous les points**.
    - Chaque bloc a ses réglages :
 
 | Réglage | Effet |
 |---|---|
 | Largeur, Colonne, Hauteur (lignes) | Place du bloc dans la grille de 6 colonnes |
+| Sous-titre | Ligne de texte en gris sous le titre du bloc (facultatif) |
 | Taille | Hauteur maximale ; au-delà, le contenu défile dans le bloc |
 | À l'ouverture | Bloc replié ou déplié à l'arrivée sur la page |
 | À la ligne | Le bloc commence une nouvelle rangée |

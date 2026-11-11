@@ -1,4 +1,4 @@
-/* UX widget grist — panneau de configuration ⚙ (version 0.9.6.7). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — panneau de configuration ⚙ (version 0.9.6.8). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé à la demande par ux-widget.js (openConfig → loadPart("config")), après ux-carte.js dont il utilise les
    réglages de zonage. Partage l'espace global de ux-widget.js, qui doit être chargé avant.
    Contenu : brouillon de configuration (draft), réglages par bloc (renderConfig), couleurs des cartes et des
@@ -319,6 +319,10 @@ ${
 </div><div class="ctrls more">
 <div class="mgrps">
   ${G("Affichage", "Réglages communs à toutes les vues : taille, état à l'ouverture, placement dans la page.", [(L(
+    "Sous-titre",
+    `<input type="text" data-bsub="${i}" value="${esc(b.sub || "")}" placeholder="facultatif" style="width:220px">`,
+    "Ligne de texte affichée en gris sous le titre du bloc (facultatif).",
+  )),(L(
     "Taille",
     sel(
       "height",
@@ -994,6 +998,10 @@ $("#panel").addEventListener("change", (ev) => {
     draft.blocks[Number(t.dataset.pcd)].pieColorDefault = v ? hexColor(v) || v : "";
     if (v && !hexColor(v)) status(`« ${v} » n'est pas un code couleur hexadécimal (ex. #c8c8c8)`, true);
     renderConfig();
+    return;
+  }
+  if (t.dataset.bsub) {
+    draft.blocks[Number(t.dataset.bsub)].sub = t.value.trim() || undefined;
     return;
   }
   if (t.dataset.sync) {

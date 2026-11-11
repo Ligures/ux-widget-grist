@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.6.7).
+/* UX widget grist — feuilles de style (version 0.9.6.8).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -778,6 +778,7 @@ button {
 .bh h2 {
   font-size: 13.5px;
   font-weight: 700;
+  color: var(--bleu);
   margin: 0;
   flex: 1;
   min-width: 0;
@@ -786,13 +787,33 @@ button {
   text-overflow: ellipsis;
 }
 /* description de la vue (ⓘ après le titre) : le titre ne prend plus toute la place, l'icône le suit */
-.bh h2:has(+ .secinfo) {
+.bh .bht {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.bh .bht:has(+ .secinfo) {
   flex: 0 1 auto;
+}
+/* sous-titre facultatif sous le titre (0.9.6.8) */
+.bh .bsub {
+  font-size: 12px;
+  color: var(--muet);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .bh .secinfo {
   margin: 0 auto 0 4px;
   font-size: 12px;
   flex: none;
+}
+.bh {
+  cursor: pointer; /* un clic sur l'en-tête plie ou déplie le bloc */
+}
+.block.maxed > .bh {
+  cursor: auto;
 }
 .bh .tog {
   border: 0;
@@ -801,10 +822,29 @@ button {
   padding: 0;
   width: 26px;
   height: 26px;
-  font-size: 20px;
   line-height: 1;
   border-radius: 4px;
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bh .tog svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: rotate(180deg); /* déplié : chevron vers le haut */
+  transition: transform 0.15s;
+}
+.block.collapsed .bh .tog svg {
+  transform: none; /* replié : chevron vers le bas */
+}
+.block.maxed .bh .tog {
+  display: none;
 }
 .bh .tog:hover {
   background: var(--bleu-hover);
@@ -992,13 +1032,12 @@ button {
 .grid.masonry > .block.collapsed {
   align-self: start !important;
 } /* un bloc replié libère sa hauteur */
+/* replié : fond coloré ; déplié : aucun effet (0.9.6.8) */
 .block.collapsed .bh {
   border-bottom: 0;
   background: var(--bleu-hover);
-  border-left: 3px solid var(--bleu);
   border-radius: 3px;
-  cursor: pointer;
-  padding-left: 6px;
+  padding: 4px 6px;
 }
 .block.collapsed .bh:hover {
   background: var(--bleu-clair);
@@ -1013,14 +1052,6 @@ button {
 }
 .block.collapsed .foldico .kico {
   margin-right: 0;
-}
-.block.collapsed .bh h2 {
-  color: var(--bleu);
-}
-.block.collapsed .bh .badge::after {
-  content: "Afficher ▸";
-  font-size: 11px;
-  color: var(--bleu);
 }
 .block.empty .bb {
   color: var(--muet);

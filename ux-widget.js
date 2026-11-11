@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.7). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.8). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -42,7 +42,7 @@
      { name, title, blocks: [...], flux, dense, masonry, hideEmptyFields,
  hideEmptyBlocks, tableMaxHeight, chartHeight, dataTable }
      Bloc (blocks[i]) : id = identifiant de la vue Grist (_grist_Views_section)
- Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold, needOthers
+ Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold, needOthers, sub (sous-titre)
  Tableaux/fiches : colWidths, rowCount, asList, cardW, editable, addable, showEmpty, hideLabels
  Texte (Markdown) : mdSize, mdEdit (modifiable depuis la page), mdNote (aspect bloc-notes)
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.7"; // voir CHANGELOG.md
+const VERSION = "0.9.6.8"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -1187,6 +1187,7 @@ function qfHtmlOne(b, info, allRows, k) {
       .join("")}</span></span>`;
 }
 
+const TOG_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'; // chevron (tourné quand déplié)
 // blockShell — (0.9.4.27 : icône du type de vue devant le titre d'un bloc replié) Crée le cadre d'un bloc : en-tête (titre, compteur, recherche, export, plein écran) et zone de contenu vide.
 function blockShell(b, info, badge, extraHead = "", extraRow = "") {
   if (S.collapsed[b.id] === undefined) S.collapsed[b.id] = initialFold(b, info);
@@ -1200,9 +1201,12 @@ function blockShell(b, info, badge, extraHead = "", extraRow = "") {
     (b.sticky && S.maxed !== b.id ? " sticky" : "");
   el.setAttribute("style", blockStyle(b, info.kind));
   el.dataset.sec = b.id;
-  el.innerHTML = `<div class="bh"><button class="tog" data-tog="${b.id}" title="Replier / déplier">${S.collapsed[b.id] ? "▸" : "▾"}</button>
-    <span class="foldico">${kindIcon(info.sec, b)}</span><h2>${esc(info.title)}</h2>${secDescMark(info)}${extraHead}<span class="badge"></span>
-    <button class="max" data-max="${b.id}" title="${S.maxed === b.id ? "Réduire (Échap)" : "Plein écran"}">${S.maxed === b.id ? "✕" : "⛶"}</button></div>${extraRow ? `<div class="bh2">${extraRow}</div>` : ""}<div class="bb"></div>`;
+  // en-tête (0.9.6.8) : titre et sous-titre facultatif (b.sub) à gauche, chevron de pliage à droite ; un clic sur
+  //   l'en-tête plie ou déplie le bloc
+  const sub = String(b.sub || "").trim();
+  el.innerHTML = `<div class="bh">
+    <span class="foldico">${kindIcon(info.sec, b)}</span><div class="bht"><h2>${esc(info.title)}</h2>${sub ? `<div class="bsub">${esc(sub)}</div>` : ""}</div>${secDescMark(info)}${extraHead}<span class="badge"></span>
+    <button class="max" data-max="${b.id}" title="${S.maxed === b.id ? "Réduire (Échap)" : "Plein écran"}">${S.maxed === b.id ? "✕" : "⛶"}</button><button class="tog" data-tog="${b.id}" title="Replier / déplier" aria-label="Replier / déplier">${TOG_ICON}</button></div>${extraRow ? `<div class="bh2">${extraRow}</div>` : ""}<div class="bb"></div>`;
   return el;
 }
 
@@ -4021,16 +4025,16 @@ $("#grid").addEventListener("click", (ev) => {
     setMaxed(S.maxed === Number(mx.dataset.max) ? null : Number(mx.dataset.max));
     return;
   }
-  // bloc replié : un clic n'importe où sur son en-tête le déplie
-  const ch = ev.target.closest(".block.collapsed > .bh");
+  // un clic n'importe où sur l'en-tête d'un bloc le plie ou le déplie (0.9.6.8 ; avant : seulement replié),
+  //   sauf sur ses commandes (filtres, recherche, liens) et en plein écran
+  const ch = ev.target.closest(".block:not(.maxed) > .bh");
   const tog =
     ev.target.closest("[data-tog]") ||
-    (ch && !ev.target.closest("button, input, a") ? ch.querySelector("[data-tog]") : null);
+    (ch && !ev.target.closest("button, input, select, label, a, .qf, .qfs, .search, .secinfo") ? ch.querySelector("[data-tog]") : null);
   if (tog) {
     const id = Number(tog.dataset.tog);
     S.collapsed[id] = !S.collapsed[id];
     tog.closest(".block").classList.toggle("collapsed", S.collapsed[id]);
-    tog.textContent = S.collapsed[id] ? "▸" : "▾";
     updateFoldButton();
     if (!S.collapsed[id]) lockColumns(tog.closest(".block"));
     return;
@@ -4507,8 +4511,6 @@ $("#btnFold").addEventListener("click", () => {
   for (const b of S.cfg.blocks) S.collapsed[b.id] = !any;
   document.querySelectorAll("#grid .block").forEach((el) => {
     el.classList.toggle("collapsed", !any);
-    const t = el.querySelector(".tog");
-    if (t) t.textContent = any ? "▾" : "▸";
   });
   if (any) lockColumns($("#grid"));
   updateFoldButton();
