@@ -38,7 +38,7 @@ En haut de la page, de gauche à droite et de haut en bas :
   | Tout replier / Tout déplier | Replie ou déplie tous les blocs d'un coup |
   | Imprimer | Imprime la page ou l'enregistre en PDF |
   | Aide | Ouvre ce guide ; l'onglet Nouveautés présente les évolutions du widget |
-  | Plein écran | Réservé aux administrateurs |
+  | Plein écran | Ouvre la page dans un nouvel onglet, sans les menus de Grist |
 
   Une pastille rouge sur ☰ signale une nouvelle version du widget : elle disparaît après lecture de l'onglet Nouveautés.
 - **Listes de sélection** (par exemple Département, Circonscription, École) : choisir une valeur filtre les blocs de la page.

@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.6.5).
+/* UX widget grist — feuilles de style (version 0.9.6.7).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -259,6 +259,16 @@ button {
   #pnav .pnav-tog {
     display: inline-flex;
     max-width: calc(100vw - var(--barw, 60px) - 32px); /* même rangée que le menu ☰ (sans titre) */
+    /* zone de toucher confortable (0.9.6.6) : 44 px de haut, jamais réduite à l'icône */
+    min-width: min(160px, 60vw);
+    height: 44px;
+    padding: 0 14px;
+    font-size: 14px;
+    gap: 8px;
+  }
+  #pnav .pnav-tog svg {
+    width: 20px;
+    height: 20px;
   }
   /* sans titre : bouton des pages à gauche et menu ☰ à droite, sur la même rangée */
   #top.notitle:has(#pnav .pnav-tog) .bar {
@@ -428,6 +438,8 @@ button {
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
+}
+.tb svg:not(.nico) {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -2092,11 +2104,18 @@ html.gated #btnPrint {
 .tb {
   position: relative;
 }
-#forms {
+#forms,
+#navbtns {
   display: contents;
 }
-a.tb.formlink {
+a.tb.formlink,
+a.tb.navbtn {
   text-decoration: none;
+}
+/* pages du menu en boutons (0.9.6.7) : icône SVG de l'administrateur (dessin d'origine, couleur du bouton) */
+a.tb.navbtn.cur {
+  background: var(--bleu-hover);
+  border-color: var(--bleu-bord);
 }
 .tb .newdot {
   position: absolute;

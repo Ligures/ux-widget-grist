@@ -26,6 +26,27 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.7] — Pages du menu en boutons de la barre d'outils — 2026-11-11
+
+### Utilisateurs
+- *Nouveau* — **Pages en boutons** : certaines pages du menu peuvent apparaître comme un bouton à icône dans la barre d'outils, à côté de l'Aide (sur smartphone, dans le menu ☰, avec leur libellé). Le bouton de la page affichée est surligné.
+
+### Administrateurs
+- *Nouveau* — ⚙ → **Menu des pages** : case **Bouton** sur chaque lien. Le lien quitte le menu des pages et devient un bouton portant son icône SVG (icône de pages par défaut) ; l'infobulle est celle du lien, sinon son libellé. La visibilité suit la règle du lien (*tous* ou *si accès à* une table) : seuls les utilisateurs autorisés voient le bouton.
+
+### Développeurs
+- *Nouveau* — `item.inBar` ; `renderNav` place ces liens dans `#navbtns` (dans `#tbMenu`, avant `#btnHelp`, `display: contents`) en `a.tb.navbtn[data-gocfg]` ; clic géré par l'écouteur de `#tbMenu` (`switchConfig`).
+- *Amélioré* — `.tb svg:not(.nico)` : les icônes nettoyées par `safeSvg` gardent leur dessin (remplissage ou trait) dans les boutons.
+
+## [0.9.6.6] — Plein écran pour tous, bouton des pages agrandi sur smartphone — 2026-11-11
+
+### Utilisateurs
+- *Amélioré* — **Plein écran** (ouvrir la page dans un nouvel onglet, sans les menus de Grist) : proposé à tous, et plus seulement aux administrateurs.
+- *Corrigé* — **Smartphone** : le bouton de changement de page est plus grand (44 px de haut, 160 px de large au moins), avec le nom de la page ; il pouvait se réduire à une petite icône difficile à toucher.
+
+### Développeurs
+- *Amélioré* — `#btnSingle` toujours affiché (sauf écran de maintenance) ; `#pnav .pnav-tog` sur écran étroit : `min-width`, `height: 44px`.
+
 ## [0.9.6.5] — Liens hypertextes — 2026-11-11
 
 ### Utilisateurs

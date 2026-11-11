@@ -1,4 +1,4 @@
-/* UX widget grist — panneau de configuration ⚙ (version 0.9.6.5). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — panneau de configuration ⚙ (version 0.9.6.7). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé à la demande par ux-widget.js (openConfig → loadPart("config")), après ux-carte.js dont il utilise les
    réglages de zonage. Partage l'espace global de ux-widget.js, qui doit être chargé avant.
    Contenu : brouillon de configuration (draft), réglages par bloc (renderConfig), couleurs des cartes et des
@@ -869,6 +869,7 @@ ${
         `<option value="${esc(t.tableId)}" ${t.tableId === x.needTable ? "selected" : ""}>si accès à ${esc(t.tableId)}</option>`,
     )
     .join("")}</select>
+  <label style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap" title="Retire ce lien du menu des pages et le place en bouton (son icône) dans la barre d'outils, à côté de l'Aide ; sur smartphone, dans le menu ☰. Visibilité : la même règle que ci-contre."><input type="checkbox" data-mnbar="${i}" ${x.inBar ? "checked" : ""}> Bouton</label>
   <span class="mnsp"></span>
   <button class="icon-btn" data-mnup="${i}" title="Monter">↑</button><button class="icon-btn" data-mndown="${i}" title="Descendre">↓</button><button class="icon-btn" data-mnrm="${i}" title="Retirer du menu">✕</button></div>
   <div class="mnl">
@@ -1017,6 +1018,10 @@ $("#panel").addEventListener("change", (ev) => {
     draftNav.items[Number(t.dataset.mnicon)].icon = v || undefined;
     const pv = t.previousElementSibling;
     if (pv) pv.innerHTML = icoPreview(v);
+    return;
+  }
+  if (t.dataset.mnbar) {
+    draftNav.items[Number(t.dataset.mnbar)].inBar = t.checked || undefined;
     return;
   }
   if (t.dataset.mntip) {

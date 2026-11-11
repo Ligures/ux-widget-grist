@@ -243,7 +243,7 @@ Section **5. Navigation entre pages**. Ce réglage est commun à toutes les conf
 - **Adresse du document** : adresse de base du document Grist (https).
 - **Changer de page dans le widget** : le menu bascule de configuration sans recharger Grist. Recommandé quand toutes les configurations sont réunies dans une seule page Grist.
 - **Page d'accueil** : page affichée à l'ouverture, pour tous les utilisateurs. Avec « Changer de page dans le widget », elle s'impose à l'ouverture de l'onglet (si Grist recharge ensuite le widget, par exemple après une modification de droits, il revient sur la page où l'on était) ; sinon, elle sert quand le widget n'a pas de configuration enregistrée. Si le widget ne sait pas quelle configuration afficher, seul un administrateur se voit poser la question, et sa réponse devient la page d'accueil ; les utilisateurs ne sont jamais interrogés.
-- **Ouvrir les pages en mode page unique** : les liens ouvrent Grist sans ses menus. Proposé seulement sans « Changer de page dans le widget » ; sinon, utiliser le bouton **Plein écran** de la barre d'outils, réservé aux administrateurs.
+- **Ouvrir les pages en mode page unique** : les liens ouvrent Grist sans ses menus. Proposé seulement sans « Changer de page dans le widget » ; sinon, utiliser le bouton **Plein écran** de la barre d'outils, ouvert à tous.
 - **Pour chaque lien** :
   - icône (facultative), affichée devant le lien et en tête de la page elle-même (devant son titre s'il est affiché, sinon avant les listes de sélection, et dans l'en-tête imprimé) : code d'un fichier SVG collé dans le champ « Icône (code SVG) » — ouvrir le fichier .svg dans un éditeur de texte (Bloc-notes…), tout sélectionner, copier. L'aperçu s'affiche à gauche du champ (« ? » rouge : code non reconnu). L'icône prend la couleur du lien ; scripts, styles et images externes sont retirés ;
   - libellé ;
@@ -251,6 +251,7 @@ Section **5. Navigation entre pages**. Ce réglage est commun à toutes les conf
   - page Grist, ou **— ce widget —** ;
   - configuration à afficher ;
   - visibilité : *tous*, ou *si accès à* une table (le lien n'apparaît qu'aux personnes qui voient au moins une ligne de cette table, quelle qu'en soit la raison : table vide, règles d'accès par ligne, lignes pas encore créées). Exemple : une page de suivi qui n'apparaît qu'une fois que l'utilisateur a créé sa première ligne dans une autre page ; le lien apparaît dès cette création, sans recharger le widget.
+  - **Bouton** (facultatif) : le lien quitte le menu des pages et devient un bouton de la barre d'outils, à côté de l'Aide (sur smartphone, dans le menu ☰). Il porte l'icône du lien (icône de pages si aucune) et, au survol, l'infobulle ou le libellé. La visibilité ci-dessus s'applique : pratique pour des pages d'administration ou de paramétrage réservées à certains utilisateurs.
 
 ### Apparence
 

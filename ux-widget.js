@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.5). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.7). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.5"; // voir CHANGELOG.md
+const VERSION = "0.9.6.7"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -1427,6 +1427,11 @@ $("#btnMenu").addEventListener("click", (e) => {
 });
 $("#tbMenu").addEventListener("click", (e) => {
   if (e.target.closest(".tb")) menuToggle(false); // une action choisie ferme le menu
+  const a = e.target.closest("#navbtns [data-gocfg]"); // page du menu placée en bouton (0.9.6.7)
+  if (a && !(e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1)) {
+    e.preventDefault();
+    switchConfig(a.dataset.gocfg);
+  }
 });
 document.addEventListener("mousedown", (e) => {
   if (!$("#tbMenu").hidden && !e.target.closest("#tbMenu, #btnMenu")) menuToggle(false);
@@ -4998,6 +5003,7 @@ function renderNav() {
     n = S.nav || { items: [] };
   if (!n.items.length || (!n.url && !n.inWidget)) {
     nav.replaceChildren();
+    $("#navbtns").replaceChildren();
     return;
   }
   // condition explicite : la page n'apparaît que si l'utilisateur voit au moins une ligne de la table choisie
@@ -5018,6 +5024,8 @@ function renderNav() {
       ),
     ).then(() => renderNav());
   }
+  const DEF_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h9l3 3v12H8zM4 7v14h12" /></svg>'; // icône par défaut d'un bouton
+  const bar = []; // liens « bouton de la barre d'outils » (0.9.6.7) : mêmes règles de visibilité que le menu
   const links = n.items
     .map((x) =>
       x.viewId && S.meta?.pageOfView.has(x.viewId) ? x : { ...x, viewId: hostView(x.cfg) || x.viewId, host: true },
@@ -5033,8 +5041,15 @@ function renderNav() {
       const url = page && safeBase(n.url) ? pageUrl(safeBase(n.url), x.viewId, n.singlePage && !n.inWidget) : ""; // lien Grist (clic du milieu)
       // infobulle : celle saisie dans la configuration, sinon l'adresse (sauf navigation dans le widget)
       const tip = String(x.tip || "").trim() || (n.inWidget ? "" : url);
+      const lab = esc(x.label || (page ? S.meta.pageOfView.get(x.viewId) : x.cfg) || "Page");
+      if (x.inBar) {
+        bar.push(`<a class="tb navbtn${x.cfg && x.cfg === S.cfg.name ? " cur" : ""}" href="${url ? esc(url) : "#"}" target="_top" role="menuitem"${n.inWidget && x.cfg ? ` data-gocfg="${esc(x.cfg)}"` : ""} data-tip="${tip ? esc(tip) : lab}" aria-label="${lab}">${safeSvg(x.icon) || DEF_ICO}<span class="lbl">${lab}</span></a>`);
+        return "";
+      }
       return `<a href="${url ? esc(url) : "#"}"${tip ? ` title="${esc(tip)}"` : ""} target="_top"${n.inWidget && x.cfg ? ` data-gocfg="${esc(x.cfg)}"` : ""} class="${x.cfg && x.cfg === S.cfg.name ? "cur" : ""}">${safeSvg(x.icon)}<span class="nlab">${esc(x.label || (page ? S.meta.pageOfView.get(x.viewId) : x.cfg) || "Page")}</span></a>`;
-    });
+    })
+    .filter(Boolean);
+  $("#navbtns").innerHTML = bar.join("");
   if (!links.length) {
     nav.replaceChildren();
     return;
@@ -5300,7 +5315,7 @@ async function init() {
     if (!S.isAdmin && noReadablePage(gate)) return showGate("noaccess", gate);
     setMaintBanner(gate?.maint && S.isAdmin ? gate : null);
     $("#btnConfig").hidden = !S.isAdmin;
-    $("#btnSingle").hidden = !S.isAdmin; // plein écran : réservé aux administrateurs (vue par défaut des utilisateurs)
+    $("#btnSingle").hidden = false; // plein écran : ouvert à tous depuis 0.9.6.6
     try {
       S.ext.tableId = await grist.selectedTable.getTableId();
     } catch {
