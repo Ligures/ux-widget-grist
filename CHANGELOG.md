@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.4] — Style de ligne réglé sur les données brutes — 2026-11-11
+
+### Utilisateurs
+- *Corrigé* — **Tableaux : style de ligne** (« Aspect de la ligne » dans Grist) : quand les règles sont portées par la table, dans ses données brutes, et que Grist les applique à toutes ses vues, le widget les applique aussi. Il ne lisait que les règles posées sur la vue elle-même.
+
+### Développeurs
+- *Nouveau* — `rowRulesOf(info)` : règles de la vue, sinon de la section des données brutes (`_grist_Tables.rawViewSectionRef`, `rules` et `options.rulesOptions`) ; `diagRowRules` indique l'origine (« vue » ou « données brutes »), ou l'absence de règle.
+
 ## [0.9.6.3] — Diagnostic du style de ligne — 2026-11-11
 
 ### Administrateurs

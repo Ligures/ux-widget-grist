@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.3). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.4). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.3"; // voir CHANGELOG.md
+const VERSION = "0.9.6.4"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -646,14 +646,27 @@ function styleCss(st, bgOnly = false) {
   if (deco) c += `text-decoration:${deco};`;
   return c;
 }
+// rowRulesOf — Règles de style de ligne d'une vue (0.9.6.4) : celles de la vue, sinon celles de la vue des données
+//   brutes de la table (rawViewSectionRef), que Grist applique aussi aux autres vues ; [règles, options, origine].
+function rowRulesOf(info) {
+  const own = refList(info.sec.rules);
+  if (own.length) return [own, info.opts.rulesOptions || [], "vue"];
+  const t = S.meta.tables.get(info.sec.tableRef);
+  const raw = t?.rawViewSectionRef && t.rawViewSectionRef !== info.secId ? S.meta.sections.get(t.rawViewSectionRef) : null;
+  const rr = raw ? refList(raw.rules) : [];
+  if (rr.length) return [rr, parseJSON(raw.options).rulesOptions || [], "données brutes"];
+  return [[], [], ""];
+}
 // diagRowRules — Diagnostic (0.9.6.3), une fois par vue : règles de style de ligne trouvées et colonnes de calcul.
 const rowRulesSeen = new Set();
 function diagRowRules(info, rows) {
   if (rowRulesSeen.has(info.secId)) return;
   rowRulesSeen.add(info.secId);
-  const rules = refList(info.sec.rules),
-    ro = info.opts.rulesOptions;
-  if (!rules.length && !ro) return;
+  const [rules, ro, from] = rowRulesOf(info);
+  if (!rules.length) {
+    console.info(`[UX widget] style de ligne « ${info.title} » : aucune règle (ni sur la vue n°${info.secId}, ni sur les données brutes de ${info.tableId})`);
+    return;
+  }
   const parts = rules.map((id, i) => {
     const rc = S.meta.cols.get(id);
     if (!rc) return `règle ${i + 1} : colonne n°${id} introuvable dans la structure`;
@@ -661,14 +674,14 @@ function diagRowRules(info, rows) {
     const yes = has ? rows.filter((r) => r[rc.colId] === true).length : 0;
     return `règle ${i + 1} : ${rc.colId} ${has ? `vraie pour ${yes} ligne(s) sur ${rows.length}` : "absente des données lues"} ; style ${JSON.stringify(ro?.[i] || {})}`;
   });
-  console.info(`[UX widget] style de ligne « ${info.title} » : ${rules.length} règle(s) ; ${parts.join(" | ") || `options ${JSON.stringify(ro)} sans règle`}`);
+  console.info(`[UX widget] style de ligne « ${info.title} » : ${rules.length} règle(s) (${from}) ; ${parts.join(" | ")}`);
 }
 // rowStyle — Style de toute une ligne (règles conditionnelles de ligne de la vue).
 function rowStyle(info, row) {
   const base = {}; // style de ligne par défaut, s'il est défini sur le widget
   for (const k of STYLE_KEYS) if (styleSet(k, info.opts[k])) base[k] = info.opts[k];
-  const rules = refList(info.sec.rules);
-  return rules.length ? applyRules(base, rules, info.opts.rulesOptions || [], row) : base;
+  const [rules, ro] = rowRulesOf(info);
+  return rules.length ? applyRules(base, rules, ro, row) : base;
 }
 // cellStyle — Style d'une cellule : style du champ, de la colonne, puis règles conditionnelles.
 function cellStyle(f, row, rowSt = {}) {
