@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.1). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.2). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.1"; // voir CHANGELOG.md
+const VERSION = "0.9.6.2"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -617,6 +617,9 @@ function refList(v) {
   return Array.isArray(a) ? (a[0] === "L" ? a.slice(1) : a) : [];
 }
 const STYLE_KEYS = ["textColor", "fillColor", "fontBold", "fontItalic", "fontUnderline", "fontStrikethrough"];
+// styleSet — Valeur de style à appliquer ? (0.9.6.2) Gras, italique, souligné, barré : seulement s'ils sont actifs.
+//   Grist enregistre « false » quand on décoche ; ce « false » ne doit pas annuler le style de la ligne.
+const styleSet = (k, v) => v !== undefined && v !== null && v !== "" && (!k.startsWith("font") || v === true);
 // applyRules — Applique les règles de mise en forme conditionnelle de Grist (colonne ou ligne) à une ligne donnée.
 function applyRules(base, rules, rulesOptions, row) {
   const st = { ...base };
@@ -625,7 +628,7 @@ function applyRules(base, rules, rulesOptions, row) {
     const rc = S.meta.cols.get(rules[i]);
     if (rc && row[rc.colId] === true)
       for (const k of STYLE_KEYS)
-        if (rulesOptions?.[i]?.[k] !== undefined && rulesOptions[i][k] !== null) st[k] = rulesOptions[i][k];
+        if (styleSet(k, rulesOptions?.[i]?.[k])) st[k] = rulesOptions[i][k];
   }
   return st;
 }
@@ -646,8 +649,7 @@ function styleCss(st, bgOnly = false) {
 // rowStyle — Style de toute une ligne (règles conditionnelles de ligne de la vue).
 function rowStyle(info, row) {
   const base = {}; // style de ligne par défaut, s'il est défini sur le widget
-  for (const k of STYLE_KEYS)
-    if (info.opts[k] !== undefined && info.opts[k] !== null && info.opts[k] !== "") base[k] = info.opts[k];
+  for (const k of STYLE_KEYS) if (styleSet(k, info.opts[k])) base[k] = info.opts[k];
   const rules = refList(info.sec.rules);
   return rules.length ? applyRules(base, rules, info.opts.rulesOptions || [], row) : base;
 }
@@ -655,7 +657,7 @@ function rowStyle(info, row) {
 function cellStyle(f, row, rowSt = {}) {
   const o = f.opts;
   const base = { ...rowSt };
-  for (const k of STYLE_KEYS) if (o[k] !== undefined && o[k] !== null && o[k] !== "") base[k] = o[k];
+  for (const k of STYLE_KEYS) if (styleSet(k, o[k])) base[k] = o[k];
   const fRules = refList(f.field?.rules);
   const rules = fRules.length ? fRules : refList(f.col.rules);
   let css = styleCss(applyRules(base, rules, o.rulesOptions || [], row));

@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.2] — Mise en forme conditionnelle de ligne — 2026-11-11
+
+### Utilisateurs
+- *Corrigé* — **Tableaux : style de ligne** (règle de mise en forme « Style de ligne » de Grist, par exemple une ligne en italique) : il s'affiche aussi dans les colonnes dont le gras, l'italique, le souligné ou le barré avaient été cochés puis décochés dans Grist. Le « non » enregistré par Grist annulait le style de la ligne ; il ne compte plus.
+
+### Développeurs
+- *Corrigé* — `styleSet` : pour `fontBold`, `fontItalic`, `fontUnderline`, `fontStrikethrough`, seule la valeur `true` s'applique (style de la vue, de la colonne, du champ et des règles) ; `false` laisse le style hérité de la ligne.
+
 ## [0.9.6.1] — Légende des graphiques avancés dans les blocs étroits — 2026-11-10
 
 ### Utilisateurs
