@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.2). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.3). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.2"; // voir CHANGELOG.md
+const VERSION = "0.9.6.3"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -645,6 +645,23 @@ function styleCss(st, bgOnly = false) {
     .join(" ");
   if (deco) c += `text-decoration:${deco};`;
   return c;
+}
+// diagRowRules — Diagnostic (0.9.6.3), une fois par vue : règles de style de ligne trouvées et colonnes de calcul.
+const rowRulesSeen = new Set();
+function diagRowRules(info, rows) {
+  if (rowRulesSeen.has(info.secId)) return;
+  rowRulesSeen.add(info.secId);
+  const rules = refList(info.sec.rules),
+    ro = info.opts.rulesOptions;
+  if (!rules.length && !ro) return;
+  const parts = rules.map((id, i) => {
+    const rc = S.meta.cols.get(id);
+    if (!rc) return `règle ${i + 1} : colonne n°${id} introuvable dans la structure`;
+    const has = rows.length && rc.colId in rows[0];
+    const yes = has ? rows.filter((r) => r[rc.colId] === true).length : 0;
+    return `règle ${i + 1} : ${rc.colId} ${has ? `vraie pour ${yes} ligne(s) sur ${rows.length}` : "absente des données lues"} ; style ${JSON.stringify(ro?.[i] || {})}`;
+  });
+  console.info(`[UX widget] style de ligne « ${info.title} » : ${rules.length} règle(s) ; ${parts.join(" | ") || `options ${JSON.stringify(ro)} sans règle`}`);
 }
 // rowStyle — Style de toute une ligne (règles conditionnelles de ligne de la vue).
 function rowStyle(info, row) {
@@ -1695,6 +1712,7 @@ function renderTable(info, rows, body, selId, jobs = []) {
       );
     })
     .join("");
+  diagRowRules(info, rows);
   const line = (r) => {
     const txt = info.fields
       .map((f) => textOf(f.col, f.opts, r[f.colId]))

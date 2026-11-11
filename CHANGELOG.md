@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.3] — Diagnostic du style de ligne — 2026-11-11
+
+### Administrateurs
+- *Nouveau* — **Console du navigateur** : pour chaque tableau qui a un « Style de ligne », une ligne « [UX widget] style de ligne « … » » indique les règles trouvées, si leur colonne de calcul est lue et pour combien de lignes elle est vraie, et le style de chaque règle. Elle sert à comprendre pourquoi un style visible dans Grist ne l'est pas dans le widget.
+
+### Développeurs
+- *Nouveau* — `diagRowRules(info, rows)`, appelée par `renderTable`, une fois par vue.
+
 ## [0.9.6.2] — Mise en forme conditionnelle de ligne — 2026-11-11
 
 ### Utilisateurs
