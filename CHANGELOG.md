@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.5] — Liens hypertextes — 2026-11-11
+
+### Utilisateurs
+- *Corrigé* — **Colonnes « Lien hypertexte »** (texte réglé en HyperLink dans Grist) : la valeur « texte adresse » s'affiche comme dans Grist, un lien cliquable portant le texte, ouvert dans un nouvel onglet, au lieu du texte brut. Une valeur réduite à l'adresse affiche l'adresse.
+
+### Développeurs
+- *Nouveau* — `htmlOf` : `widget === "HyperLink"`, adresse = dernier mot (`https://`, `http://`, `mailto:`, `tel:` seulement ; sinon texte simple), `a.hlink` (`rel="noopener noreferrer"`).
+
 ## [0.9.6.4] — Style de ligne réglé sur les données brutes — 2026-11-11
 
 ### Utilisateurs

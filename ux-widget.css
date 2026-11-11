@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.6.4).
+/* UX widget grist — feuilles de style (version 0.9.6.5).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1634,6 +1634,13 @@ dd[data-kind="sel"][data-ed] {
   width: 100%;
 }
 /* message d'accueil (0.9.3) */
+/* lien hypertexte (colonne « HyperLink » de Grist) */
+a.hlink {
+  color: var(--bleu);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
 /* maintenance et accès fermé (0.9.6) */
 html.gated #pnav,
 html.gated #filters,

@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.4). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.5). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.4"; // voir CHANGELOG.md
+const VERSION = "0.9.6.5"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -538,6 +538,15 @@ function htmlOf(f, v) {
       : v
         ? '<span class="ok">✔</span>'
         : '<span class="ko">—</span>';
+  // lien hypertexte (widget « HyperLink » de Grist, 0.9.6.5) : « texte adresse », l'adresse étant le dernier mot
+  if (f.opts?.widget === "HyperLink" && typeof v === "string" && v.trim()) {
+    const s = v.trim(),
+      i = s.lastIndexOf(" "),
+      url = i < 0 ? s : s.slice(i + 1),
+      label = i < 0 ? s : s.slice(0, i).trim() || url;
+    if (/^(https?:\/\/|mailto:|tel:)/i.test(url))
+      return `<a class="hlink" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="${esc(url)}">${esc(label)}</a>`;
+  }
   if (t === "Choice" && !isEmpty(v)) return chip(v, f.opts);
   if (t === "ChoiceList" && isList(v))
     return v
