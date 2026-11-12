@@ -21,6 +21,10 @@
         · de chaque école vers son collège de secteur.
       Résultats ajoutés dans la table des distances (Depart, Arrivee, Km, Minutes, Statut, Calcule_le).
       Seules les paires absentes de cette table sont demandées au service : relancer ne recalcule rien.
+      Lignes conservées (0.9.6.9) : seules les K distances les plus courtes de chaque école (réglage « Lignes
+      conservées par école ») et son collège sont écrites ; les autres trajets calculés servent au calcul exact, en
+      mémoire. Une école qui a déjà ses lignes dans la table est passée. Le bouton « Nettoyer la table » supprime
+      les lignes en trop d'un calcul précédent, sans aucun appel au service.
 
       Méthode exacte : la distance routière n'est jamais inférieure à la distance à vol d'oiseau. Les écoles
       candidates sont prises par distance à vol d'oiseau croissante ; on s'arrête dès que la N-ième meilleure
@@ -167,6 +171,7 @@
         <div>
           <label>Table des distances <input type="text" data-opt="dst" /></label>
           <label>Écoles les plus proches <input type="number" min="1" max="20" data-opt="n" /></label>
+          <label title="Nombre de distances enregistrées par école : les plus courtes par la route, en plus du trajet vers le collège de secteur. Les autres trajets calculés servent au calcul puis ne sont pas enregistrés. Le bouton « Nettoyer la table » applique ce nombre aux lignes déjà présentes.">Lignes conservées par école <input type="number" min="1" max="50" data-opt="keep" /></label>
           <label
             title="IGN seulement. Metric-OSRM calcule toujours l'itinéraire le plus rapide."
             >Itinéraire (IGN)
@@ -207,6 +212,7 @@
           <label>Écoles à traiter <input type="number" id="limit" min="0" value="0" title="0 : toutes. Un petit nombre permet de faire un essai." /></label>
           <button id="go" disabled>Calculer les distances manquantes</button>
           <button id="stop" class="sec" disabled>Arrêter</button>
+          <button id="clean" class="sec" hidden title="Supprime de la table des distances les lignes au-delà du nombre conservé par école (les plus longues), en gardant toujours le trajet vers le collège. Aucun appel au service.">Nettoyer la table</button>
           <button id="test" class="sec" title="Un appel au service choisi entre la première école et ses voisines, avec la réponse brute. Pour l'IGN, essaie aussi les adresses et moteurs connus et retient celle qui répond.">Tester un appel</button>
         </p>
         <progress id="prog" value="0" max="1" hidden></progress>
@@ -235,8 +241,9 @@
         filtCol: "Statut_public_prive", // restriction facultative (vide : toutes les écoles)
         filtVal: "Public",
         uai: "UAI", // si la colonne du collège contient un code UAI (texte) plutôt qu'une référence
-        dst: "DATA_DISTANCES",
+        dst: "REF_DISTANCES",
         n: 5,
+        keep: 5, // lignes conservées par école (hors collège)
         optim: "fastest",
         maxc: 40,
         resource: "bdtopo-valhalla", // bdtopo-osrm retiré par l'IGN (404) en 2026
@@ -332,14 +339,52 @@
         const dst = await grist.docApi.fetchTable(opt.dst);
         for (const c of ["Depart", "Arrivee", "Km", "Minutes", "Statut", "Calcule_le"]) colKey(dst, c);
         const known = new Map(),
-          failIds = [];
+          failIds = [],
+          dstRows = [];
         for (const r of rows(dst)) {
+          if (!(r.Km === null || r.Km === undefined || r.Km === "")) dstRows.push({ id: r.id, dep: r.Depart, arr: r.Arrivee, km: Number(r.Km), min: Number(r.Minutes) || 0 });
           // échecs : jamais conservés (une panne du service ne doit pas bloquer la paire) — ceux d'une version
           // précédente sont supprimés au lancement
           if (r.Km === null || r.Km === undefined || r.Km === "") failIds.push(r.id);
           else known.set(`${r.Depart}>${r.Arrivee}`, { km: r.Km, min: r.Minutes ?? null, statut: r.Statut });
         }
-        return { etabs, ecoles, byId, geo, known, failIds, sansGeo: etabs.filter((e) => e.ecole && !geo(e)).length };
+        // lignes par école de départ, hors collège : sert à passer les écoles déjà traitées et au nettoyage
+        const byDep = new Map();
+        for (const r of dstRows) {
+          if (r.arr === byId.get(r.dep)?.college) continue;
+          if (!byDep.has(r.dep)) byDep.set(r.dep, []);
+          byDep.get(r.dep).push(r);
+        }
+        const K = keepN();
+        const extra = [];
+        for (const list of byDep.values()) if (list.length > K) extra.push(...list.sort((x, y) => x.km - y.km || x.min - y.min).slice(K).map((r) => r.id));
+        return { etabs, ecoles, byId, geo, known, failIds, byDep, extra, mine: new Map(), sansGeo: etabs.filter((e) => e.ecole && !geo(e)).length };
+      }
+      const keepN = () => Math.max(1, Number(opt.keep) || 5);
+      // remember — résultat gardé en mémoire (et rangé par école de départ, pour choisir ensuite les K plus courts)
+      function remember(a, b, r) {
+        D.known.set(`${a.id}>${b.id}`, r);
+        if (!D.mine.has(a.id)) D.mine.set(a.id, new Map());
+        D.mine.get(a.id).set(b.id, r);
+      }
+      // keepBest — fin d'une école : écrit ses K distances les plus courtes et le collège (seulement les nouvelles)
+      async function keepBest(e) {
+        const m = D.mine.get(e.id);
+        D.mine.delete(e.id);
+        if (!m) return;
+        const ok = [...m].filter(([b, r]) => r.km !== null && b !== e.college).sort((x, y) => x[1].km - y[1].km || (x[1].min ?? 0) - (y[1].min ?? 0));
+        const old = (D.byDep.get(e.id) || []).length; // lignes déjà dans la table pour cette école
+        const want = new Set(ok.slice(0, Math.max(0, keepN() - old)).map(([b]) => b));
+        if (m.get(e.college)?.km != null) want.add(e.college);
+        for (const [b, r] of m) if (r.fresh && want.has(b)) pending.push({ a: e.id, b, km: r.km, min: r.min, statut: r.statut });
+        if (pending.length >= FLUSH) await flush();
+      }
+      // complete — école déjà traitée lors d'un calcul précédent (ses lignes conservées sont dans la table)
+      function complete(e) {
+        const n = (D.byDep.get(e.id) || []).length;
+        if (n < Math.min(keepN(), Math.max(1, Number(opt.n) || 5))) return false;
+        const col = D.byId.get(e.college);
+        return !D.geo(col) || D.known.has(`${e.id}>${e.college}`);
       }
       async function prepare() {
         if (running) return;
@@ -357,9 +402,15 @@
                 }</span>`;
           $("#info").innerHTML =
             `<b>${D.ecoles.length}</b> écoles${String(opt.filtCol || "").trim() ? ` (${esc(opt.filtCol)} contenant « ${esc(opt.filtVal)} »)` : ""} localisées${D.sansGeo ? ` (${D.sansGeo} sans coordonnées, ignorées)` : ""}, ` +
-            `dont <b>${withCol}</b> avec un collège de secteur localisé · <b>${D.known.size}</b> distances déjà dans ${opt.dst}.${colNote}`;
+            `dont <b>${withCol}</b> avec un collège de secteur localisé · <b>${D.known.size}</b> distances déjà dans ${opt.dst}` +
+            (D.extra.length ? ` · <span class="err"><b>${D.extra.length}</b> lignes au-delà de ${keepN()} par école</span>` : "") +
+            `.${colNote}`;
           $("#info").className = "muet";
           $("#go").disabled = !D.ecoles.length;
+          $("#clean").hidden = !D.extra.length;
+          $("#clean").disabled = false;
+          $("#clean").textContent = "Nettoyer la table";
+          delete $("#clean").dataset.armed;
         } catch (e) {
           $("#info").textContent = `Impossible de lire les tables : ${e.message || e}. Vérifiez les paramètres et l'accès complet du widget.`;
           $("#info").className = "err";
@@ -496,10 +547,7 @@
         } else if (rev && rev.km === null) {
           r = rev; // échec dans l'autre sens pendant ce calcul : pas de nouvel appel
         } else return store(a, b, await fetchOne(a, b));
-        D.known.set(k, r);
-        if (r.km === null) return r;
-        pending.push({ a: a.id, b: b.id, km: r.km, min: r.min, statut: r.statut });
-        if (pending.length >= FLUSH) await flush();
+        remember(a, b, r.km === null ? r : { ...r, fresh: true });
         return r;
       }
       // store — enregistre un résultat obtenu du service
@@ -509,10 +557,9 @@
           S.lastWhy = r.why;
           if (S.fail <= 3) log(`Échec #${a.id} → #${b.id} : ${r.why}`, "err");
         } else S.fetched++;
-        D.known.set(`${a.id}>${b.id}`, r);
-        if (r.km === null) return r; // échec : gardé en mémoire pour ce calcul, jamais écrit dans la table
-        pending.push({ a: a.id, b: b.id, km: r.km, min: r.min, statut: r.statut });
-        if (pending.length >= FLUSH) await flush();
+        // échec : gardé en mémoire pour ce calcul, jamais écrit ; réussite : écrite à la fin de l'école si elle
+        //   fait partie des K plus courtes (keepBest)
+        remember(a, b, r.km === null ? r : { ...r, fresh: true });
         return r;
       }
       // needsCall — paire ni connue, ni recopiable depuis le sens inverse
@@ -560,8 +607,14 @@
           }
           S.total = todo.length;
           stats();
+          let skipped = 0;
           for (const e of todo) {
             if (stopAsked) break;
+            if (complete(e)) {
+              skipped++;
+              S.done++;
+              continue;
+            }
             // candidates par distance à vol d'oiseau croissante
             const cands = D.ecoles
               .filter((o) => o.id !== e.id)
@@ -602,12 +655,15 @@
             // collège de secteur
             const col = D.byId.get(e.college);
             if (!stopAsked && D.geo(col)) await route(e, col);
+            if (stopAsked) D.mine.delete(e.id); // école interrompue : rien d'écrit, elle sera reprise
+            else await keepBest(e);
             S.done++;
             stats();
             // le service refuse tout : inutile de continuer
             if (S.done >= 3 && !S.fetched && !S.copied && S.fail) throw new Error(`aucun itinéraire obtenu pour les ${S.done} premières écoles. Dernière réponse du service : ${S.lastWhy}`);
           }
           await flush();
+          if (skipped) log(`${skipped} écoles déjà traitées lors d'un calcul précédent : passées.`);
           log(
             stopAsked ? `Arrêté. ${S.written} lignes ajoutées ; relancez pour continuer.` : `Terminé : ${S.written} lignes ajoutées.`,
             stopAsked ? "" : "ok",
@@ -624,6 +680,30 @@
         prepare();
       }
       $("#go").addEventListener("click", run);
+      // Nettoyer — 1er clic : annonce le nombre de lignes ; 2e clic : les supprime (par lots de 500)
+      $("#clean").addEventListener("click", async () => {
+        const btn = $("#clean");
+        if (running || !D?.extra.length) return;
+        if (!btn.dataset.armed) {
+          btn.dataset.armed = "1";
+          btn.textContent = `Confirmer : supprimer ${D.extra.length} lignes`;
+          return;
+        }
+        btn.disabled = true;
+        running = true;
+        try {
+          const ids = D.extra;
+          for (let i = 0; i < ids.length; i += 500) {
+            await grist.docApi.applyUserActions([["BulkRemoveRecord", opt.dst, ids.slice(i, i + 500)]]);
+            btn.textContent = `Suppression… ${Math.min(i + 500, ids.length)} / ${ids.length}`;
+          }
+          log(`${ids.length} lignes supprimées : ${keepN()} distances au plus par école, plus le collège.`, "ok");
+        } catch (e) {
+          log(`Nettoyage interrompu : ${e.message || e}`, "err");
+        }
+        running = false;
+        prepare();
+      });
       // Tester — essaie chaque adresse et chaque moteur sur un trajet de quelques km, journalise les réponses
       //   brutes et retient la première combinaison qui renvoie une distance
       $("#test").addEventListener("click", async () => {
