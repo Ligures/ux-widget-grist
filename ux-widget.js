@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.11). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.12). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.11"; // voir CHANGELOG.md
+const VERSION = "0.9.6.12"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -4006,7 +4006,10 @@ $("#grid").addEventListener("click", (ev) => {
     S.collapsed[id] = !S.collapsed[id];
     tog.closest(".block").classList.toggle("collapsed", S.collapsed[id]);
     updateFoldButton();
-    if (!S.collapsed[id]) lockColumns(tog.closest(".block"));
+    if (!S.collapsed[id]) {
+      lockColumns(tog.closest(".block"));
+      fitQf(tog.closest(".block")); // filtres masqués tant que le bloc était replié : présentation à recalculer
+    }
     return;
   }
   const nav = ev.target.closest("[data-nav]");
@@ -4482,7 +4485,10 @@ $("#btnFold").addEventListener("click", () => {
   document.querySelectorAll("#grid .block").forEach((el) => {
     el.classList.toggle("collapsed", !any);
   });
-  if (any) lockColumns($("#grid"));
+  if (any) {
+    lockColumns($("#grid"));
+    fitQf($("#grid"));
+  }
   updateFoldButton();
 });
 $("#btnConfig").addEventListener("click", () => openConfig());

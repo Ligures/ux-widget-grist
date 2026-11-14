@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.12] — Filtres masqués sur les blocs repliés — 2026-11-14
+
+### Utilisateurs
+- *Amélioré* — **Blocs repliés** : les filtres rapides et la recherche n'apparaissent plus dans l'en-tête ; ils reviennent quand le bloc est déplié. Un filtre déjà choisi reste appliqué.
+
+### Développeurs
+- *Amélioré* — `.block.collapsed .bh .qf, .qfs, .search` masqués ; `fitQf` relancé au dépliage (bloc ou « Tout déplier »).
+
 ## [0.9.6.11] — Niveaux de titres, description de la vue en sous-titre — 2026-11-14
 
 ### Utilisateurs

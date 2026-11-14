@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.6.11).
+/* UX widget grist — feuilles de style (version 0.9.6.12).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1036,6 +1036,12 @@ button {
 .grid.masonry > .block.collapsed {
   align-self: start !important;
 } /* un bloc replié libère sa hauteur */
+/* replié : ni filtres ni recherche dans l'en-tête (0.9.6.12), ils reviennent quand le bloc est déplié */
+.block.collapsed .bh .qf,
+.block.collapsed .bh .qfs,
+.block.collapsed .bh .search {
+  display: none !important;
+}
 /* replié : fond coloré ; déplié : aucun effet (0.9.6.8) */
 .block.collapsed .bh {
   border-bottom: 0;
