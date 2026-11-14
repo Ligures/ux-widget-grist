@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.8). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.11). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -42,7 +42,7 @@
      { name, title, blocks: [...], flux, dense, masonry, hideEmptyFields,
  hideEmptyBlocks, tableMaxHeight, chartHeight, dataTable }
      Bloc (blocks[i]) : id = identifiant de la vue Grist (_grist_Views_section)
- Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold, needOthers, sub (sous-titre)
+ Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold, needOthers, subDesc (description de la vue en sous-titre), hLevel (2 : titre en h2 ; sinon h3)
  Tableaux/fiches : colWidths, rowCount, asList, cardW, editable, addable, showEmpty, hideLabels
  Texte (Markdown) : mdSize, mdEdit (modifiable depuis la page), mdNote (aspect bloc-notes)
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.8"; // voir CHANGELOG.md
+const VERSION = "0.9.6.11"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -943,7 +943,7 @@ const QF_ICON = '<svg class="qf-ico" viewBox="0 0 24 24" aria-hidden="true"><pat
 //   on garde au titre au moins 140 px (ou sa largeur entière s'il est plus court).
 function fitQf(root = document) {
   for (const q of root.querySelectorAll(".bh .qf")) {
-    const h2 = q.closest(".bh").querySelector("h2");
+    const h2 = q.closest(".bh").querySelector(".bt");
     const need = () => h2.clientWidth < Math.min(h2.scrollWidth, 140);
     // beaucoup de valeurs : jamais de boutons côte à côte, mais la valeur active et sa liste (comme sur petit écran)
     for (const mode of q.dataset.many ? ["compact", "icon"] : ["full", "compact", "icon"]) {
@@ -1201,11 +1201,12 @@ function blockShell(b, info, badge, extraHead = "", extraRow = "") {
     (b.sticky && S.maxed !== b.id ? " sticky" : "");
   el.setAttribute("style", blockStyle(b, info.kind));
   el.dataset.sec = b.id;
-  // en-tête (0.9.6.8) : titre et sous-titre facultatif (b.sub) à gauche, chevron de pliage à droite ; un clic sur
+  // en-tête : titre (h3, ou h2 si b.hLevel === 2) et, si b.subDesc, la description de la vue Grist en sous-titre
+  //   (0.9.6.11 ; elle remplace alors le ⓘ) à gauche, chevron de pliage à droite ; un clic sur
   //   l'en-tête plie ou déplie le bloc
-  const sub = String(b.sub || "").trim();
+  const sub = b.subDesc ? String(info.sec?.description || "").trim() : "";
   el.innerHTML = `<div class="bh">
-    <span class="foldico">${kindIcon(info.sec, b)}</span><div class="bht"><h2>${esc(info.title)}</h2>${sub ? `<div class="bsub">${esc(sub)}</div>` : ""}</div>${secDescMark(info)}${extraHead}<span class="badge"></span>
+    <span class="foldico">${kindIcon(info.sec, b)}</span><div class="bht"><${b.hLevel === 2 ? "h2" : "h3"} class="bt">${esc(info.title)}</${b.hLevel === 2 ? "h2" : "h3"}>${sub ? `<div class="bsub">${esc(sub)}</div>` : ""}</div>${sub ? "" : secDescMark(info)}${extraHead}<span class="badge"></span>
     <button class="max" data-max="${b.id}" title="${S.maxed === b.id ? "Réduire (Échap)" : "Plein écran"}">${S.maxed === b.id ? "✕" : "⛶"}</button><button class="tog" data-tog="${b.id}" title="Replier / déplier" aria-label="Replier / déplier">${TOG_ICON}</button></div>${extraRow ? `<div class="bh2">${extraRow}</div>` : ""}<div class="bb"></div>`;
   return el;
 }
@@ -3395,51 +3396,21 @@ async function renderAdvChart(info, rows, body, jobs) {
   body.innerHTML = '<div class="plot-box"></div>';
   const el = body.querySelector(".plot-box");
   delete layout.height;
-  // légende adaptée à la largeur (0.9.6.1) : au-dessus du graphique et en petit dans un bloc étroit, pour ne plus
-  // recouvrir les barres ; celle du graphique sinon. Recalculée au redimensionnement et pour l'impression.
-  el._uxLegend = layout.legend ? { ...layout.legend } : {};
-  el._uxLegendKind = legendKind(body.clientWidth || 600);
-  layout.legend = legendFor(el._uxLegend, el._uxLegendKind);
   jobs.push(async () => {
     await loadPlotly();
     new ResizeObserver(() => {
       if (!el.isConnected || !el.data || el._uxPrinting) return;
-      const k = legendKind(el.clientWidth);
-      if (k !== el._uxLegendKind) {
-        el._uxLegendKind = k;
-        Plotly.relayout(el, { legend: legendFor(el._uxLegend, k) });
-      } else Plotly.Plots.resize(el);
+      Plotly.Plots.resize(el);
     }).observe(el);
     await Plotly.newPlot(el, data, layout, { displayModeBar: false, responsive: true });
   });
 }
-// legendKind — Présentation de la légende selon la largeur du graphique : "top" (étroit), "small", "normal".
-const legendKind = (w) => (w < 480 ? "top" : w < 700 ? "small" : "normal");
-// legendFor — Légende Plotly : celle du graphique (base), rendue plus petite ou placée au-dessus selon kind.
-function legendFor(base, kind) {
-  const font = { ...(base.font || {}) };
-  if (kind === "normal") return { ...base, bgcolor: base.bgcolor ?? "rgba(0,0,0,0)" };
-  font.size = kind === "top" ? 9 : 10;
-  if (kind === "small") return { ...base, font, bgcolor: base.bgcolor ?? "rgba(0,0,0,0)" };
-  return {
-    ...base,
-    font,
-    orientation: "h",
-    x: 0,
-    xanchor: "left",
-    y: 1.02,
-    yanchor: "bottom",
-    bgcolor: "rgba(0,0,0,0)",
-    itemwidth: 30,
-    tracegroupgap: 0,
-  };
-}
-// légende des graphiques avancés à l'impression : selon la largeur du bloc sur le papier (A4 paysage, 277 mm utiles)
+// graphiques avancés à l'impression : redessinés à la largeur du bloc sur le papier (A4 paysage, 277 mm utiles)
 window.addEventListener("beforeprint", () => {
   if (!window.Plotly) return;
   const pageW = (277 * 96) / 25.4;
   document.querySelectorAll(".plot-box").forEach((el) => {
-    if (!el.data || !el._uxLegend) return;
+    if (!el.data) return;
     const blk = el.closest(".block");
     const span = Number(getComputedStyle(blk || el).getPropertyValue("--span")) || 6;
     const wide = blk?.classList.contains("printwide");
@@ -3447,7 +3418,7 @@ window.addEventListener("beforeprint", () => {
     // largeur du bloc sur le papier : le graphique y est redessiné (sinon il garde sa largeur d'écran et se coupe)
     const w = Math.round(wide ? pageW - 20 : (pageW * span) / 6 - 24);
     try {
-      Plotly.relayout(el, { width: w, legend: legendFor(el._uxLegend, legendKind(w)) });
+      Plotly.relayout(el, { width: w });
     } catch {
       /* graphique non dessiné */
     }
@@ -3458,9 +3429,8 @@ window.addEventListener("afterprint", () => {
   document.querySelectorAll(".plot-box").forEach((el) => {
     if (!el._uxPrinting) return;
     el._uxPrinting = false;
-    el._uxLegendKind = legendKind(el.clientWidth);
     try {
-      Plotly.relayout(el, { width: null, autosize: true, legend: legendFor(el._uxLegend, el._uxLegendKind) }).then(() => Plotly.Plots.resize(el));
+      Plotly.relayout(el, { width: null, autosize: true }).then(() => Plotly.Plots.resize(el));
     } catch {
       /* graphique retiré */
     }
@@ -3708,7 +3678,7 @@ async function render() {
       [...frag.children]
         .filter((el) => el.classList.contains("needothers"))
         .forEach((el) => {
-          skipped.empty.push(el.querySelector("h2")?.textContent || "");
+          skipped.empty.push(el.querySelector(".bt")?.textContent || "");
           el.remove();
         });
   } finally {
@@ -4120,7 +4090,7 @@ tip.id = "tip";
 document.body.append(tip);
 $("#grid").addEventListener("mouseover", (ev) => {
   const d = ev.target.closest("[data-desc]"); // description de colonne (en-tête ou libellé de fiche)
-  const h = d || ev.target.closest(".bh h2"); // ou titre de bloc tronqué
+  const h = d || ev.target.closest(".bh .bt"); // ou titre de bloc tronqué
   if (!h || (!d && h.scrollWidth <= h.clientWidth)) return;
   tip.textContent = d ? d.dataset.desc : h.textContent;
   tip.classList.add("on");
@@ -4129,7 +4099,7 @@ $("#grid").addEventListener("mouseover", (ev) => {
   tip.style.left = `${Math.max(4, Math.min(r.left, window.innerWidth - tip.offsetWidth - 4))}px`;
 });
 $("#grid").addEventListener("mouseout", (ev) => {
-  if (ev.target.closest(".bh h2, [data-desc]")) tip.classList.remove("on");
+  if (ev.target.closest(".bh .bt, [data-desc]")) tip.classList.remove("on");
 });
 window.addEventListener(
   "scroll",

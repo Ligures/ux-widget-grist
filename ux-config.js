@@ -1,4 +1,4 @@
-/* UX widget grist — panneau de configuration ⚙ (version 0.9.6.8). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — panneau de configuration ⚙ (version 0.9.6.11). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé à la demande par ux-widget.js (openConfig → loadPart("config")), après ux-carte.js dont il utilise les
    réglages de zonage. Partage l'espace global de ux-widget.js, qui doit être chargé avant.
    Contenu : brouillon de configuration (draft), réglages par bloc (renderConfig), couleurs des cartes et des
@@ -319,9 +319,20 @@ ${
 </div><div class="ctrls more">
 <div class="mgrps">
   ${G("Affichage", "Réglages communs à toutes les vues : taille, état à l'ouverture, placement dans la page.", [(L(
+    "Titre",
+    sel(
+      "hLevel",
+      [
+        [0, "H3 (normal)"],
+        [2, "H2 (plus grand)"],
+      ],
+      b.hLevel || 0,
+    ),
+    "Niveau du titre du bloc. H2 : titre intermédiaire, plus grand, pour les blocs principaux de la page ; H3 : titre habituel.",
+  )),(L(
     "Sous-titre",
-    `<input type="text" data-bsub="${i}" value="${esc(b.sub || "")}" placeholder="facultatif" style="width:220px">`,
-    "Ligne de texte affichée en gris sous le titre du bloc (facultatif).",
+    `<input type="checkbox" data-subd="${i}" ${b.subDesc ? "checked" : ""}> <span>afficher la description${String(s.description || "").trim() ? "" : " (vide)"}</span>`,
+    "Affiche sous le titre du bloc la description du widget saisie dans Grist (menu ⋮ de la vue → « Ajouter une description »). Décoché : la description reste accessible au survol du ⓘ.",
   )),(L(
     "Taille",
     sel(
@@ -1000,8 +1011,10 @@ $("#panel").addEventListener("change", (ev) => {
     renderConfig();
     return;
   }
-  if (t.dataset.bsub) {
-    draft.blocks[Number(t.dataset.bsub)].sub = t.value.trim() || undefined;
+  if (t.dataset.subd) {
+    const b = draft.blocks[Number(t.dataset.subd)];
+    b.subDesc = t.checked || undefined;
+    delete b.sub; // ancien sous-titre saisi (0.9.6.8), remplacé par la description de la vue
     return;
   }
   if (t.dataset.sync) {

@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.6.8** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.6.11** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---
@@ -222,10 +222,10 @@ Widget personnalisé Grist séparé, pour les administrateurs : il calcule les d
   - **Metric-OSRM (Insee)**, par défaut : serveur OSRM de l'Insee (`metric-osrm-backend.lab.sspcloud.fr`, données OpenStreetMap, sans clé, présenté comme expérimental). Service « table » : une école vers 25 candidates en un seul appel. Option **Sans bateaux** (cochée) : les liaisons maritimes sont exclues, une école d'île n'est reliée qu'aux écoles de la même île.
   - **IGN (Géoplateforme)** : `data.geopf.fr/navigation/itineraire`, un trajet par appel, moteur `bdtopo-valhalla` (`bdtopo-osrm` a été retiré en 2026), 1 appel par seconde au plus. Le bouton **Tester un appel** retrouve l'adresse et le moteur qui répondent.
 - **Table des distances** (par défaut `REF_DISTANCES`) : `Depart` et `Arrivee` (références à la table des établissements), `Km`, `Minutes` (numériques), `Statut` (texte : `ok`, ou `retour` pour une distance recopiée du trajet inverse), `Calcule_le` (date). Les échecs ne sont jamais enregistrés.
-- **Paramètres** (enregistrés avec la vue) : table et colonnes des établissements (par défaut `REF_ETAB`, `latitude`, `longitude`, `Type_etablissement` contenant « Ecole », `UAI_College` en référence ou en code UAI), **restriction** facultative (par défaut `Statut_public_prive` contenant « Public »), nombre N (5), garde-fou de 40 candidates par école, débit (1 appel par seconde).
+- **Paramètres** (enregistrés avec la vue) : table et colonnes des établissements (par défaut `REF_ETAB`, `latitude`, `longitude`, `Type_etablissement` contenant « Ecole », `UAI_College` en référence ou en code UAI), **restriction** facultative (par défaut `Statut_public_prive` contenant « Public »), nombre N (5), lignes conservées par école (5), garde-fou de 40 candidates par école, débit (1 appel par seconde).
 - **Méthode exacte** : la distance routière n'est jamais inférieure à la distance à vol d'oiseau. Les candidates sont essayées par distance à vol d'oiseau croissante, et le calcul s'arrête dès que la N-ième meilleure distance routière est inférieure à la distance à vol d'oiseau de la suivante. Un estuaire ou une rade fait simplement essayer plus de candidates.
 - **Économie d'appels** : une paire déjà dans la table n'est jamais redemandée ; une paire connue dans l'autre sens est recopiée (`retour`). Relancer ne calcule que ce qui manque. Écritures par lots de 25 lignes : un arrêt ou une erreur ne perd rien.
-- **Volume** : avec Metric-OSRM, environ 25 lignes par école (le premier lot de candidates est conservé), plus une par collège.
+- **Volume** (0.9.6.9) : réglage **Lignes conservées par école** (5 par défaut) : seules les distances les plus courtes sont enregistrées, plus une par collège ; les autres trajets calculés ne servent qu'en mémoire. Une école qui a déjà ses lignes est passée à la relance. Le bouton **Nettoyer la table** supprime les lignes en trop d'un calcul précédent (les plus longues), sans appel au service.
 ---
 
 ## Sécurité et confidentialité

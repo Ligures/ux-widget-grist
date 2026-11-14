@@ -56,14 +56,15 @@ Le bouton **⚙ Configurer** ouvre un panneau sur la moitié droite de l'écran 
    - Les flèches ↑ ↓ règlent l'ordre ; ✕ retire le bloc (la vue Grist n'est pas supprimée).
    - Les réglages de chaque bloc sont **repliés par défaut** : restent visibles son titre, ses flèches, sa largeur, sa colonne et son nombre de lignes. ▸ / ▾ déplie ou replie un bloc ; **Tout déplier** et **Tout replier** agissent sur tous. Une vue que l'on vient d'ajouter s'ouvre dépliée.
    - Déplié, un bloc présente ses réglages dans des encadrés titrés, toujours dans le même ordre :
-     - **Affichage**, commun à toutes les vues : sous-titre, taille, état à l'ouverture, « À la ligne », « Figer à l'écran », « Seulement si la page a d'autres données », « Liste de sélection » ;
+     - **Affichage**, commun à toutes les vues : niveau du titre, sous-titre, taille, état à l'ouverture, « À la ligne », « Figer à l'écran », « Seulement si la page a d'autres données », « Liste de sélection » ;
      - puis les encadrés propres au type de vue, s'il y a lieu : **Tableau**, **Fiches**, **Édition**, **Liste de sélection**, **Couleurs du graphique**, **Filtre rapide**, et pour les cartes **Points**, **Contour des points**, **QPV**, **Zones sous les points**.
    - Chaque bloc a ses réglages :
 
 | Réglage | Effet |
 |---|---|
 | Largeur, Colonne, Hauteur (lignes) | Place du bloc dans la grille de 6 colonnes |
-| Sous-titre | Ligne de texte en gris sous le titre du bloc (facultatif) |
+| Titre | Niveau du titre du bloc : **H3** (habituel) ou **H2** (plus grand, pour les blocs principaux) |
+| Sous-titre | Case « afficher la description » : la description du widget saisie dans Grist s'affiche en gris sous le titre, à la place du ⓘ |
 | Taille | Hauteur maximale ; au-delà, le contenu défile dans le bloc |
 | À l'ouverture | Bloc replié ou déplié à l'arrivée sur la page |
 | À la ligne | Le bloc commence une nouvelle rangée |
@@ -286,7 +287,10 @@ Outil séparé, à installer dans une page d'administration : vue **Widget perso
 2. Vérifier les **Paramètres** : noms de tables et de colonnes, **Restreindre à** (par défaut les écoles dont `Statut_public_prive` contient « Public » ; vide : toutes), **Service** (Metric-OSRM de l'Insee par défaut, ou IGN), **Sans bateaux** (coché : les îles ne sont reliées qu'à leurs propres écoles). Le bandeau indique le nombre d'écoles retenues, celles dont le collège de secteur est localisé, et les distances déjà connues ; en rouge, il signale un collège renseigné mais introuvable ou sans coordonnées.
 3. Cliquer sur **Tester un appel** : le journal montre la réponse du service pour une école et ses voisines.
 4. Faire un essai : « Écoles à traiter » = 5, puis **Calculer les distances manquantes**. Contrôler quelques lignes dans `REF_DISTANCES`.
-5. Remettre 0 (toutes les écoles) et relancer. Laisser l'onglet ouvert : avec Metric-OSRM, compter environ 1 appel par école, soit une vingtaine de minutes pour 1 400 écoles. **Arrêter** est sans risque : on reprend où l'on en était.
+5. Régler **Lignes conservées par école** : nombre de distances enregistrées par école (les plus courtes par la route), en plus du trajet vers le collège. Les autres trajets calculés servent au calcul exact mais ne sont pas écrits : la table reste petite (environ 6 lignes par école avec 5).
+6. Remettre 0 (toutes les écoles) et relancer. Laisser l'onglet ouvert : avec Metric-OSRM, compter environ 1 appel par école, soit une vingtaine de minutes pour 1 400 écoles. **Arrêter** est sans risque : on reprend où l'on en était.
+
+**Nettoyer la table** : apparaît quand des écoles ont plus de lignes que le nombre conservé (calcul d'une version précédente, ou nombre réduit). Premier clic : nombre de lignes à supprimer ; second clic : suppression des distances les plus longues de chaque école, le trajet vers le collège étant toujours gardé. Aucun appel au service. À la relance, une école qui a déjà ses lignes est passée.
 
 Le distancier écrit dans le document à chaque lot de 25 lignes : les formules qui lisent `REF_DISTANCES` se recalculent alors. Lancez-le de préférence quand personne d'autre ne travaille sur le document, et placez-le seul sur une page d'administration (il lit les tables entières à son ouverture). Les colonnes de formule de `REF_DISTANCES` (un résumé du trajet, par exemple) peuvent être des formules d'initialisation, recalculées seulement si `Depart` ou `Arrivee` change.
 

@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.6.8).
+/* UX widget grist — feuilles de style (version 0.9.6.11).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -391,7 +391,7 @@ button {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 .bar h1 {
-  font-size: 16px;
+  font-size: 19px;
   margin: 0;
   color: var(--bleu);
   display: inline-flex;
@@ -775,7 +775,11 @@ button {
   border-bottom: 1px solid var(--bord);
   min-height: 30px;
 }
-.bh h2 {
+/* titres (0.9.6.11) : page h1 19 px · bloc h2 15,5 px (au choix) · bloc h3 13,5 px (par défaut) */
+.bh h2.bt {
+  font-size: 15.5px;
+}
+.bh .bt {
   font-size: 13.5px;
   font-weight: 700;
   color: var(--bleu);

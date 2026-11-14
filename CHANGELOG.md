@@ -26,6 +26,40 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.11] — Niveaux de titres, description de la vue en sous-titre — 2026-11-14
+
+### Utilisateurs
+- *Amélioré* — **Titres** : le titre de la page est plus grand (19 px) ; les blocs principaux peuvent porter un titre intermédiaire, plus grand que le titre habituel.
+- *Amélioré* — **Sous-titre** d'un bloc : c'est la description de la vue, affichée sous le titre au lieu du ⓘ.
+
+### Administrateurs
+- *Nouveau* — ⚙ → réglages du bloc → **Affichage** : **Titre** (H3, habituel, ou H2, plus grand) et **Sous-titre** : case « afficher la description », qui reprend la description du widget saisie dans Grist. Décochée, la description reste au survol du ⓘ.
+- *Retiré* — Champ de saisie du sous-titre (0.9.6.8) : un sous-titre déjà saisi n'est plus affiché ; le reporter dans la description du widget dans Grist, puis cocher la case.
+
+### Développeurs
+- *Amélioré* — Hiérarchie : `h1` page (19 px, avant 16), bloc `h3.bt` (13,5 px) ou `h2.bt` (15,5 px) selon `b.hLevel` ; sélecteurs `.bh h2` remplacés par `.bh .bt`. `b.subDesc` remplace `b.sub` (supprimé à l'enregistrement de la case).
+
+## [0.9.6.10] — Légende des graphiques avancés rendue à Plotly — 2026-11-14
+
+### Utilisateurs
+- *Retiré* — **Graphiques avancés** : le widget ne modifie plus la légende selon la largeur du bloc (placée au-dessus et en petit dans un bloc étroit, depuis 0.9.6.1). Elle s'affiche telle qu'elle est réglée dans le graphique, à l'écran comme à l'impression.
+
+### Administrateurs
+- *Amélioré* — La position, l'orientation et la taille de la légende se règlent dans l'éditeur du graphique avancé (Style → Legend) ; le widget les reprend sans les changer.
+
+### Développeurs
+- *Retiré* — `legendKind`, `legendFor`, `el._uxLegend`, `el._uxLegendKind`. Gardé : `Plotly.Plots.resize` au redimensionnement et largeur recalculée à l'impression (`beforeprint` / `afterprint`).
+
+## [0.9.6.9] — Distancier : lignes conservées par école, nettoyage — 2026-11-12
+
+### Administrateurs
+- *Nouveau* — **Distancier routier** : réglage **Lignes conservées par école** (5 par défaut). Seules les distances les plus courtes par la route de chaque école sont enregistrées, plus le trajet vers son collège ; avec Metric-OSRM, la table passait à environ 28 lignes par école (tous les trajets d'un lot de 25 candidates étaient écrits), elle en garde 6 avec le réglage par défaut. Le résultat reste exact : les autres trajets servent au calcul, en mémoire.
+- *Nouveau* — Distancier : bouton **Nettoyer la table**, affiché quand des écoles dépassent le nombre conservé. Deux clics (annonce du nombre de lignes, puis confirmation) suppriment les distances les plus longues, sans appel au service ; le trajet vers le collège est toujours gardé.
+- *Amélioré* — Distancier : à la relance, une école qui a déjà ses lignes conservées (et son collège) est passée.
+
+### Développeurs
+- *Nouveau* — `outils/distancier.html` : `opt.keep`, `remember` (résultats rangés par école dans `D.mine`, marqués `fresh`), `keepBest` (écriture des K plus courts et du collège à la fin de chaque école ; école interrompue par Arrêter : rien d'écrit), `complete` (école passée), `D.byDep` / `D.extra` (lignes en trop, supprimées par `BulkRemoveRecord` par lots de 500).
+
 ## [0.9.6.8] — Sous-titre des blocs, nouvel en-tête de pliage — 2026-11-11
 
 ### Utilisateurs
