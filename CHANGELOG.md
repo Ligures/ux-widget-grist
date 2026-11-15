@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.15] — Filtre rapide : double clic pour filtrer toute la page — 2026-11-15
+
+### Utilisateurs
+- *Nouveau* — **Filtres rapides** : un double clic (double toucher sur smartphone) sur une valeur l'applique à tous les blocs de la page filtrés sur le même champ, comme Maj+clic ou le clic du milieu, qui restent disponibles.
+
+### Développeurs
+- *Nouveau* — `qfLast` : deux clics en moins de 0,5 s sur la même valeur (`[data-qf]`), ou une valeur puis le bouton de la liste refermée (`[data-qftog]`, présentation compacte) → `qfSync`.
+
 ## [0.9.6.14] — Graphiques avancés : plage des axes de catégories — 2026-11-15
 
 ### Utilisateurs

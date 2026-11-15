@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.14). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.15). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.14"; // voir CHANGELOG.md
+const VERSION = "0.9.6.15"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -997,6 +997,7 @@ function qfCur(b, k = 1) {
 }
 // qfSync — Applique la valeur choisie à tous les blocs de la page dont le filtre rapide porte sur le même
 //   champ (même identifiant de colonne ou même libellé) : clic milieu ou Maj+clic sur une valeur.
+let qfLast = null; // dernier choix d'une valeur de filtre rapide (détection du double clic / double toucher)
 function qfSync(fromId, v, fromK = 1) {
   const src = S.cfg.blocks.find((x) => x.id === fromId),
     srcInfo = src && getInfo(src.id),
@@ -1173,7 +1174,7 @@ function qfHtmlOne(b, info, allRows, k) {
   const name = col.label || col.colId;
   const tip = `Filtrer ce bloc sur « ${name} »`;
   // aide au survol de chaque valeur : clic sur ce bloc, clic milieu (ou Maj+clic) sur tous les blocs
-  const sync = `\nClic milieu (ou Maj+clic) : appliquer à tous les blocs de la page filtrés sur « ${name} »`;
+  const sync = `\nDouble clic, double toucher, clic milieu ou Maj+clic : appliquer à tous les blocs de la page filtrés sur « ${name} »`;
   const pr = cur ? `<span class="qf-print">${esc(name)} : ${esc(shown(vals.find((x) => qfSame(x, cur)) || cur))}</span>` : ""; // impression
   // trois présentations, choisies par fitQf() selon la place dans l'en-tête :
   //   « full » boutons côte à côte · « compact » seule l'option active, les autres en liste au clic
@@ -4000,6 +4001,12 @@ $("#grid").addEventListener("click", (ev) => {
   const qt = ev.target.closest("[data-qftog]"); // filtre rapide compact : ouvrir / fermer la liste
   if (qt) {
     ev.stopPropagation();
+    // second toucher juste après le choix d'une valeur dans la liste (refermée entre-temps) : double toucher
+    if (qfLast && Date.now() - qfLast.t < 500 && qfLast.id === qt.dataset.qftog && qfLast.k === (Number(qt.dataset.qk) || 1)) {
+      const l = qfLast;
+      qfLast = null;
+      return qfSync(Number(l.id), l.v, l.k);
+    }
     qfToggle(qt);
     return;
   }
@@ -4007,7 +4014,10 @@ $("#grid").addEventListener("click", (ev) => {
   if (qb) {
     ev.stopPropagation();
     const k = Number(qb.dataset.qk) || 1;
-    if (ev.shiftKey) return qfSync(Number(qb.dataset.qf), qb.dataset.qv, k); // Maj+clic : tous les blocs
+    // Maj+clic, ou double clic / double toucher sur la même valeur (0.9.6.15, smartphone) : tous les blocs
+    const dbl = qfLast && Date.now() - qfLast.t < 500 && qfLast.id === qb.dataset.qf && qfLast.k === k && qfLast.v === qb.dataset.qv;
+    qfLast = dbl ? null : { id: qb.dataset.qf, k, v: qb.dataset.qv, t: Date.now() };
+    if (ev.shiftKey || dbl) return qfSync(Number(qb.dataset.qf), qb.dataset.qv, k);
     S.qf[k === 3 ? `${qb.dataset.qf}:3` : k === 2 ? `${qb.dataset.qf}:2` : Number(qb.dataset.qf)] = qb.dataset.qv;
     scheduleRender();
     return;
