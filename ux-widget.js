@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.12). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.6.14). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.12"; // voir CHANGELOG.md
+const VERSION = "0.9.6.14"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3214,7 +3214,65 @@ function fixAggregate(data, src) {
       const vk = t.orientation === "h" ? "x" : "y";
       if (t0.textsrc && t0.textsrc === t0[`${vk}src`] && !t.texttemplate) t.texttemplate = `%{${vk}:.1~f}`;
     });
+    aggMulti(t);
   });
+}
+// aggMulti — (0.9.6.13) Axe à catégories imbriquées (X ou Y sur plusieurs colonnes, ex. NIVEAU + RENTREE) avec une
+//   transformation « Aggregate » : Plotly prend alors l'axe pour un tableau de 2 éléments et ne dessine que 2 barres.
+//   L'agrégation est faite ici, par combinaison de catégories (ou par la colonne de regroupement choisie), puis la
+//   transformation est retirée.
+const AGG_FN = {
+  count: (a) => a.length,
+  sum: (a) => a.reduce((x, y) => x + (Number(y) || 0), 0),
+  avg: (a) => (a.length ? AGG_FN.sum(a) / a.length : null),
+  min: (a) => Math.min(...a.map(Number)),
+  max: (a) => Math.max(...a.map(Number)),
+  first: (a) => a[0],
+  last: (a) => a[a.length - 1],
+  median: (a) => {
+    const v = a.map(Number).sort((x, y) => x - y),
+      m = v.length >> 1;
+    return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+  },
+  range: (a) => AGG_FN.max(a) - AGG_FN.min(a),
+  change: (a) => Number(a[a.length - 1]) - Number(a[0]),
+};
+function aggMulti(t) {
+  const ck = t?.orientation === "h" ? "y" : "x",
+    cats = t?.[ck];
+  if (!Array.isArray(cats) || !cats.length || !cats.every(Array.isArray)) return;
+  const trs = t.transforms || [],
+    k = trs.findIndex((x) => x?.type === "aggregate" && x.enabled !== false);
+  if (k < 0) return;
+  const tr = trs[k],
+    n = cats[0].length;
+  const keyOf = Array.isArray(tr.groups) && tr.groups.length === n && !tr.groups.some(Array.isArray) ? (i) => String(tr.groups[i]) : (i) => cats.map((a) => a[i]).join("\u001f");
+  const idx = new Map(); // groupe → numéros de lignes, dans l'ordre de première apparition
+  for (let i = 0; i < n; i++) {
+    const g = keyOf(i);
+    if (!idx.has(g)) idx.set(g, []);
+    idx.get(g).push(i);
+  }
+  const groups = [...idx.values()];
+  const fn = new Map((tr.aggregations || []).filter((a) => a && a.enabled !== false).map((a) => [a.target, AGG_FN[a.func] || AGG_FN.first]));
+  // étiquettes reprenant les valeurs (texte = colonne des valeurs) : même calcul que les valeurs
+  const vk = ck === "x" ? "y" : "x";
+  if (!fn.has("text") && fn.has(vk) && Array.isArray(t.text) && Array.isArray(t[vk]) && t.text.length === n && t.text.every((x, i) => x === t[vk][i])) fn.set("text", fn.get(vk));
+  const walk = (obj, path) => {
+    for (const [key, v] of Object.entries(obj)) {
+      if (key === "transforms") continue;
+      const p = path ? `${path}.${key}` : key;
+      if (Array.isArray(v) && v.length === n && !v.some(Array.isArray)) {
+        const f = fn.get(p) || AGG_FN.first;
+        obj[key] = groups.map((ix) => f(ix.map((i) => v[i])));
+      } else if (Array.isArray(v) && v.length && v.every((a) => Array.isArray(a) && a.length === n)) {
+        obj[key] = v.map((a) => groups.map((ix) => a[ix[0]])); // catégories imbriquées : celles du groupe
+      } else if (v && typeof v === "object" && !Array.isArray(v)) walk(v, p);
+    }
+  };
+  walk(t, "");
+  t.transforms = trs.filter((_, i) => i !== k);
+  if (!t.transforms.length) delete t.transforms;
 }
 async function renderAdvChart(info, rows, body, jobs) {
   const spec = advChartSpec(info.sec);
@@ -3386,6 +3444,21 @@ async function renderAdvChart(info, rows, body, jobs) {
     ax.gridcolor ??= cssVar("--bord-doux") || "#eee";
     ax.zerolinecolor ??= cssVar("--bord") || "#ddd";
     ax.linecolor ??= cssVar("--bord") || "#ddd";
+  }
+  // axe de catégories (texte, ou catégories imbriquées sur plusieurs colonnes) : la plage enregistrée avec le
+  //   graphique (xaxis.range) date du moment du réglage ; si le nombre de barres a changé depuis (liaison, filtre),
+  //   elle n'en montrait qu'une partie (0.9.6.14). Elle est recalculée d'après les données.
+  for (const t of data) {
+    for (const d of ["x", "y"]) {
+      const v = t?.[d];
+      const cat = Array.isArray(v) && v.length && (v.every(Array.isArray) || v.some((x) => typeof x === "string" && x.trim() !== "" && !Number.isFinite(Number(x)) && Number.isNaN(Date.parse(x))));
+      if (!cat) continue;
+      const ax = layout[`${d}axis${String(t[`${d}axis`] || d).slice(1)}`];
+      if (ax && (ax.type === undefined || ax.type === "category" || ax.type === "multicategory")) {
+        delete ax.range;
+        ax.autorange = true;
+      }
+    }
   }
   delete layout.width;
   // camemberts : quand les parts portent déjà leur nom, la légende fait double emploi et recouvrait les étiquettes

@@ -26,6 +26,22 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.6.14] — Graphiques avancés : plage des axes de catégories — 2026-11-15
+
+### Utilisateurs
+- *Corrigé* — **Graphiques avancés** à axe de catégories : toutes les barres s'affichent même si leur nombre a changé depuis le réglage du graphique (vue liée ou filtrée ensuite) ; le widget gardait la plage d'axe enregistrée et ne montrait que les premières barres, très larges.
+
+### Développeurs
+- *Corrigé* — `renderAdvChart` : `range` supprimé et `autorange: true` sur les axes de catégories (données texte ou imbriquées, type absent, `category` ou `multicategory`).
+
+## [0.9.6.13] — Graphiques avancés : agrégation sur un axe à deux colonnes — 2026-11-15
+
+### Utilisateurs
+- *Corrigé* — **Graphiques avancés** dont l'axe porte deux colonnes (niveau et rentrée, par exemple) avec une agrégation (somme, moyenne…) : toutes les barres s'affichent, comme dans Grist ; le widget n'en montrait que deux.
+
+### Développeurs
+- *Nouveau* — `aggMulti` (appelé par `fixAggregate`) : axe multicatégorie + transformation `aggregate` → agrégation faite par le widget (clé = combinaison des catégories, ou `groups` s'il s'agit d'une colonne ; fonctions `count, sum, avg, min, max, first, last, median, range, change`, `first` par défaut), transformation retirée avant `Plotly.newPlot`.
+
 ## [0.9.6.12] — Filtres masqués sur les blocs repliés — 2026-11-14
 
 ### Utilisateurs
