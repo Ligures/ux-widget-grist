@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.7.1). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.7.2). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -42,7 +42,7 @@
      { name, title, blocks: [...], flux, dense, masonry, hideEmptyFields,
  hideEmptyBlocks, tableMaxHeight, chartHeight, dataTable }
      Bloc (blocks[i]) : id = identifiant de la vue Grist (_grist_Views_section)
- Séparateur (0.9.7.0) : { id: "sepN", sep: true, name, note, width } dans la liste des blocs
+ Séparateur (0.9.7.0) : { id: "sepN", sep: true, name, note, width, start (0.9.7.2) } dans la liste des blocs
  Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold, needOthers, subDesc (description de la vue en sous-titre), hLevel (2 : titre en h2 ; sinon h3)
  Tableaux/fiches : colWidths, rowCount, asList, cardW, editable, addable, showEmpty, hideLabels
  Texte (Markdown) : mdSize, mdEdit (modifiable depuis la page), mdNote (aspect bloc-notes)
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.7.1"; // voir CHANGELOG.md
+const VERSION = "0.9.7.2"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -3720,7 +3720,7 @@ async function render() {
 }
 // insertSeparators — (0.9.7.0) Séparateurs de la page (b.sep : nom, commentaire, largeur), placés devant la
 //   première vue affichée qui les suit. Un séparateur sans vue affichée avant le suivant (droits, blocs vides
-//   masqués) n'apparaît pas. Il commence toujours une nouvelle rangée.
+//   masqués) n'apparaît pas. Il se place à sa colonne (pending.start, 1 par défaut) et sur sa largeur.
 function insertSeparators(frag) {
   const els = new Map([...frag.children].filter((e) => e.dataset.sec).map((e) => [e.dataset.sec, e]));
   let pending = null;
@@ -3733,7 +3733,10 @@ function insertSeparators(frag) {
     if (!el || !pending) continue;
     const d = document.createElement("div");
     d.className = "usep";
-    d.setAttribute("style", S.cfg.flux ? "flex:0 0 100%;" : `grid-column:1 / span ${Math.min(Number(pending.width) || 6, 6)};--span:6;`);
+    // colonne de départ réglée (0.9.7.2 ; 1 par défaut) : un séparateur peut annoncer une colonne de la page
+    const st = Math.min(Math.max(Number(pending.start) || 1, 1), 6),
+      w = Math.min(Number(pending.width) || 6, 7 - st);
+    d.setAttribute("style", S.cfg.flux ? "flex:0 0 100%;" : `grid-column:${st} / span ${w};--span:${w};`);
     d.innerHTML = `${pending.name ? `<h2 class="usep-t">${esc(pending.name)}</h2>` : ""}${pending.note ? `<div class="usep-n">${esc(pending.note)}</div>` : ""}`;
     el.before(d);
     pending = null;

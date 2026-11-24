@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.7.1).
+/* UX widget grist — feuilles de style (version 0.9.7.2).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1038,6 +1038,7 @@ button {
 } /* un bloc replié libère sa hauteur */
 /* séparateur (0.9.7.0) : titre de partie, commentaire en gris, trait ; commence une nouvelle rangée */
 .usep {
+  align-self: start; /* n'occupe que sa hauteur dans la rangée */
   margin-top: 10px;
   padding: 2px 2px 4px;
   border-bottom: 2px solid var(--bleu);
@@ -2872,6 +2873,32 @@ html.printone .block.printme > .bb > .map-box {
 }
 .chosen li.folded {
   padding-bottom: 2px;
+}
+/* séparateur dans la liste des vues retenues (0.9.7.2) : couleur distincte */
+.chosen li.sepitem {
+  border-color: #c96a00 !important;
+  border-left-color: #c96a00 !important;
+}
+.chosen li.sepitem > .chead {
+  background: #fff1e0;
+  border-bottom-color: #f0c48a;
+}
+.chosen li.sepitem > .chead .cname {
+  color: #8a4a00;
+}
+html.sombre .chosen li.sepitem > .chead {
+  background: #3a2810;
+}
+html.sombre .chosen li.sepitem > .chead .cname {
+  color: #f0b46a;
+}
+@media screen and (prefers-color-scheme: dark) {
+  html:not(.clair) .chosen li.sepitem > .chead {
+    background: #3a2810;
+  }
+  html:not(.clair) .chosen li.sepitem > .chead .cname {
+    color: #f0b46a;
+  }
 }
 .chosen .chead {
   flex-basis: 100%;

@@ -26,6 +26,18 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.7.2] — Séparateurs : colonne de départ, couleur dans la configuration — 2026-11-24
+
+### Utilisateurs
+- *Amélioré* — **Séparateurs** : un séparateur peut annoncer une colonne de la page (par exemple la colonne de droite d'une page en 2/3 – 1/3) ; il n'occupe que sa propre hauteur.
+
+### Administrateurs
+- *Nouveau* — Séparateur : réglage **Colonne** (1 à 6, 1 par défaut), à côté de la largeur. Les séparateurs existants gardent la colonne 1.
+- *Amélioré* — **2. Vues retenues** : les séparateurs ont un fond et un liseré orangés, distincts des vues.
+
+### Développeurs
+- *Nouveau* — `b.start` des séparateurs (`grid-column: start / span largeur`, largeur bornée à 7 − start) ; `.usep { align-self: start }` ; `.chosen li.sepitem` (clair et sombre).
+
 ## [0.9.7.1] — Séparateurs en disposition « empilée » — 2026-11-24
 
 ### Utilisateurs
