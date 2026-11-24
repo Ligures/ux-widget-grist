@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   ╔══════════════════════════════════════════════════════════════════════════════╗
-  ║  UX widget grist — widget personnalisé Grist (version 0.9.6.15)              ║
+  ║  UX widget grist — widget personnalisé Grist (version 0.9.7.0)               ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
   Affiche sur une seule page, condensée et lisible, plusieurs vues natives d'un
   document Grist (tableaux, fiches, listes de fiches, graphiques natifs et avancés,
@@ -31,14 +31,14 @@
     <title>UX widget grist</title>
     <meta name="author" content="Ligures" />
     <!-- Politique de sécurité : aucun script en ligne ; sources limitées (Grist, jsDelivr, services géographiques publics) -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://docs.getgrist.com https://cdn.jsdelivr.net 'unsafe-eval'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' https: data: blob:; connect-src 'self' https://geo.api.gouv.fr https://data.geopf.fr https://cdn.jsdelivr.net https://grist.numerique.gouv.fr https://grist.toutatice.fr https://grist.ac-rennes.fr https://*.getgrist.com; frame-src https:; object-src 'none'; base-uri 'self'; form-action 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://docs.getgrist.com https://cdn.jsdelivr.net 'unsafe-eval'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' https: data: blob:; connect-src 'self' https://geo.api.gouv.fr https://data.geopf.fr https://cdn.jsdelivr.net; frame-src https:; object-src 'none'; base-uri 'self'; form-action 'none'" />
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script
       src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"
       integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG"
       crossorigin="anonymous"
     ></script>
-    <link rel="stylesheet" href="ux-widget.css?v=0.9.6.15" />
+    <link rel="stylesheet" href="ux-widget.css?v=0.9.7.0" />
   </head>
   <body>
     <!-- écran de chargement (0.9.5.9) : visible si le chargement dépasse 0,4 s, retiré par ux-widget.js (splashHide) -->
@@ -166,6 +166,6 @@
       <div class="panel" id="panel"></div>
     </div>
 
-    <script src="ux-widget.js?v=0.9.6.15"></script>
+    <script src="ux-widget.js?v=0.9.7.0"></script>
   </body>
 </html>

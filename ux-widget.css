@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.6.15).
+/* UX widget grist — feuilles de style (version 0.9.7.0).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1036,6 +1036,32 @@ button {
 .grid.masonry > .block.collapsed {
   align-self: start !important;
 } /* un bloc replié libère sa hauteur */
+/* séparateur (0.9.7.0) : titre de partie, commentaire en gris, trait ; commence une nouvelle rangée */
+.usep {
+  margin-top: 10px;
+  padding: 2px 2px 4px;
+  border-bottom: 2px solid var(--bleu);
+  min-width: 0;
+}
+.usep:first-child {
+  margin-top: 0;
+}
+.usep-t {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--bleu);
+}
+.usep-n {
+  font-size: 12.5px;
+  color: var(--muet);
+}
+@media print {
+  .usep {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+}
 /* replié : ni filtres ni recherche dans l'en-tête (0.9.6.12), ils reviennent quand le bloc est déplié */
 .block.collapsed .bh .qf,
 .block.collapsed .bh .qfs,
@@ -1398,18 +1424,6 @@ td.num {
   border: 1px dashed var(--bleu);
   border-radius: 3px;
   cursor: pointer;
-}
-.pcs {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin: 0 2px;
-  border: 1px solid var(--bord);
-  border-radius: 3px;
-  vertical-align: middle;
-}
-.pcsl {
-  margin: 2px 0 4px;
 }
 .rowcount {
   flex: none;
@@ -3280,6 +3294,7 @@ html.printing #grid {
     position: static !important;
   }
   /* carte imprimée seule (0.9.4.7) : les autres blocs disparaissent, le titre passe dans l'en-tête imprimé */
+  html.printone #grid > .usep,
   html.printone #grid > .block:not(.printme) {
     display: none !important;
   }

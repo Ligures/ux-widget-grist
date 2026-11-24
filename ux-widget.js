@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.6.15). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.7.0). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -42,11 +42,11 @@
      { name, title, blocks: [...], flux, dense, masonry, hideEmptyFields,
  hideEmptyBlocks, tableMaxHeight, chartHeight, dataTable }
      Bloc (blocks[i]) : id = identifiant de la vue Grist (_grist_Views_section)
+ Séparateur (0.9.7.0) : { id: "sepN", sep: true, name, note, width } dans la liste des blocs
  Disposition : width (1-6), start, rows, fw (flux), newLine, height, sticky, startFold, needOthers, subDesc (description de la vue en sous-titre), hLevel (2 : titre en h2 ; sinon h3)
  Tableaux/fiches : colWidths, rowCount, asList, cardW, editable, addable, showEmpty, hideLabels
  Texte (Markdown) : mdSize, mdEdit (modifiable depuis la page), mdNote (aspect bloc-notes)
  Liste de sélection : asSelect, selCol, selOrder, selGroup, selGroupOrder, syncId
- Couleurs des graphiques : pieColorCol, pieColorMap, pieColorDefault
  Carte : mapLabel, mapWheel (molette sans Ctrl), mapExportAdmin, qfFree (filtre libre, tous blocs), mapColor, mapRing + mapRules (contour), mapQpv, qpvDist,
          qpvUrl, mapZone (communes|epci|iris|legis|college|groupe|groupe2|groupe3), mapZone2 (contours croisés), zoneHover, legisUrl, collegeUrl, legisCol, collegeCol, irisCol, mapCommune, zoneColor,
          zoneSum, zoneTable/zoneKey/zoneVal, grpTable/grpKey/grpCol/grpLabel (et grp2…, grp3…), mapLabelsOn
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.6.15"; // voir CHANGELOG.md
+const VERSION = "0.9.7.0"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -2542,43 +2542,6 @@ function renderCards(info, rows, body, selId, jobs = []) {
   });
 }
 
-/* ---------- Couleurs personnalisées des camemberts (option de bloc, enregistrée dans W_Composition) ----------
-   pieColorMap : correspondance « catégorie = #code », une par ligne (ou séparées par « ; ») ;
-   pieColorCol : colonne de la table contenant un code hexadécimal par ligne (ex. formule $Reseau.Couleur) ;
-   pieColorDefault : couleur des catégories sans code (vide : palette habituelle).
-   Priorité : correspondance, puis colonne, puis couleur de repli. */
-// hexColor — Code couleur hexadécimal normalisé (« 000091 », « #009 »… → « #000091 », « #009 »), ou "" s'il est invalide.
-function hexColor(v) {
-  const m = /^\s*#?([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})\s*$/i.exec(String(v ?? ""));
-  return m ? `#${m[1]}` : "";
-}
-const pieKey = (v) => String(v ?? "").trim().toLowerCase();
-// pieColorMapOf — Lit la correspondance saisie : Map(catégorie en minuscules → #code).
-function pieColorMapOf(txt) {
-  const map = new Map();
-  for (const line of String(txt || "").split(/[\n;]+/)) {
-    const i = line.lastIndexOf("=");
-    if (i < 1) continue;
-    const c = hexColor(line.slice(i + 1));
-    if (c) map.set(pieKey(line.slice(0, i)), c);
-  }
-  return map;
-}
-const pieCustom = (b) => !!(b && (b.pieColorCol || String(b.pieColorMap || "").trim() || hexColor(b.pieColorDefault)));
-// pieColors — Couleur de chaque catégorie (labels), d'après la configuration du bloc.
-// labelOfRow(r) donne la catégorie d'une ligne (pour lire la colonne de codes).
-function pieColors(b, labels, rows, labelOfRow, fallback = (j) => PALETTE[j % PALETTE.length]) {
-  const map = pieColorMapOf(b.pieColorMap),
-    fromCol = new Map();
-  if (b.pieColorCol)
-    for (const r of rows) {
-      const k = pieKey(labelOfRow(r)),
-        c = hexColor(r[b.pieColorCol]);
-      if (c && !fromCol.has(k)) fromCol.set(k, c);
-    }
-  const dflt = hexColor(b.pieColorDefault);
-  return labels.map((l, j) => map.get(pieKey(l)) || fromCol.get(pieKey(l)) || dflt || fallback(j));
-}
 
 // renderChart — Affiche un graphique natif de Grist avec Chart.js (barres, lignes, secteurs, aires…).
 function renderChart(info, rows, body, jobs) {
@@ -2613,8 +2576,6 @@ function renderChart(info, rows, body, jobs) {
     const xl = rows.map((r) => textOf(xF.col, xF.opts, r[xF.colId]) || "(vide)");
     const gl = multi ? rows.map((r) => textOf(groupF.col, groupF.opts, r[groupF.colId]) || "(vide)") : null;
     const labels = [...new Set(xl)];
-    const blk = S.cfg.blocks.find((x) => x.id === info.secId);
-    const custom = pieCustom(blk);
     const series = [];
     if (multi) {
       for (const g of new Set(gl))
@@ -2622,27 +2583,9 @@ function renderChart(info, rows, body, jobs) {
     } else {
       for (const y of pie ? yFs.slice(0, 1) : yFs) series.push({ label: y.label, y, g: null });
     }
-    // couleurs choisies (encadré « Couleurs du graphique ») : une couleur par catégorie pour un camembert ou un
-    // histogramme à une seule série, sinon une couleur par série (valeur du regroupement ou nom de la colonne)
-    const perCat = pie || (custom && series.length === 1 && type === "bar");
-    const catCols = perCat
-      ? custom
-        ? pieColors(blk, labels, rows, (r) => textOf(xF.col, xF.opts, r[xF.colId]) || "(vide)", pie ? undefined : () => PALETTE[0])
-        : labels.map((_, j) => PALETTE[j % PALETTE.length])
-      : null;
-    const map = custom ? pieColorMapOf(blk.pieColorMap) : null;
-    const serieColor = (s, i) => {
-      if (custom) {
-        const c =
-          map.get(pieKey(s.label)) ||
-          (s.g !== null && map.get(pieKey(s.g))) ||
-          map.get(pieKey(s.y.label)) ||
-          (blk.pieColorCol && s.g !== null && hexColor(rows.find((r, k) => gl[k] === s.g && hexColor(r[blk.pieColorCol]))?.[blk.pieColorCol])) ||
-          hexColor(blk.pieColorDefault);
-        if (c) return c;
-      }
-      return PALETTE[i % PALETTE.length];
-    };
+    // couleurs : une par catégorie pour un camembert, sinon une par série (palette du widget)
+    const catCols = pie ? labels.map((_, j) => PALETTE[j % PALETTE.length]) : null;
+    const serieColor = (s, i) => PALETTE[i % PALETTE.length];
     const datasets = series.map((s, i) => {
       const sums = new Map(labels.map((l) => [l, 0]));
       rows.forEach((r, k) => {
@@ -3330,8 +3273,6 @@ async function renderAdvChart(info, rows, body, jobs) {
   const data = JSON.parse(JSON.stringify(spec.data));
   data.forEach(fill);
   fixAggregate(data, spec.data);
-  // camemberts : couleurs par catégorie (marker.colors), une valeur par ligne, dans l'ordre des lignes
-  const blk = S.cfg.blocks.find((x) => x.id === info.secId);
   // nom d'une série : celui de la trace, sinon le libellé de la colonne de ses valeurs (graphique converti depuis
   // un graphique natif : les traces n'ont souvent pas de nom, Plotly affiche « trace 0 »)
   const srcLabel = (t0) => {
@@ -3348,59 +3289,6 @@ async function renderAdvChart(info, rows, body, jobs) {
       if (n) t.name = n;
     }
   });
-  if (pieCustom(blk))
-    data.forEach((t, ti) => {
-      if (t && t.type !== "pie") {
-        // barres, courbes… : couleur de la trace d'après son nom ; une seule trace de barres : une couleur par barre
-        const map = pieColorMapOf(blk.pieColorMap);
-        // séries « éclatées » par une colonne (transformation groupby de l'éditeur Plotly, ou graphique natif
-        // converti) : une couleur par groupe, d'après son nom renommé (styles[].value.name) ou sa valeur
-        const gb = (t.transforms || []).find((x) => x?.type === "groupby" && Array.isArray(x.groups));
-        if (gb) {
-          const styles = (Array.isArray(gb.styles) ? gb.styles : []).map((st) => ({ ...st, value: { ...(st?.value || {}) } }));
-          const groups = [...new Set(gb.groups.map((g) => String(g ?? "")))];
-          for (const g of groups) {
-            let st = styles.find((x) => String(x.target ?? "") === g);
-            let c = map.get(pieKey(st?.value?.name)) || map.get(pieKey(g));
-            if (!c && blk.pieColorCol) c = hexColor(rows[gb.groups.findIndex((x) => String(x ?? "") === g)]?.[blk.pieColorCol]);
-            c ||= hexColor(blk.pieColorDefault);
-            if (!c) continue;
-            if (!st) styles.push((st = { target: g, value: {} }));
-            st.value.marker = { ...(st.value.marker || {}), color: c };
-            if ((t.type || "scatter") === "scatter") st.value.line = { ...(st.value.line || {}), color: c };
-          }
-          gb.styles = styles;
-          return;
-        }
-        const named = map.get(pieKey(t.name)) || map.get(pieKey(srcLabel(spec.data[ti])));
-        let cats = t.orientation === "h" ? t.y : t.x;
-        // catégories imbriquées (plusieurs colonnes) : [[niveaux…], [années…]] → une étiquette par barre
-        if (Array.isArray(cats) && cats.length && cats.every(Array.isArray)) cats = cats[0].map((_, k) => cats.map((a) => a[k]).join(" "));
-        if (named) {
-          t.marker = { ...(t.marker || {}), color: named };
-          if (t.type === "scatter") t.line = { ...(t.line || {}), color: named };
-        } else if (data.length === 1 && (t.type || "scatter") === "bar" && Array.isArray(cats)) {
-          const lab = cats.map((l) => (Array.isArray(l) ? l.join(" ") : l));
-          const cols = pieColors(blk, lab, [], () => "", () => BRAND.c);
-          if (blk.pieColorCol)
-            lab.forEach((l, k) => {
-              const own = hexColor(rows[k]?.[blk.pieColorCol]);
-              if (own && !map.has(pieKey(l))) cols[k] = own;
-            });
-          if (cols.some((c) => c !== BRAND.c)) t.marker = { ...(t.marker || {}), color: cols };
-        } else if (hexColor(blk.pieColorDefault) && !t.marker?.color) t.marker = { ...(t.marker || {}), color: hexColor(blk.pieColorDefault) };
-      } else if (t?.type === "pie" && Array.isArray(t.labels)) {
-        const lab = t.labels.map((l) => (Array.isArray(l) ? l.join(" ") : l));
-        const cols = pieColors(blk, lab, [], () => "");
-        // la colonne de codes se lit ligne à ligne (les étiquettes suivent l'ordre des lignes)
-        if (blk.pieColorCol)
-          lab.forEach((l, k) => {
-            const own = hexColor(rows[k]?.[blk.pieColorCol]);
-            if (own && !pieColorMapOf(blk.pieColorMap).has(pieKey(l))) cols[k] = own;
-          });
-        t.marker = { ...(t.marker || {}), colors: cols };
-      }
-    });
   // camemberts : les étiquettes longues passent à la ligne (Plotly ne le fait pas) et la marge s'agrandit au
   // besoin pour les étiquettes placées à l'extérieur, qui étaient coupées au bord du bloc
   const wrapLabel = (l, max = 14) => {
@@ -3771,6 +3659,7 @@ async function render() {
     );
   }
   if (stale()) return;
+  insertSeparators(frag);
   // jamais de page blanche : message simple (le détail reste dans la console)
   if (!frag.childElementCount) {
     const d = document.createElement("div");
@@ -3817,10 +3706,37 @@ async function render() {
     if (s) w.scrollTop = s;
   });
   for (const id of Object.keys(S.search)) applySearch(Number(id));
+  // filtre libre : colonne qui vient d'être choisie → sa liste de valeurs s'ouvre aussitôt
+  if (S.qf3Auto) {
+    const tog = grid.querySelector(`[data-qf3tog="${S.qf3Auto}"]`);
+    S.qf3Auto = null;
+    if (tog) requestAnimationFrame(() => qf3Open(tog));
+  }
   if (S.scrollTop) {
     S.scrollTop = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   } else window.scrollTo(0, winY);
+}
+// insertSeparators — (0.9.7.0) Séparateurs de la page (b.sep : nom, commentaire, largeur), placés devant la
+//   première vue affichée qui les suit. Un séparateur sans vue affichée avant le suivant (droits, blocs vides
+//   masqués) n'apparaît pas. Il commence toujours une nouvelle rangée.
+function insertSeparators(frag) {
+  const els = new Map([...frag.children].filter((e) => e.dataset.sec).map((e) => [e.dataset.sec, e]));
+  let pending = null;
+  for (const b of S.cfg.blocks) {
+    if (b.sep) {
+      pending = b;
+      continue;
+    }
+    const el = els.get(String(b.id));
+    if (!el || !pending) continue;
+    const d = document.createElement("div");
+    d.className = "usep";
+    d.setAttribute("style", S.cfg.flux ? "flex:0 0 100%;" : `grid-column:1 / span ${Math.min(Number(pending.width) || 6, 6)};--span:6;`);
+    d.innerHTML = `${pending.name ? `<h2 class="usep-t">${esc(pending.name)}</h2>` : ""}${pending.note ? `<div class="usep-n">${esc(pending.note)}</div>` : ""}`;
+    el.before(d);
+    pending = null;
+  }
 }
 // scheduleRender — Demande un rendu (regroupe les demandes rapprochées ; différé pendant une édition).
 function scheduleRender() {
@@ -4138,6 +4054,7 @@ $("#grid").addEventListener("change", (ev) => {
   if (qc) {
     (S.qfFreeCol ??= {})[qc.dataset.qfcol] = qc.value;
     delete S.qf[`${qc.dataset.qfcol}:3`];
+    S.qf3Auto = qc.value ? qc.dataset.qfcol : null; // la liste des valeurs s'ouvrira après le rendu (0.9.7.0)
     scheduleRender();
   }
   const mz = ev.target.closest("[data-mzone]"); // carte : zonage choisi par l'utilisateur
@@ -4553,7 +4470,7 @@ updateHelpDot();
 
 // updateFoldButton — Libellé du bouton « Tout replier / Tout déplier » selon l'état des blocs.
 function updateFoldButton() {
-  const any = S.cfg.blocks.some((b) => S.collapsed[b.id]);
+  const any = S.cfg.blocks.some((b) => !b.sep && S.collapsed[b.id]);
   const t = any ? "Tout déplier" : "Tout replier";
   $("#btnFold .lbl").textContent = t;
   $("#btnFold").dataset.tip = t;
@@ -4563,8 +4480,8 @@ function updateFoldButton() {
     : '<path d="M7 4l5 5 5-5M7 20l5-5 5 5"/>';
 }
 $("#btnFold").addEventListener("click", () => {
-  const any = S.cfg.blocks.some((b) => S.collapsed[b.id]);
-  for (const b of S.cfg.blocks) S.collapsed[b.id] = !any;
+  const any = S.cfg.blocks.some((b) => !b.sep && S.collapsed[b.id]);
+  for (const b of S.cfg.blocks) if (!b.sep) S.collapsed[b.id] = !any;
   document.querySelectorAll("#grid .block").forEach((el) => {
     el.classList.toggle("collapsed", !any);
   });
@@ -4579,7 +4496,7 @@ $("#btnConfig").addEventListener("click", () => openConfig());
 /* Colonnes choisies dans la configuration : elles sont enregistrées par identifiant (colId), qui change quand
    on renomme une colonne dans Grist. On garde aussi leur numéro interne (colRef, stable) dans b._refs pour
    retrouver le nouvel identifiant automatiquement. */
-const COL_FIELDS = ["mapLabel", "mapColor", "mapColor2", "mapRing", "mapCommune", "selCol", "selGroup", "zoneSum", "qfField", "qfField2", "legisCol", "collegeCol", "irisCol", "pieColorCol"];
+const COL_FIELDS = ["mapLabel", "mapColor", "mapColor2", "mapRing", "mapCommune", "selCol", "selGroup", "zoneSum", "qfField", "qfField2", "legisCol", "collegeCol", "irisCol"];
 const COL_SPECIAL = new Set(["", "__qpv", "__pos", "__pts"]); // valeurs qui ne sont pas des colonnes
 // colFieldTable — Table d'une option de colonne (zoneKey / zoneVal : table choisie pour colorer les zones).
 function colFieldTable(b, f) {
@@ -4638,71 +4555,12 @@ async function refreshAll(silent = false) {
     status(e.message || String(e), true);
   }
 }
-/* ---------- Actualisation automatique (0.9.5.2) ----------
-   Grist ne prévient un widget que des changements de sa propre table. Pour voir les saisies faites ailleurs (autres
-   tables, autres utilisateurs), le widget lit à intervalle régulier l'état du document (GET …/states, API REST de
-   Grist avec le jeton du widget, en lecture seule) : si le dernier numéro d'action a changé, il relit les données
-   et redessine la page (refreshAll silencieux). Rien tant que l'onglet est caché, qu'une saisie est en cours ou
-   que la configuration est ouverte ; les modifications faites par le widget lui-même (docActions) ne déclenchent
-   pas de second rendu. Intervalle : nav.refresh (secondes, 0 = désactivée, 20 par défaut). */
-const REFRESH_CHOICES = [
-  [0, "désactivée"],
-  [10, "toutes les 10 s"],
-  [20, "toutes les 20 s (par défaut)"],
-  [30, "toutes les 30 s"],
-  [60, "toutes les minutes"],
-  [120, "toutes les 2 minutes"],
-];
-const refreshEvery = () => (S.nav?.refresh === undefined || S.nav?.refresh === null ? 20 : Number(S.nav.refresh) || 0);
-const live = { tok: null, exp: 0, last: null, self: false, fails: 0, timer: null, busy: false };
-// docActions — Modifie le document (applyUserActions) ; le changement d'état qui suit vient du widget lui-même.
+// docActions — Modifie le document (applyUserActions).
 async function docActions(actions) {
   const r = await grist.docApi.applyUserActions(actions);
-  live.self = true;
   S.navAccess = {}; // une ligne créée ou supprimée peut faire apparaître ou disparaître une page du menu (0.9.5.3)
   return r;
 }
-// docState — Dernier état du document (numéro et empreinte de la dernière action), par l'API REST de Grist.
-async function docState() {
-  if (!live.tok || Date.now() > live.exp) {
-    live.tok = await grist.docApi.getAccessToken({ readOnly: true });
-    live.exp = Date.now() + Math.max(30000, (live.tok.ttlMsecs || 300000) - 30000);
-  }
-  const r = await fetch(`${live.tok.baseUrl}/states?auth=${encodeURIComponent(live.tok.token)}`);
-  if (r.status === 401 || r.status === 403) live.exp = 0; // jeton expiré : redemandé au prochain essai
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  const s = (await r.json())?.states?.[0];
-  return s ? `${s.n}:${s.h}` : "";
-}
-// liveCheck — Relit le document si quelqu'un l'a modifié depuis la dernière vérification.
-async function liveCheck() {
-  if (live.busy || live.fails >= 3 || document.hidden || S.editing || !refreshEvery()) return;
-  if ($("#config") && !$("#config").hidden) return;
-  live.busy = true;
-  try {
-    const st = await docState();
-    live.fails = 0;
-    const changed = live.last !== null && st !== live.last && !live.self;
-    live.last = st;
-    live.self = false;
-    if (changed && S.ready) await refreshAll(true);
-  } catch (e) {
-    if (++live.fails === 3) console.info(`[UX widget] actualisation automatique arrêtée : ${e.message || e}`);
-  } finally {
-    live.busy = false;
-  }
-}
-// liveStart — (Re)lance la vérification périodique selon le réglage du document.
-function liveStart() {
-  clearInterval(live.timer);
-  live.fails = 0;
-  const sec = refreshEvery();
-  if (sec) {
-    live.timer = setInterval(liveCheck, sec * 1000);
-    liveCheck(); // état de départ
-  }
-}
-document.addEventListener("visibilitychange", () => !document.hidden && liveCheck()); // retour sur l'onglet
 /* ---------- Maintenance et accès fermé (0.9.6) ----------
    Table W_Messages (une ligne), laissée lisible par tous par une règle d'accès placée avant les autres :
    Maintenance (booléen), Message_maintenance, Fin_prevue (date et heure), Message_sans_acces (Markdown).
@@ -4877,8 +4735,6 @@ async function readNav() {
             },
           }
         : {}),
-      // actualisation automatique (s) ; absente = valeur par défaut (20 s)
-      ...(REFRESH_CHOICES.some(([v]) => v === n.refresh) ? { refresh: n.refresh } : {}),
     };
   } catch {
     return { url: "", items: [] };
@@ -5365,7 +5221,6 @@ async function init() {
         /* stockage plein ou indisponible : l'écran s'affichera sans image au début */
       }
     });
-    liveStart();
     splashStep("Vérification des droits…", 0.3);
     S.isAdmin = await checkAdmin();
     await keyP; // pour les sélections partagées

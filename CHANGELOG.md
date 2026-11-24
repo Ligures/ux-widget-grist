@@ -26,164 +26,55 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
-## [0.9.6.15] — Filtre rapide : double clic pour filtrer toute la page — 2026-11-15
+## [0.9.7.0] — Séparateurs, sans réglage des couleurs ni actualisation automatique — 2026-11-24
+
+Palier 0.9.7 ; les livraisons 0.9.6.0 à 0.9.6.15 sont regroupées dans « 0.9.6 » ci-dessous.
 
 ### Utilisateurs
-- *Nouveau* — **Filtres rapides** : un double clic (double toucher sur smartphone) sur une valeur l'applique à tous les blocs de la page filtrés sur le même champ, comme Maj+clic ou le clic du milieu, qui restent disponibles.
-
-### Développeurs
-- *Nouveau* — `qfLast` : deux clics en moins de 0,5 s sur la même valeur (`[data-qf]`), ou une valeur puis le bouton de la liste refermée (`[data-qftog]`, présentation compacte) → `qfSync`.
-
-## [0.9.6.14] — Graphiques avancés : plage des axes de catégories — 2026-11-15
-
-### Utilisateurs
-- *Corrigé* — **Graphiques avancés** à axe de catégories : toutes les barres s'affichent même si leur nombre a changé depuis le réglage du graphique (vue liée ou filtrée ensuite) ; le widget gardait la plage d'axe enregistrée et ne montrait que les premières barres, très larges.
-
-### Développeurs
-- *Corrigé* — `renderAdvChart` : `range` supprimé et `autorange: true` sur les axes de catégories (données texte ou imbriquées, type absent, `category` ou `multicategory`).
-
-## [0.9.6.13] — Graphiques avancés : agrégation sur un axe à deux colonnes — 2026-11-15
-
-### Utilisateurs
-- *Corrigé* — **Graphiques avancés** dont l'axe porte deux colonnes (niveau et rentrée, par exemple) avec une agrégation (somme, moyenne…) : toutes les barres s'affichent, comme dans Grist ; le widget n'en montrait que deux.
-
-### Développeurs
-- *Nouveau* — `aggMulti` (appelé par `fixAggregate`) : axe multicatégorie + transformation `aggregate` → agrégation faite par le widget (clé = combinaison des catégories, ou `groups` s'il s'agit d'une colonne ; fonctions `count, sum, avg, min, max, first, last, median, range, change`, `first` par défaut), transformation retirée avant `Plotly.newPlot`.
-
-## [0.9.6.12] — Filtres masqués sur les blocs repliés — 2026-11-14
-
-### Utilisateurs
-- *Amélioré* — **Blocs repliés** : les filtres rapides et la recherche n'apparaissent plus dans l'en-tête ; ils reviennent quand le bloc est déplié. Un filtre déjà choisi reste appliqué.
-
-### Développeurs
-- *Amélioré* — `.block.collapsed .bh .qf, .qfs, .search` masqués ; `fitQf` relancé au dépliage (bloc ou « Tout déplier »).
-
-## [0.9.6.11] — Niveaux de titres, description de la vue en sous-titre — 2026-11-14
-
-### Utilisateurs
-- *Amélioré* — **Titres** : le titre de la page est plus grand (19 px) ; les blocs principaux peuvent porter un titre intermédiaire, plus grand que le titre habituel.
-- *Amélioré* — **Sous-titre** d'un bloc : c'est la description de la vue, affichée sous le titre au lieu du ⓘ.
+- *Nouveau* — **Séparateurs** : une page peut être découpée en parties, chacune annoncée par un titre, une ligne de commentaire en gris et un trait. Une partie dont aucun bloc n'est affiché (droits, blocs vides) n'apparaît pas.
+- *Amélioré* — **Filtre libre** : dès que la colonne est choisie, la liste de ses valeurs s'ouvre, sans clic supplémentaire.
+- *Retiré* — **Actualisation automatique** : une modification faite ailleurs (autre table, autre utilisateur) n'apparaît plus d'elle-même ; utiliser le bouton **Actualiser**. Les saisies faites dans le widget restent visibles aussitôt. Le début et la fin d'une maintenance s'appliquent à la prochaine ouverture ou au prochain clic sur Actualiser.
+- *Amélioré* — **Graphiques avancés** : ils s'affichent avec les couleurs réglées dans Grist, que le widget ne modifie plus.
 
 ### Administrateurs
-- *Nouveau* — ⚙ → réglages du bloc → **Affichage** : **Titre** (H3, habituel, ou H2, plus grand) et **Sous-titre** : case « afficher la description », qui reprend la description du widget saisie dans Grist. Décochée, la description reste au survol du ⓘ.
-- *Retiré* — Champ de saisie du sous-titre (0.9.6.8) : un sous-titre déjà saisi n'est plus affiché ; le reporter dans la description du widget dans Grist, puis cocher la case.
+- *Nouveau* — ⚙ → **2. Vues retenues** : bouton **+ Ajouter un séparateur** ; nom, commentaire et largeur (1 à 6 colonnes), placé avec ↑ ↓ devant les vues qu'il annonce. Il commence toujours une nouvelle rangée. Avec « Combler automatiquement les espaces libres », une vue placée après un séparateur peut remonter dans un espace libre au-dessus de lui : décocher l'option si c'est gênant.
+- *Retiré* — Encadré **Couleurs du graphique** (colonne de codes, correspondance, couleur de repli), sur les graphiques natifs comme avancés. Les graphiques natifs prennent la palette du widget ; les graphiques avancés, leurs couleurs Grist. Les réglages déjà enregistrés sont ignorés.
+- *Retiré* — Réglage **Actualisation automatique** (4. Affichage).
+- *Sécurité* — `index.html` : les adresses des instances Grist sont retirées de `connect-src` (elles ne servaient qu'à l'actualisation automatique).
 
 ### Développeurs
-- *Amélioré* — Hiérarchie : `h1` page (19 px, avant 16), bloc `h3.bt` (13,5 px) ou `h2.bt` (15,5 px) selon `b.hLevel` ; sélecteurs `.bh h2` remplacés par `.bh .bt`. `b.subDesc` remplace `b.sub` (supprimé à l'enregistrement de la case).
+- *Nouveau* — Séparateur = élément `{ id: "sepN", sep: true, name, note, width }` de `cfg.blocks` ; ignoré par le chargement (aucune section), `insertSeparators(frag)` après le rendu (devant la première vue affichée qui le suit, `div.usep`, `h2.usep-t`, `.usep-n`) ; exclu de « Tout replier » et de l'impression d'une carte seule.
+- *Nouveau* — `S.qf3Auto` : `qf3Open` sur le filtre libre du bloc après le rendu qui suit le choix de la colonne.
+- *Retiré* — `hexColor`, `pieKey`, `pieColorMapOf`, `pieCustom`, `pieColors`, champs `pieColorCol`, `pieColorMap`, `pieColorDefault` (`.pcs`, `.pcsl`).
+- *Retiré* — `liveStart`, `liveCheck`, `docState`, `live`, `refreshEvery`, `REFRESH_CHOICES`, `nav.refresh`, `#cRefresh` ; `docActions` garde seulement `applyUserActions` et la remise à zéro de `S.navAccess`.
 
-## [0.9.6.10] — Légende des graphiques avancés rendue à Plotly — 2026-11-14
+## [0.9.6] — Maintenance, titres et pliage des blocs, pages en boutons, graphiques avancés — 2026-11-09 → 2026-11-15
+
+Regroupe les livraisons 0.9.6.0 à 0.9.6.15.
 
 ### Utilisateurs
-- *Retiré* — **Graphiques avancés** : le widget ne modifie plus la légende selon la largeur du bloc (placée au-dessus et en petit dans un bloc étroit, depuis 0.9.6.1). Elle s'affiche telle qu'elle est réglée dans le graphique, à l'écran comme à l'impression.
+- *Nouveau* — **Écran de maintenance** (message des administrateurs, heure de retour prévue) et écran **accès non ouvert** pour une personne qui ne peut lire aucune page.
+- *Nouveau* — **Pages en boutons** : certaines pages du menu apparaissent comme un bouton à icône dans la barre d'outils (dans le menu ☰ sur smartphone).
+- *Nouveau* — **Filtres rapides** : un double clic (double toucher sur smartphone) sur une valeur l'applique à tous les blocs de la page filtrés sur le même champ, comme Maj+clic ou le clic du milieu.
+- *Amélioré* — **En-tête des blocs** : chevron de pliage à droite, clic sur tout l'en-tête pour plier ou déplier, fond coloré seulement quand le bloc est replié ; filtres et recherche masqués sur un bloc replié.
+- *Amélioré* — **Titres** : titre de la page plus grand (19 px), titre de bloc habituel ou intermédiaire (plus grand) ; description de la vue affichable en sous-titre.
+- *Amélioré* — **Plein écran** proposé à tous ; bouton de changement de page plus grand sur smartphone.
+- *Corrigé* — **Tableaux : style de ligne** de Grist appliqué, y compris réglé sur les données brutes et dans les colonnes dont un style de police avait été décoché.
+- *Corrigé* — **Liens hypertextes** affichés comme dans Grist.
+- *Corrigé* — **Graphiques avancés** : toutes les barres s'affichent sur un axe de catégories (plage d'axe recalculée) et sur un axe à deux colonnes avec agrégation ; la légende est celle réglée dans le graphique ; à l'impression, le graphique est redessiné à la largeur de son bloc.
 
 ### Administrateurs
-- *Amélioré* — La position, l'orientation et la taille de la légende se règlent dans l'éditeur du graphique avancé (Style → Legend) ; le widget les reprend sans les changer.
+- *Nouveau* — Table **`W_Messages`** (`Maintenance`, `Message_maintenance`, `Fin_prevue`, `Message_sans_acces`), lisible par tous ; bandeau « Maintenance active » pour les administrateurs.
+- *Nouveau* — ⚙ → **Menu des pages** : case **Bouton** par lien.
+- *Nouveau* — ⚙ → réglages du bloc → **Affichage** : **Titre** (H3 ou H2) et **Sous-titre** (case « afficher la description »).
+- *Nouveau* — **Console du navigateur** : diagnostic du style de ligne de chaque tableau.
+- *Nouveau* — **Distancier routier** : **Lignes conservées par école** (5 par défaut) et bouton **Nettoyer la table** ; une école déjà traitée est passée à la relance.
+- *Sécurité* — Un utilisateur à qui les règles d'accès cachent `W_Admin` et `W_Composition` n'est plus pris pour un administrateur en cours d'installation.
 
 ### Développeurs
-- *Retiré* — `legendKind`, `legendFor`, `el._uxLegend`, `el._uxLegendKind`. Gardé : `Plotly.Plots.resize` au redimensionnement et largeur recalculée à l'impression (`beforeprint` / `afterprint`).
-
-## [0.9.6.9] — Distancier : lignes conservées par école, nettoyage — 2026-11-12
-
-### Administrateurs
-- *Nouveau* — **Distancier routier** : réglage **Lignes conservées par école** (5 par défaut). Seules les distances les plus courtes par la route de chaque école sont enregistrées, plus le trajet vers son collège ; avec Metric-OSRM, la table passait à environ 28 lignes par école (tous les trajets d'un lot de 25 candidates étaient écrits), elle en garde 6 avec le réglage par défaut. Le résultat reste exact : les autres trajets servent au calcul, en mémoire.
-- *Nouveau* — Distancier : bouton **Nettoyer la table**, affiché quand des écoles dépassent le nombre conservé. Deux clics (annonce du nombre de lignes, puis confirmation) suppriment les distances les plus longues, sans appel au service ; le trajet vers le collège est toujours gardé.
-- *Amélioré* — Distancier : à la relance, une école qui a déjà ses lignes conservées (et son collège) est passée.
-
-### Développeurs
-- *Nouveau* — `outils/distancier.html` : `opt.keep`, `remember` (résultats rangés par école dans `D.mine`, marqués `fresh`), `keepBest` (écriture des K plus courts et du collège à la fin de chaque école ; école interrompue par Arrêter : rien d'écrit), `complete` (école passée), `D.byDep` / `D.extra` (lignes en trop, supprimées par `BulkRemoveRecord` par lots de 500).
-
-## [0.9.6.8] — Sous-titre des blocs, nouvel en-tête de pliage — 2026-11-11
-
-### Utilisateurs
-- *Nouveau* — **Sous-titre** : un bloc peut afficher une ligne de texte en gris sous son titre.
-- *Amélioré* — **Pliage des blocs** : chevron à droite de l'en-tête (vers le bas : replié, vers le haut : déplié) ; un clic n'importe où sur l'en-tête plie ou déplie le bloc, et plus seulement quand il est replié. Un bloc replié a un fond coloré, plus de liseré à gauche ; un bloc déplié n'a aucun effet. Le titre est en bleu dans les deux cas, l'icône du type de vue reste affichée sur les blocs repliés. La mention « Afficher ▸ » disparaît.
-
-### Administrateurs
-- *Nouveau* — ⚙ → réglages du bloc → **Affichage** : champ **Sous-titre**.
-
-### Développeurs
-- *Nouveau* — `b.sub` ; en-tête `.bh` : `.foldico`, `.bht` (`h2` + `.bsub`), …, `.max`, `.tog` (chevron SVG `TOG_ICON`, tourné par CSS selon `.collapsed`, plus de texte ▸/▾ à mettre à jour).
-- *Amélioré* — clic sur `.block:not(.maxed) > .bh` hors commandes (`button, input, select, label, a, .qf, .qfs, .search, .secinfo`) → bascule du pliage.
-
-## [0.9.6.7] — Pages du menu en boutons de la barre d'outils — 2026-11-11
-
-### Utilisateurs
-- *Nouveau* — **Pages en boutons** : certaines pages du menu peuvent apparaître comme un bouton à icône dans la barre d'outils, à côté de l'Aide (sur smartphone, dans le menu ☰, avec leur libellé). Le bouton de la page affichée est surligné.
-
-### Administrateurs
-- *Nouveau* — ⚙ → **Menu des pages** : case **Bouton** sur chaque lien. Le lien quitte le menu des pages et devient un bouton portant son icône SVG (icône de pages par défaut) ; l'infobulle est celle du lien, sinon son libellé. La visibilité suit la règle du lien (*tous* ou *si accès à* une table) : seuls les utilisateurs autorisés voient le bouton.
-
-### Développeurs
-- *Nouveau* — `item.inBar` ; `renderNav` place ces liens dans `#navbtns` (dans `#tbMenu`, avant `#btnHelp`, `display: contents`) en `a.tb.navbtn[data-gocfg]` ; clic géré par l'écouteur de `#tbMenu` (`switchConfig`).
-- *Amélioré* — `.tb svg:not(.nico)` : les icônes nettoyées par `safeSvg` gardent leur dessin (remplissage ou trait) dans les boutons.
-
-## [0.9.6.6] — Plein écran pour tous, bouton des pages agrandi sur smartphone — 2026-11-11
-
-### Utilisateurs
-- *Amélioré* — **Plein écran** (ouvrir la page dans un nouvel onglet, sans les menus de Grist) : proposé à tous, et plus seulement aux administrateurs.
-- *Corrigé* — **Smartphone** : le bouton de changement de page est plus grand (44 px de haut, 160 px de large au moins), avec le nom de la page ; il pouvait se réduire à une petite icône difficile à toucher.
-
-### Développeurs
-- *Amélioré* — `#btnSingle` toujours affiché (sauf écran de maintenance) ; `#pnav .pnav-tog` sur écran étroit : `min-width`, `height: 44px`.
-
-## [0.9.6.5] — Liens hypertextes — 2026-11-11
-
-### Utilisateurs
-- *Corrigé* — **Colonnes « Lien hypertexte »** (texte réglé en HyperLink dans Grist) : la valeur « texte adresse » s'affiche comme dans Grist, un lien cliquable portant le texte, ouvert dans un nouvel onglet, au lieu du texte brut. Une valeur réduite à l'adresse affiche l'adresse.
-
-### Développeurs
-- *Nouveau* — `htmlOf` : `widget === "HyperLink"`, adresse = dernier mot (`https://`, `http://`, `mailto:`, `tel:` seulement ; sinon texte simple), `a.hlink` (`rel="noopener noreferrer"`).
-
-## [0.9.6.4] — Style de ligne réglé sur les données brutes — 2026-11-11
-
-### Utilisateurs
-- *Corrigé* — **Tableaux : style de ligne** (« Aspect de la ligne » dans Grist) : quand les règles sont portées par la table, dans ses données brutes, et que Grist les applique à toutes ses vues, le widget les applique aussi. Il ne lisait que les règles posées sur la vue elle-même.
-
-### Développeurs
-- *Nouveau* — `rowRulesOf(info)` : règles de la vue, sinon de la section des données brutes (`_grist_Tables.rawViewSectionRef`, `rules` et `options.rulesOptions`) ; `diagRowRules` indique l'origine (« vue » ou « données brutes »), ou l'absence de règle.
-
-## [0.9.6.3] — Diagnostic du style de ligne — 2026-11-11
-
-### Administrateurs
-- *Nouveau* — **Console du navigateur** : pour chaque tableau qui a un « Style de ligne », une ligne « [UX widget] style de ligne « … » » indique les règles trouvées, si leur colonne de calcul est lue et pour combien de lignes elle est vraie, et le style de chaque règle. Elle sert à comprendre pourquoi un style visible dans Grist ne l'est pas dans le widget.
-
-### Développeurs
-- *Nouveau* — `diagRowRules(info, rows)`, appelée par `renderTable`, une fois par vue.
-
-## [0.9.6.2] — Mise en forme conditionnelle de ligne — 2026-11-11
-
-### Utilisateurs
-- *Corrigé* — **Tableaux : style de ligne** (règle de mise en forme « Style de ligne » de Grist, par exemple une ligne en italique) : il s'affiche aussi dans les colonnes dont le gras, l'italique, le souligné ou le barré avaient été cochés puis décochés dans Grist. Le « non » enregistré par Grist annulait le style de la ligne ; il ne compte plus.
-
-### Développeurs
-- *Corrigé* — `styleSet` : pour `fontBold`, `fontItalic`, `fontUnderline`, `fontStrikethrough`, seule la valeur `true` s'applique (style de la vue, de la colonne, du champ et des règles) ; `false` laisse le style hérité de la ligne.
-
-## [0.9.6.1] — Légende des graphiques avancés dans les blocs étroits — 2026-11-10
-
-### Utilisateurs
-- *Corrigé* — **Graphiques avancés dans un bloc étroit** : la légende ne recouvre plus les barres. Sous 480 px de large, elle passe au-dessus du graphique, en petits caractères ; jusqu'à 700 px, elle reste à droite en plus petit. Elle s'adapte quand la largeur change (plein écran, fenêtre).
-- *Corrigé* — **Impression** : les graphiques avancés sont redessinés à la largeur de leur bloc sur le papier (ils gardaient leur largeur d'écran et se coupaient à droite), avec la légende adaptée à cette largeur.
-
-### Développeurs
-- *Nouveau* — `legendKind(largeur)` (« top » < 480 px, « small » < 700 px, « normal ») et `legendFor(légende du graphique, kind)` ; `ResizeObserver` du graphique : `Plotly.relayout` de la légende au changement de palier ; `beforeprint` / `afterprint` : `width` et légende selon la largeur du bloc sur A4 paysage (`--span`, `printwide`), puis retour à `autosize`.
-
-## [0.9.6.0] — Maintenance et accès fermé — 2026-11-09
-
-Palier 0.9.6 ; les livraisons 0.9.5.0 à 0.9.5.11 sont regroupées dans « 0.9.5 » ci-dessous.
-
-### Utilisateurs
-- *Nouveau* — **Écran de maintenance** : pendant une maintenance, le widget affiche « Maintenance en cours », le message des administrateurs et l'heure de retour prévue, au lieu d'une page blanche. À la fin de la maintenance, la page normale revient d'elle-même.
-- *Nouveau* — **Accès non ouvert** : une personne à qui le document est partagé mais qui ne peut lire aucune page voit un message (par exemple : qui contacter pour obtenir des droits).
-
-### Administrateurs
-- *Nouveau* — Table **`W_Messages`** (une ligne) : `Maintenance` (booléen), `Message_maintenance` (Markdown), `Fin_prevue` (date et heure, facultatif), `Message_sans_acces` (Markdown). Elle doit rester lisible par tous : règle d'accès propre, placée avant les autres. Voir le guide administrateur, « Maintenance et accès fermé ».
-- *Nouveau* — **Bandeau « Maintenance active »** en haut des pages pour les administrateurs, qui continuent à voir le site normalement.
-- *Sécurité* — Un utilisateur qui ne voit ni `W_Admin` ni `W_Composition` parce que les règles d'accès les lui cachent (maintenance, droits retirés) n'est plus pris pour un administrateur en cours d'installation : le mode installation ne s'applique que si aucune table n'est cachée.
-- *Amélioré* — `index.html` contient le bandeau : à déposer avec les scripts.
-
-### Développeurs
-- *Nouveau* — `readMessages`, `noReadablePage` (aucune configuration avec des blocs lisibles ; sans configuration lisible : fermé si `W_Messages` existe ou si rien n'est lisible), `showGate` (`S.gated`, classe `html.gated`, Markdown nettoyé par DOMPurify, image de l'écran de chargement gardée en mémoire), `setMaintBanner` (`#maintBanner`) ; `render` ne fait rien sous `S.gated` ; `refreshAll` (bouton Actualiser, actualisation automatique) relance `init` pour sortir de l'écran.
-- *Sécurité* — `checkAdmin` : tables à `tableId` vide dans `_grist_Tables` (cachées par les règles d'accès) et `W_Composition` invisible → pas d'administration.
+- *Nouveau* — `readMessages`, `noReadablePage`, `showGate` (`S.gated`), `setMaintBanner` ; `item.inBar` et `#navbtns` ; `qfLast` ; `rowRulesOf`, `diagRowRules` ; `htmlOf` (HyperLink) ; `aggMulti` ; `b.hLevel`, `b.subDesc` ; `TOG_ICON`.
+- *Corrigé* — `styleSet` (seule la valeur `true` d'un style de police s'applique) ; `renderAdvChart` (axes de catégories en `autorange`) ; `checkAdmin` (tables cachées).
+- *Retiré* — `legendKind`, `legendFor` (légende adaptée à la largeur, 0.9.6.1 à 0.9.6.9) ; `b.sub` (sous-titre saisi, 0.9.6.8 à 0.9.6.10).
 
 ## [0.9.5] — Code découpé, actualisation automatique, écran de chargement, avertissements comme dans Grist — 2026-11-03 → 2026-11-09
 

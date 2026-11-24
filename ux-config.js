@@ -1,4 +1,4 @@
-/* UX widget grist — panneau de configuration ⚙ (version 0.9.6.15). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — panneau de configuration ⚙ (version 0.9.7.0). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé à la demande par ux-widget.js (openConfig → loadPart("config")), après ux-carte.js dont il utilise les
    réglages de zonage. Partage l'espace global de ux-widget.js, qui doit être chargé avant.
    Contenu : brouillon de configuration (draft), réglages par bloc (renderConfig), couleurs des cartes et des
@@ -7,7 +7,6 @@
 "use strict";
 /* ---------- Panneau de configuration ---------- */
 let draftNav = { url: "", items: [] };
-const refreshOf = (n) => (n?.refresh === undefined || n?.refresh === null ? 20 : Number(n.refresh) || 0); // actualisation (s)
 // vues retenues dont les réglages sont dépliés dans la configuration (identifiants de vue). Par défaut, toutes
 // sont repliées : seuls restent le titre, les flèches et la place dans la grille (largeur, colonne, lignes) ;
 // non enregistré
@@ -247,6 +246,12 @@ function renderConfig() {
   const chosen =
     draft.blocks
       .map((b, i) => {
+        // séparateur (0.9.7.0) : nom, commentaire, largeur ; il se place et se déplace comme une vue
+        if (b.sep)
+          return `<li class="sepitem"><div class="chead"><span class="cname">— Séparateur —</span>
+<button class="icon-btn" data-up="${i}" title="Placer avant l'élément précédent">↑</button><button class="icon-btn" data-down="${i}" title="Placer après l'élément suivant">↓</button>
+<button class="icon-btn" data-rm="${i}" title="Retirer le séparateur">✕</button></div>
+<div class="ctrls lay">${L("Nom", `<input type="text" data-sepname="${i}" value="${esc(b.name || "")}" placeholder="Titre de la partie" style="width:220px">`, "Titre affiché par le séparateur.")}${L("Commentaire", `<input type="text" data-sepnote="${i}" value="${esc(b.note || "")}" placeholder="facultatif" style="width:280px">`, "Ligne de texte en gris sous le nom (facultative).")}${draft.flux ? "" : L("Largeur", `<select data-f="width" data-i="${i}">${widths.map(([v, l]) => `<option value="${v}" ${String(v) === String(b.width || 6) ? "selected" : ""}>${l}</option>`).join("")}</select>`, "Part de la largeur de la page occupée par le séparateur (6 : toute la largeur). Il est masqué si aucune vue n'est affichée entre lui et le séparateur suivant.")}</div></li>`;
         const s = m.sections.get(b.id);
         if (!s)
           return `<li><span style="color:var(--rouge)">Vue #${b.id} introuvable (supprimée ?)</span><button class="icon-btn" data-rm="${i}" title="Retirer de la page">✕</button></li>`;
@@ -437,23 +442,6 @@ ${
           "Les listes portant le même identifiant gardent la même sélection d'une page à l'autre (comme le drop-down de Varamil).",
         )
       : ""))}
-  ${(() => {
-    // couleurs des graphiques (natifs, ou avancés Plotly) : par catégorie (camembert, histogramme à une série)
-    // ou par série (plusieurs séries, courbes)
-    const adv = s.parentKey === "custom" && !isMap ? advChartSpec(s)?.data : null;
-    if (s.parentKey !== "chart" && !adv) return "";
-    const isPie = (s.parentKey === "chart" && ["pie", "donut"].includes(s.chartType)) || (adv || []).some((t) => t?.type === "pie");
-    const swatches = [...pieColorMapOf(b.pieColorMap).values()].slice(0, 12).map((c) => `<span class="pcs" style="background:${c}"></span>`).join("");
-    const dflt = hexColor(b.pieColorDefault);
-    return (
-      `<div class="mgrp"><div class="mgrp-h" title="${isPie ? "Couleur de chaque part du camembert." : "Histogramme à une seule série : une couleur par barre (catégorie). Plusieurs séries, ou courbes : une couleur par série (valeur du regroupement ou nom de la colonne)."} Priorité : correspondance, puis colonne de codes, puis couleur de repli.">Couleurs du graphique</div>` +
-      L("Colonne de codes", sel("pieColorCol", [["", "aucune"], ...colOpts(s)], b.pieColorCol || ""), "Colonne de la table contenant, pour chaque ligne, un code couleur hexadécimal (#000091), appliqué à la catégorie (ou à la série) de la ligne. Peut être une formule, par exemple $Reseau.Couleur.") +
-      L("Correspondance", `<textarea data-pcm="${i}" rows="3" placeholder="Public = #000091&#10;Privé = #e1000f">${esc(b.pieColorMap || "")}</textarea>`, "Une catégorie ou une série par ligne : « Public = #000091 ». La casse est ignorée. Prioritaire sur la colonne de codes.") +
-      (swatches ? `<div class="pcsl">${swatches}</div>` : "") +
-      L("Couleur de repli", `<input type="text" data-pcd="${i}" value="${esc(b.pieColorDefault || "")}" placeholder="#c8c8c8" size="9">${dflt ? `<span class="pcs" style="background:${dflt}"></span>` : ""}`, "Couleur des catégories sans code. Vide : couleurs habituelles du widget.") +
-      `</div>`
-    );
-  })()}
   ${(() => {
     // filtres rapides du bloc (0.9.0.2) : un encadré par filtre — champ, valeur à l'ouverture, valeurs exclues
     if (!(["record", "detail", "chart", "custom"].includes(s.parentKey) || (s.parentKey === "single" && b.asList)) || isSelector(b) || isMarkdownSection(s)) return "";
@@ -792,6 +780,7 @@ ${L("Page", `<select id="cPage">${pageOpts}</select>`, "Page Grist dont on liste
     </section>
     <section class="cs"><h4>2. Vues retenues <small>— dans l'ordre d'affichage</small> <button class="icon-btn" data-foldall="1" title="Replier les réglages de toutes les vues (largeur, colonne et lignes restent visibles)">Tout replier</button> <button class="icon-btn" data-foldall="0" title="Afficher tous les réglages de toutes les vues">Tout déplier</button></h4>
 <ul class="chosen">${chosen}</ul>
+<button class="icon-btn" id="cSepAdd" style="margin-top:6px" title="Ajoute un titre de partie (nom, commentaire), à placer avec ↑ ↓ avant les vues qu'il annonce">+ Ajouter un séparateur</button>
     </section>
     <section class="cs"><h4>3. Disposition</h4>
 ${C('id="cFlux"', draft.flux, "Mode ultracompact", "Les blocs prennent la largeur de leurs données et s'enchaînent comme des mots dans un texte, au lieu d'une grille de 6 colonnes.")}
@@ -828,11 +817,6 @@ ${L(
     .map(([v, t]) => `<option value="${v}" ${(draftNav.mode || "") === v ? "selected" : ""}>${t}</option>`)
     .join("")}</select>`,
   "Par défaut, le widget passe en mode sombre quand l'ordinateur de l'utilisateur est réglé ainsi (réglage du système, pas celui de Grist). L'impression reste toujours claire. Commun à toutes les pages du document.",
-)}
-${L(
-  "Actualisation automatique",
-  `<select id="cRefresh">${REFRESH_CHOICES.map(([v, t]) => `<option value="${v}" ${refreshOf(draftNav) === v ? "selected" : ""}>${t}</option>`).join("")}</select>`,
-  "Le widget vérifie à cet intervalle si le document a été modifié (saisie dans une autre table, par un autre utilisateur…) et, si oui, relit les données et redessine la page. Rien n'est vérifié tant que l'onglet est caché ou qu'une saisie est en cours. « désactivée » : seul le bouton Actualiser relit les données. Commun à toutes les pages du document.",
 )}
 ${C('id="cHideFields"', draft.hideEmptyFields, "Masquer les champs vides dans les fiches", "Les champs sans valeur ne sont pas affichés dans les fiches (sauf en édition, ou si le bloc demande à les afficher).")}
 ${C('id="cHideBlocks"', draft.hideEmptyBlocks, "Masquer les blocs sans données", "Un bloc sans aucune ligne à afficher (par exemple après filtrage) disparaît de la page.")}
@@ -991,7 +975,6 @@ $("#panel").addEventListener("change", (ev) => {
       "qfField",
       "qfDefault2",
       "qfField2",
-      "pieColorCol",
       "mdSize",
     ].includes(t.dataset.f)
       ? t.value
@@ -999,16 +982,12 @@ $("#panel").addEventListener("change", (ev) => {
     renderConfig();
     return;
   }
-  if (t.dataset.pcm) {
-    draft.blocks[Number(t.dataset.pcm)].pieColorMap = t.value;
-    renderConfig();
+  if (t.dataset.sepname) {
+    draft.blocks[Number(t.dataset.sepname)].name = t.value.trim();
     return;
   }
-  if (t.dataset.pcd) {
-    const v = t.value.trim();
-    draft.blocks[Number(t.dataset.pcd)].pieColorDefault = v ? hexColor(v) || v : "";
-    if (v && !hexColor(v)) status(`« ${v} » n'est pas un code couleur hexadécimal (ex. #c8c8c8)`, true);
-    renderConfig();
+  if (t.dataset.sepnote) {
+    draft.blocks[Number(t.dataset.sepnote)].note = t.value.trim();
     return;
   }
   if (t.dataset.subd) {
@@ -1177,7 +1156,6 @@ $("#panel").addEventListener("change", (ev) => {
   if (t.id === "cShowAfter") draftShowAfter = t.checked;
   if (t.id === "cTheme") draftNav.theme = t.value;
   if (t.id === "cMode") draftNav.mode = t.value;
-  if (t.id === "cRefresh") draftNav.refresh = Number(t.value);
   if (t.id === "cMnHome") draftNav.home = t.value;
   if (t.id === "cWelcome") draftNav.welcome = t.value;
   if (t.id === "cSplTitle") draftNav.splash = { ...(draftNav.splash || {}), title: t.value.trim() };
@@ -1243,6 +1221,13 @@ $("#panel").addEventListener("click", async (ev) => {
     cfgOpen.clear();
     if (t.dataset.foldall === "0") draft.blocks.forEach((b) => cfgOpen.add(b.id));
     return renderConfig();
+  }
+  if (t.id === "cSepAdd") {
+    let n = 1;
+    while (draft.blocks.some((b) => b.id === `sep${n}`)) n++;
+    draft.blocks.push({ id: `sep${n}`, sep: true, name: "", note: "", width: 6 });
+    renderConfig();
+    return;
   }
   if (t.dataset.up) return move(Number(t.dataset.up), -1);
   if (t.dataset.down) return move(Number(t.dataset.down), 1);
@@ -1330,7 +1315,6 @@ $("#panel").addEventListener("click", async (ev) => {
       if (JSON.stringify(draftNav) !== JSON.stringify(S.nav)) {
         S.nav = draftNav;
         S.navAccess = {};
-        liveStart();
         try {
           await saveConfigToTable({ name: NAV_NAME, nav: draftNav });
         } catch {
@@ -1360,7 +1344,6 @@ $("#panel").addEventListener("click", async (ev) => {
     if (JSON.stringify(draftNav) !== JSON.stringify(S.nav)) {
       S.nav = draftNav;
       S.navAccess = {};
-      liveStart();
       try {
         await saveConfigToTable({ name: NAV_NAME, nav: draftNav });
       } catch {

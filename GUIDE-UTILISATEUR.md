@@ -29,7 +29,7 @@ En haut de la page, de gauche à droite et de haut en bas :
 
 - **Menu des pages** : un clic affiche une autre page. Seules les pages auxquelles vous avez accès apparaissent. Une icône peut précéder le nom d'une page ; elle est aussi rappelée devant le titre de la page, ou, sans titre, avant les listes de sélection (sauf sur smartphone).
 - **Boutons directs**, à gauche du menu ☰ :
-  - **⟳ Actualiser** : recharge les données et la configuration des vues. Le plus souvent inutile : le widget se met à jour seul quelques secondes après une modification faite ailleurs (autre table, autre utilisateur) ;
+  - **⟳ Actualiser** : recharge les données et la configuration des vues, pour voir une modification faite ailleurs (autre table, vue native, autre utilisateur). Vos propres saisies dans le widget apparaissent aussitôt ;
   - **⚙ Configurer** : réservé aux administrateurs.
 - **Menu ☰** (en haut à droite, sur écran étroit) : il ouvre la liste des autres actions. Sur grand écran, il n'y a pas de menu : toutes les actions sont des icônes dans la barre, avec leur nom au survol. L'infobulle du menu et celle de l'Aide indiquent la version du widget.
 

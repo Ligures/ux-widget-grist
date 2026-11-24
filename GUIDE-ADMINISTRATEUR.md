@@ -54,10 +54,11 @@ Le bouton **⚙ Configurer** ouvre un panneau sur la moitié droite de l'écran 
 1. **Vues disponibles** : choisir une page Grist, puis cocher ses vues. On peut combiner des vues de plusieurs pages.
 2. **Vues retenues** : chaque vue cochée devient un bloc.
    - Les flèches ↑ ↓ règlent l'ordre ; ✕ retire le bloc (la vue Grist n'est pas supprimée).
+   - **+ Ajouter un séparateur** (0.9.7.0) : titre de partie, avec une ligne de commentaire facultative et une largeur (6 : toute la largeur). Placez-le avec ↑ ↓ devant les vues qu'il annonce. Il commence toujours une nouvelle rangée, et il est masqué quand aucune vue n'est affichée entre lui et le séparateur suivant (droits, blocs vides). Avec « Combler automatiquement les espaces libres » (3. Disposition), une vue peut remonter dans un espace libre au-dessus d'un séparateur : décochez l'option si c'est gênant.
    - Les réglages de chaque bloc sont **repliés par défaut** : restent visibles son titre, ses flèches, sa largeur, sa colonne et son nombre de lignes. ▸ / ▾ déplie ou replie un bloc ; **Tout déplier** et **Tout replier** agissent sur tous. Une vue que l'on vient d'ajouter s'ouvre dépliée.
    - Déplié, un bloc présente ses réglages dans des encadrés titrés, toujours dans le même ordre :
      - **Affichage**, commun à toutes les vues : niveau du titre, sous-titre, taille, état à l'ouverture, « À la ligne », « Figer à l'écran », « Seulement si la page a d'autres données », « Liste de sélection » ;
-     - puis les encadrés propres au type de vue, s'il y a lieu : **Tableau**, **Fiches**, **Édition**, **Liste de sélection**, **Couleurs du graphique**, **Filtre rapide**, et pour les cartes **Points**, **Contour des points**, **QPV**, **Zones sous les points**.
+     - puis les encadrés propres au type de vue, s'il y a lieu : **Tableau**, **Fiches**, **Édition**, **Liste de sélection**, **Filtre rapide**, et pour les cartes **Points**, **Contour des points**, **QPV**, **Zones sous les points**.
    - Chaque bloc a ses réglages :
 
 | Réglage | Effet |
@@ -167,19 +168,9 @@ Les réglages d'une carte sont regroupés en quatre encadrés.
 
 ### Graphiques : couleurs
 
-L'encadré **Couleurs du graphique** de chaque bloc graphique (natif ou avancé) fixe les couleurs :
-- **camembert** (secteurs, anneau) et **histogramme à une seule série** : une couleur par catégorie (part ou barre) ;
-- **plusieurs séries** (graphique multi-séries, plusieurs colonnes de valeurs) et **courbes** : une couleur par série, désignée par la valeur du regroupement (ex. `Public`) ou le nom de la colonne.
-
-Sans réglage, les couleurs suivent la palette du widget dans l'ordre d'apparition des catégories ou des séries ; cet ordre peut changer avec les données, d'où l'intérêt de les fixer.
-
-| Réglage | Effet |
-|---|---|
-| Colonne de codes | Colonne de la table qui donne, pour chaque ligne, un code hexadécimal (`#000091`, `000091` ou `#009`). Elle peut être une formule, par exemple `$Reseau.Couleur` pour reprendre la couleur rangée dans une table de référence |
-| Correspondance | Une catégorie ou une série par ligne : `Public = #000091`, `Privé = #e1000f`. La casse est ignorée. Des pastilles montrent les couleurs reconnues |
-| Couleur de repli | Couleur des catégories sans code. Vide : couleurs habituelles du widget |
-
-Priorité : correspondance, puis colonne de codes, puis couleur de repli. Un code invalide est ignoré. Les réglages sont enregistrés avec la page dans `W_Composition`.
+Le widget ne règle plus les couleurs (0.9.7.0) :
+- **graphiques avancés** : couleurs réglées dans l'éditeur du graphique, dans Grist, reprises telles quelles ;
+- **graphiques natifs** : palette du widget, dans l'ordre d'apparition des catégories ou des séries. Pour des couleurs fixes, utilisez un graphique avancé.
 
 ### Bloc-notes
 
@@ -232,7 +223,7 @@ Le widget lit une petite table **`W_Messages`**, à créer une fois, avec une se
 
 **Règle d'accès** : `W_Messages` doit rester **lisible par tous**, même pendant la maintenance. Donnez-lui une règle propre (lecture pour tous, modification réservée aux propriétaires), placée **avant** la règle de maintenance.
 
-**Pendant une maintenance** : cochez `Maintenance`, écrivez le message, puis activez votre règle habituelle. Les utilisateurs voient « Maintenance en cours », le message et l'heure de retour prévue. Les administrateurs voient le site normalement, avec un bandeau jaune « Maintenance active ». À la fin, décochez `Maintenance` et retirez la règle : la page normale revient d'elle-même (Grist recharge le widget quand les droits changent, sinon l'actualisation automatique s'en charge).
+**Pendant une maintenance** : cochez `Maintenance`, écrivez le message, puis activez votre règle habituelle. Les utilisateurs voient « Maintenance en cours », le message et l'heure de retour prévue. Les administrateurs voient le site normalement, avec un bandeau jaune « Maintenance active ». À la fin, décochez `Maintenance` et retirez la règle : la page normale revient quand Grist recharge le widget (changement des droits), à la prochaine ouverture ou au clic sur ⟳ Actualiser.
 
 **Accès non ouvert** : une personne à qui le document est partagé, mais qui ne peut lire aucune page configurée (par exemple parce que son email ne figure pas dans la table des utilisateurs), voit « Accès non ouvert » et `Message_sans_acces`. Une personne à qui le document n'est pas partagé n'atteint pas le widget : Grist l'arrête avant.
 
@@ -268,11 +259,6 @@ Sans choix, le widget s'affiche en style État. Le choix vaut pour toutes les pa
 - **Toujours clair** / **Toujours sombre** : impose un mode à tous.
 
 En mode sombre, les couleurs choisies dans Grist (pastilles, mises en forme conditionnelles, couleurs des graphiques) sont reprises telles quelles ; le fond de carte reste clair, légèrement assombri. L'impression est toujours en couleurs claires.
-
-**Actualisation automatique** (même section) : intervalle auquel le widget vérifie si le document a été modifié ailleurs (dans une autre table, depuis une vue native de Grist, par un autre utilisateur). Si oui, il relit les données et redessine la page, en gardant la position de défilement.
-- **Toutes les 20 s** par défaut ; de 10 s à 2 minutes, ou **désactivée** (seul ⟳ Actualiser relit alors les données).
-- Rien n'est vérifié tant que l'onglet est caché, qu'une saisie ou un bloc-notes est ouvert, ou que la configuration est ouverte ; au retour sur l'onglet, la vérification est immédiate.
-- La vérification est une petite requête à l'API de Grist (état du document). Elle ne fonctionne que sur les instances autorisées dans la politique de sécurité de `index.html` (`grist.numerique.gouv.fr`, `grist.toutatice.fr`, `grist.ac-rennes.fr`, `*.getgrist.com`) ; pour une autre instance, ajouter son adresse à `connect-src`.
 
 ### Enregistrer
 

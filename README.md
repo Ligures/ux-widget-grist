@@ -7,7 +7,7 @@ Widget personnalisé [Grist](https://www.getgrist.com/) qui rassemble sur **une 
 
 Le widget ne duplique rien. Il **relit la configuration des vues Grist** (tables de métadonnées `_grist_*`) et en reproduit le rendu. Cela comprend les colonnes affichées, le tri, les filtres, les liaisons entre vues, la mise en forme conditionnelle et la disposition des fiches. Quand une vue change dans Grist, la page suit.
 
-**Version actuelle : 0.9.6.15** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
+**Version actuelle : 0.9.7.0** (en développement) · Développeur : **Ligures** — voir le [journal des modifications](CHANGELOG.md).
 Pour l'usage au quotidien, voir le [guide d'utilisation](GUIDE-UTILISATEUR.md), aussi accessible dans le widget par le bouton **Aide**.
 
 ---
@@ -233,7 +233,7 @@ Widget personnalisé Grist séparé, pour les administrateurs : il calcule les d
 - **Droits** : le widget passe par l'API de Grist et ne contourne aucune règle d'accès. Les lecteurs ne peuvent rien modifier.
 - **Affichage des données** : toutes les valeurs insérées dans la page sont échappées.
 - **HTML des étiquettes de carte** : nettoyé par DOMPurify. La mise en forme est conservée ; scripts et gestionnaires d'événements sont retirés.
-- **Politique de sécurité (CSP)** : la page n'accepte que ses propres scripts (`ux-widget.js`, `ux-carte.js`, `ux-config.js`) et ceux de Grist et de jsDelivr ; tout script en ligne, ou injecté dans une valeur, est refusé par le navigateur. Les connexions sont limitées au site du widget, à jsDelivr, aux services géographiques publics (geo.api.gouv.fr, data.geopf.fr) et aux instances Grist connues (grist.numerique.gouv.fr, grist.toutatice.fr, grist.ac-rennes.fr, *.getgrist.com), pour l'actualisation automatique ; une autre instance s'ajoute à `connect-src`. `unsafe-eval` reste autorisé pour Plotly (graphiques avancés).
+- **Politique de sécurité (CSP)** : la page n'accepte que ses propres scripts (`ux-widget.js`, `ux-carte.js`, `ux-config.js`) et ceux de Grist et de jsDelivr ; tout script en ligne, ou injecté dans une valeur, est refusé par le navigateur. Les connexions sont limitées au site du widget, à jsDelivr, aux services géographiques publics (geo.api.gouv.fr, data.geopf.fr). Le widget n'appelle pas l'API REST de Grist : il passe par l'API des widgets, quelle que soit l'instance. `unsafe-eval` reste autorisé pour Plotly (graphiques avancés).
 - **Bibliothèques externes** : versions figées, vérifiées par empreinte d'intégrité (SRI). Un fichier altéré sur le CDN est refusé.
 - **Liens du menu** : seules les adresses `https://` sont acceptées.
 - **Export des cartes** : le fichier HTML exporté contient les points, étiquettes, infobulles et zones visibles par la personne au moment de l'export. Une fois enregistré ou envoyé, il échappe aux règles d'accès de Grist. Il charge Leaflet depuis jsDelivr (empreinte SRI). Fond de carte : quand la carte utilise OpenStreetMap, l'export prend le **Plan IGN** de la Géoplateforme (`data.geopf.fr/wmts`, couche `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2`), car les serveurs d'OpenStreetMap refusent les fichiers ouverts depuis le poste (« Access blocked ») ; un autre fond réglé dans la carte Grist est repris tel quel. L'option « Export réservé aux administrateurs » masque le bouton aux autres utilisateurs.
@@ -246,7 +246,6 @@ Widget personnalisé Grist séparé, pour les administrateurs : il calcule les d
   | data.geopf.fr (IGN) | des **codes INSEE de communes** | zonage IRIS : contours des IRIS de ces communes |
   | Fond de carte (OpenStreetMap par défaut, ou le fournisseur réglé dans la carte Grist) | les numéros des tuiles affichées | toujours : le fournisseur voit la zone regardée, pas les points |
   | data.geopf.fr (IGN), Plan IGN | les numéros des tuiles affichées | carte exportée en HTML dont le fond est OpenStreetMap dans Grist |
-  | L'instance Grist du document (API REST, `GET /api/docs/<doc>/states`, jeton du widget en lecture seule) | l'identifiant du document | actualisation automatique : toutes les 20 s par défaut, page visible seulement |
   | Fichiers QPV, circonscriptions, secteurs de collège | rien | lus sur le même site que le widget |
 
   Comme pour toute page web, chaque service voit aussi l'adresse IP de l'utilisateur et le site d'origine de la demande. Les bibliothèques (jsDelivr) sont téléchargées sans aucune donnée du document.
