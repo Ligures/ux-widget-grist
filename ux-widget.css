@@ -1,0 +1,3364 @@
+/* UX widget grist — feuilles de style (version 0.9.7.2).
+   Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
+   Chargée par index.html ; ne contient aucune donnée. */
+@font-face {
+  font-family: "Marianne";
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.14.4/dist/fonts/Marianne-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Marianne";
+  font-weight: 500;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.14.4/dist/fonts/Marianne-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Marianne";
+  font-weight: 700;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.14.4/dist/fonts/Marianne-Bold.woff2") format("woff2");
+}
+
+:root {
+  --bleu: #000091;
+  --bleu-clair: #e3e3fd;
+  --bleu-hover: #f0f0ff;
+  --texte: #161616;
+  --muet: #666;
+  --bord: #ddd;
+  --fond: #f6f6f6;
+  --carte: #fff;
+  --rouge: #ce0500;
+  --gap: 10px;
+  /* couleurs secondaires (0.9.3.14) : redéfinies pour le mode sombre ci-dessous */
+  --texte2: #3a3a3a;
+  --muet2: #aaa;
+  --doux: #f6f6f6;
+  --doux2: #f0f0f0;
+  --bord-doux: #eee;
+  --bleu-bord: #b7b7f5;
+  --bleu-bord2: #cfd0e6;
+  --sur-bleu: #fff; /* texte posé sur la couleur principale */
+  --voile: rgba(255, 255, 255, 0.92);
+  --voile2: rgba(240, 240, 240, 0.92);
+  --rouge-clair: #fde8e8;
+  --vert: #18753c;
+  --jaune-clair: #fff8e1;
+  --jaune-bord: #f0d58a;
+  --brun: #8d533e;
+  --brun-clair: #fbf5f2;
+  --tip-fond: #161616;
+  --tip-texte: #fff;
+  color-scheme: light;
+}
+/* Apparence « neutre » (0.8.9) : pour les structures qui ne sont pas des services de l'État, sans la police
+   Marianne ni le bleu France, réservés par les conditions d'utilisation du DSFR */
+html.neutre {
+  /* rouge bordeaux (0.9.3.5) : se distingue du DSFR au premier coup d'œil (variables --bleu gardées par commodité) */
+  --bleu: #8c1c2c;
+  --bleu-clair: #f4dfe2;
+  --bleu-hover: #fbf0f2;
+}
+/* Mode sombre (0.9.3.14) : suit le réglage du système (prefers-color-scheme), sauf apparence imposée dans la
+   configuration (html.clair / html.sombre). À l'impression, les couleurs claires restent (règles « screen »). */
+@media screen and (prefers-color-scheme: dark) {
+  html:not(.clair) {
+    --bleu: #8585f6;
+    --bleu-clair: #1b1b35;
+    --bleu-hover: #222244;
+    --texte: #dedede;
+    --texte2: #cecece;
+    --muet: #a0a0a0;
+    --muet2: #777;
+    --bord: #3a3a3a;
+    --bord-doux: #2c2c2c;
+    --fond: #161616;
+    --carte: #1e1e1e;
+    --doux: #262626;
+    --doux2: #2e2e2e;
+    --rouge: #ff6b6b;
+    --bleu-bord: #4a4a8a;
+    --bleu-bord2: #3c3c5a;
+    --sur-bleu: #0e0e1e;
+    --voile: rgba(30, 30, 30, 0.92);
+    --voile2: rgba(40, 40, 40, 0.92);
+    --rouge-clair: #4a1e1e;
+    --vert: #6fd08c;
+    --jaune-clair: #3a3216;
+    --jaune-bord: #7a6520;
+    --brun: #d9a48f;
+    --brun-clair: #2e211c;
+    --tip-fond: #e5e5e5;
+    --tip-texte: #161616;
+    color-scheme: dark;
+  }
+  html.neutre:not(.clair) {
+    --bleu: #e58e9a;
+    --bleu-clair: #3a1d22;
+    --bleu-hover: #2c171b;
+    --sur-bleu: #1e0e10;
+  }
+}
+@media screen {
+  html.sombre {
+    --bleu: #8585f6;
+    --bleu-clair: #1b1b35;
+    --bleu-hover: #222244;
+    --texte: #dedede;
+    --texte2: #cecece;
+    --muet: #a0a0a0;
+    --muet2: #777;
+    --bord: #3a3a3a;
+    --bord-doux: #2c2c2c;
+    --fond: #161616;
+    --carte: #1e1e1e;
+    --doux: #262626;
+    --doux2: #2e2e2e;
+    --rouge: #ff6b6b;
+    --bleu-bord: #4a4a8a;
+    --bleu-bord2: #3c3c5a;
+    --sur-bleu: #0e0e1e;
+    --voile: rgba(30, 30, 30, 0.92);
+    --voile2: rgba(40, 40, 40, 0.92);
+    --rouge-clair: #4a1e1e;
+    --vert: #6fd08c;
+    --jaune-clair: #3a3216;
+    --jaune-bord: #7a6520;
+    --brun: #d9a48f;
+    --brun-clair: #2e211c;
+    --tip-fond: #e5e5e5;
+    --tip-texte: #161616;
+    color-scheme: dark;
+  }
+  html.sombre.neutre {
+    --bleu: #e58e9a;
+    --bleu-clair: #3a1d22;
+    --bleu-hover: #2c171b;
+    --sur-bleu: #1e0e10;
+  }
+  /* fond de carte : un peu assombri pour ne pas éblouir (les tuiles restent claires) */
+  html.sombre .leaflet-tile-pane {
+    filter: brightness(0.82) contrast(1.05);
+  }
+}
+@media screen and (prefers-color-scheme: dark) {
+  html:not(.clair) .leaflet-tile-pane {
+    filter: brightness(0.82) contrast(1.05);
+  }
+}
+html.neutre body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  padding: 8px;
+  background: var(--carte);
+  color: var(--texte);
+  font:
+    13px/1.4 "Marianne",
+    Arial,
+    sans-serif;
+}
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+/* Haut du widget toujours visible : titre, boutons, listes de sélection */
+/* Menu de navigation entre pages (style onglets DSFR) */
+#pnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 2px;
+  margin: 0 0 8px;
+  border-bottom: 1px solid var(--bord);
+}
+#pnav:empty {
+  display: none;
+}
+#pnav a {
+  padding: 6px 12px;
+  font-size: 14px;
+  color: var(--texte);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+#pnav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+#pnav .nico,
+.mnico .nico {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+}
+.mnico {
+  display: inline-flex;
+  width: 18px;
+  justify-content: center;
+}
+#pnav a:hover {
+  background: var(--doux);
+}
+#pnav a.cur {
+  color: var(--bleu);
+  border-bottom-color: var(--bleu);
+  font-weight: 700;
+}
+/* liste des pages : en ligne sur grand écran, derrière un bouton sur smartphone */
+#pnav .pnav-list {
+  display: contents;
+}
+#pnav .pnav-tog {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  background: var(--carte);
+  color: var(--bleu);
+  font-size: 13px;
+  font-weight: 700;
+  max-width: 70vw;
+}
+#pnav .pnav-tog span:first-of-type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#pnav .pnav-tog svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+@media (max-width: 760px) {
+  #pnav {
+    position: relative;
+    border-bottom: 0;
+    margin-bottom: 6px;
+  }
+  #pnav .pnav-tog {
+    display: inline-flex;
+    max-width: calc(100vw - var(--barw, 60px) - 32px); /* même rangée que le menu ☰ (sans titre) */
+    /* zone de toucher confortable (0.9.6.6) : 44 px de haut, jamais réduite à l'icône */
+    min-width: min(160px, 60vw);
+    height: 44px;
+    padding: 0 14px;
+    font-size: 14px;
+    gap: 8px;
+  }
+  #pnav .pnav-tog svg {
+    width: 20px;
+    height: 20px;
+  }
+  /* sans titre : bouton des pages à gauche et menu ☰ à droite, sur la même rangée */
+  #top.notitle:has(#pnav .pnav-tog) .bar {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    margin: 0;
+  }
+  #pnav.open .pnav-tog {
+    background: var(--bleu);
+    color: var(--sur-bleu);
+  }
+  #pnav .pnav-list {
+    display: none;
+  }
+  #pnav.open .pnav-list {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 36px;
+    left: 0;
+    z-index: 30;
+    min-width: 200px;
+    max-width: 90vw;
+    max-height: 70vh;
+    overflow: auto;
+    background: var(--carte);
+    border: 1px solid var(--bord);
+    border-radius: 4px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  }
+  #pnav.open .pnav-list a {
+    border-bottom: 0;
+    border-left: 3px solid transparent;
+    margin: 0;
+    padding: 9px 12px;
+  }
+  #pnav.open .pnav-list a.cur {
+    border-left-color: var(--bleu);
+    background: var(--bleu-hover);
+  }
+}
+.mn {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--bord-doux);
+  font-size: 12px;
+}
+/* lien du menu dans la configuration (0.9.5.7) : un cadre par lien ; 1re ligne : numéro, libellé, icône, visibilité,
+   flèches ; 2e ligne : page, configuration, infobulle, code de l'icône */
+.mn.mncard {
+  display: block;
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--bord);
+  border-radius: 6px;
+  background: var(--doux);
+}
+.mncard .mnl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.mncard .mnl + .mnl {
+  margin-top: 5px;
+  padding-left: 22px;
+}
+.mncard .mnn {
+  min-width: 16px;
+  color: var(--bleu);
+}
+.mncard .mnsp {
+  flex: 1;
+}
+#top {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  background: var(--carte);
+  margin: -8px -8px 8px;
+  padding: 8px 8px 2px;
+  border-bottom: 1px solid transparent;
+}
+#top.notitle .bar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  margin: 0;
+  z-index: 1;
+}
+#top.notitle .bar h1,
+#top.notitle .bar .spacer {
+  display: none;
+}
+#top.notitle #pnav,
+#top.notitle #filters {
+  padding-right: calc(var(--barw, 230px) + 12px);
+}
+/* la barre d'outils n'occupe que la première rangée : sous le menu des pages, les listes prennent toute la largeur */
+#top.notitle #pnav:not(:empty) ~ #filters {
+  padding-right: 0;
+}
+@media (max-width: 760px) {
+  #top.notitle .bar {
+    position: static;
+    justify-content: flex-end;
+    margin-bottom: 6px;
+  }
+  #top.notitle #pnav,
+  #top.notitle #filters {
+    padding-right: 0;
+  }
+}
+#top.stuck {
+  border-bottom-color: var(--bord);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+.bar h1 {
+  font-size: 19px;
+  margin: 0;
+  color: var(--bleu);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+/* icône de la page devant son titre (0.9.4.1), comme sur le lien du menu */
+.bar h1 .ticon {
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+}
+.bar .spacer {
+  flex: 1;
+}
+/* barre d'outils : icône + texte ; texte masqué sur écran réduit (infobulle) */
+.tb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  background: var(--carte);
+  color: var(--bleu);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tb:hover {
+  background: var(--bleu-hover);
+  border-color: var(--bleu-bord);
+}
+.tb:focus-visible {
+  outline: 2px solid #0a76f6;
+  outline-offset: 2px;
+}
+.tb[hidden] {
+  display: none;
+}
+.tb svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+.tb svg:not(.nico) {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* menu déroulant de la barre d'outils (ouvert par le bouton hamburger) */
+.bar {
+  position: relative;
+}
+.tbmenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 210px;
+  padding: 4px;
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.tbmenu[hidden] {
+  display: none;
+}
+.tbmenu .tb {
+  border: 0;
+  width: 100%;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 12px;
+  height: 36px;
+  border-radius: 4px;
+}
+.tbmenu .tb .newdot {
+  position: static;
+  box-shadow: none;
+  margin-left: -4px;
+}
+.bar > .tb.ico .lbl {
+  display: none; /* icône seule ; libellé en infobulle */
+}
+.tbmenu .tb .lbl {
+  display: inline !important; /* libellés toujours visibles dans le menu */
+}
+/* Écran large (0.8.10.2) : pas de menu ☰, toutes les actions en icônes dans la barre (libellé en infobulle).
+   Sur écran étroit, le menu ☰ revient. */
+@media (min-width: 901px) {
+  #btnMenu {
+    display: none !important;
+  }
+  .bar .tbmenu,
+  .bar .tbmenu[hidden] {
+    display: contents;
+  }
+  .bar .tbmenu .tb {
+    border: 1px solid var(--bord);
+    width: auto;
+    height: 32px;
+    padding: 0 10px;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .bar .tbmenu .tb[hidden] {
+    display: none;
+  }
+  .bar .tbmenu .tb .lbl {
+    display: none !important;
+  }
+  .bar .tbmenu .tb .newdot {
+    position: absolute;
+    margin-left: 0;
+  }
+}
+#btnMenu[aria-expanded="true"] {
+  background: var(--bleu);
+  color: var(--sur-bleu);
+}
+@media (max-width: 900px) {
+  .bar > .tb .lbl {
+    display: none;
+  }
+  .tb {
+    padding: 0 7px;
+  }
+}
+.icon-btn {
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: var(--bleu);
+}
+.icon-btn:hover {
+  background: var(--bleu-hover);
+}
+/* messages (chargement, filtre appliqué, erreurs) : petite bulle discrète en haut au centre, entre le menu
+   des pages et la barre d'outils ; elle flotte au-dessus de la page et ne décale plus l'affichage */
+#status {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  max-width: min(46vw, 520px);
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: var(--voile);
+  border: 1px solid var(--bord);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  color: var(--muet);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+#status.err {
+  color: var(--rouge);
+  border-color: var(--rouge);
+  opacity: 1;
+  pointer-events: auto; /* un clic ferme le message d'erreur */
+  cursor: pointer;
+  white-space: normal;
+}
+#status.fade {
+  opacity: 0;
+}
+#status:empty {
+  display: none;
+}
+#filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 24px;
+  margin: 0 0 14px;
+  padding: 0;
+}
+#filters:empty,
+#filters:not(:has(label:not(.solo), .picon)) {
+  display: none;
+}
+/* icône de la page sans titre (0.9.4.0) : celle de son lien de menu, à la hauteur d'une liste (titre + champ), couleur du thème */
+#filters .picon {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  color: var(--bleu);
+  align-self: flex-end;
+}
+#filters label.solo {
+  display: none;
+}
+/* smartphone : toutes les listes sur une seule ligne, sans libellé (repris en infobulle et pour les lecteurs d'écran) */
+@media (max-width: 760px) {
+  #filters {
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  #filters label {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  #filters label .fl {
+    display: none;
+  }
+  #filters .picon {
+    display: none;
+  }
+  #filters:not(:has(label:not(.solo))) {
+    display: none;
+  }
+  #filters select {
+    min-width: 0;
+    width: 100%;
+    font-size: 13px;
+    padding: 5px 24px 5px 8px;
+    background-position: calc(100% - 6px) 50%;
+    background-size: 14px 14px;
+    text-overflow: ellipsis;
+  }
+}
+/* Listes au style DSFR (fr-label / fr-select) */
+#filters label {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--muet);
+  gap: 2px;
+}
+#filters select {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--texte2);
+  min-width: 160px;
+  max-width: 100%;
+  padding: 6px 40px 6px 12px;
+  border: 0;
+  border-radius: 4px 4px 0 0;
+  background-color: var(--doux2);
+  box-shadow: inset 0 -2px 0 0 var(--texte2);
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23161616' d='m12 13.1 5-4.9 1.4 1.4-6.4 6.3-6.4-6.4L7 8.1l5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 12px) 50%;
+  background-size: 16px 16px;
+}
+#filters select:hover {
+  background-color: var(--bord);
+}
+#filters select:focus {
+  outline: 2px solid #0a76f6;
+  outline-offset: 2px;
+}
+#filters optgroup {
+  font-weight: 700;
+  color: var(--texte);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--gap);
+  align-items: start;
+}
+.grid.dense {
+  grid-auto-flow: row dense;
+}
+/* Empilement sans trous : chaque bloc occupe exactement sa hauteur, la colonne voisine n'impose plus la sienne */
+.grid.masonry {
+  grid-auto-rows: 2px;
+  row-gap: 0;
+}
+.grid.masonry > .block {
+  align-self: start !important;
+  margin-bottom: var(--gap);
+}
+/* Mode ultracompact : flux de blocs ajustés au contenu */
+.grid.flux {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.brk {
+  flex-basis: 100%;
+  height: 0;
+}
+.flux table {
+  width: auto;
+  font-size: 12px;
+}
+.flux th,
+.flux td {
+  padding: 2px 6px;
+}
+.flux td {
+  max-width: 220px;
+}
+#tip {
+  position: fixed;
+  z-index: 20;
+  display: none;
+  background: var(--tip-fond);
+  color: var(--tip-texte);
+  font-size: 12px;
+  line-height: 1.35;
+  padding: 4px 8px;
+  border-radius: 4px;
+  max-width: min(420px, calc(100vw - 8px));
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+#tip.on {
+  display: block;
+}
+#tip {
+  white-space: pre-line;
+}
+.info {
+  color: var(--bleu);
+  font-size: 10px;
+  margin-left: 3px;
+  cursor: help;
+  font-weight: 400;
+}
+/* écran étroit (téléphone) : un bloc par ligne, empilés, sans empilement « sans trous » ni blocs figés
+   (écran seulement : à l'impression on garde la disposition en 6 colonnes) */
+@media screen and (max-width: 760px) {
+  .grid > * {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+  }
+  .grid.masonry {
+    grid-auto-rows: auto !important;
+    row-gap: var(--gap) !important;
+  }
+  .grid.masonry > .block {
+    margin-bottom: 0 !important;
+  }
+  .grid.flux > * {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .block.sticky {
+    position: static !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+  }
+}
+
+.block {
+  background: var(--carte);
+  border: 0;
+  overflow: hidden;
+}
+.bh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  border-bottom: 1px solid var(--bord);
+  min-height: 30px;
+}
+/* titres (0.9.6.11) : page h1 19 px · bloc h2 15,5 px (au choix) · bloc h3 13,5 px (par défaut) */
+.bh h2.bt {
+  font-size: 15.5px;
+}
+.bh .bt {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--bleu);
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* description de la vue (ⓘ après le titre) : le titre ne prend plus toute la place, l'icône le suit */
+.bh .bht {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.bh .bht:has(+ .secinfo) {
+  flex: 0 1 auto;
+}
+/* sous-titre facultatif sous le titre (0.9.6.8) */
+.bh .bsub {
+  font-size: 12px;
+  color: var(--muet);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bh .secinfo {
+  margin: 0 auto 0 4px;
+  font-size: 12px;
+  flex: none;
+}
+.bh {
+  cursor: pointer; /* un clic sur l'en-tête plie ou déplie le bloc */
+}
+.block.maxed > .bh {
+  cursor: auto;
+}
+.bh .tog {
+  border: 0;
+  background: none;
+  color: var(--bleu);
+  padding: 0;
+  width: 26px;
+  height: 26px;
+  line-height: 1;
+  border-radius: 4px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bh .tog svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: rotate(180deg); /* déplié : chevron vers le haut */
+  transition: transform 0.15s;
+}
+.block.collapsed .bh .tog svg {
+  transform: none; /* replié : chevron vers le bas */
+}
+.block.maxed .bh .tog {
+  display: none;
+}
+.bh .tog:hover {
+  background: var(--bleu-hover);
+}
+.badge {
+  font-size: 11px;
+  color: var(--muet);
+  white-space: nowrap;
+}
+/* filtre rapide dans l'en-tête des blocs : 3 présentations (full / compact / icon), voir fitQf() */
+.bh .qf-print {
+  display: none;
+  font-size: 11px;
+  color: var(--muet);
+  white-space: nowrap;
+}
+.bh .qf {
+  display: inline-flex;
+  flex: none;
+  position: relative;
+}
+.qf .qf-opts {
+  display: inline-flex;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.qf .qf-opts button {
+  border: 0;
+  border-left: 1px solid var(--bord);
+  background: var(--carte);
+  color: var(--bleu);
+  font: inherit;
+  font-size: 11.5px;
+  padding: 1px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: left;
+}
+.qf .qf-opts button:first-child {
+  border-left: 0;
+}
+.qf .qf-opts button:hover {
+  background: var(--bleu-hover);
+}
+.qf .qf-opts button.on {
+  background: var(--bleu);
+  color: var(--sur-bleu);
+}
+.qf .qf-cur {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  background: var(--carte);
+  color: var(--bleu);
+  font: inherit;
+  font-size: 11.5px;
+  padding: 1px 6px;
+  cursor: pointer;
+  max-width: 140px;
+}
+.qf .qf-cur:hover {
+  background: var(--bleu-hover);
+}
+.qf .qf-lab {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.qf .qf-caret {
+  font-size: 9px;
+}
+.qf-ico {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.qf.full .qf-ico {
+  display: none;
+}
+/* compact : seule l'option active ; icône : seulement l'entonnoir (plein si un filtre est actif) */
+.qf.compact .qf-cur,
+.qf.icon .qf-cur {
+  display: inline-flex;
+}
+.qf.compact .qf-ico {
+  display: none;
+}
+.qf.icon .qf-lab,
+.qf.icon .qf-caret {
+  display: none;
+}
+.qf.icon.active .qf-cur {
+  background: var(--bleu);
+  color: var(--sur-bleu);
+}
+.qf.icon.active .qf-ico {
+  fill: currentColor;
+}
+.qf.compact .qf-opts,
+.qf.icon .qf-opts {
+  display: none;
+}
+/* liste ouverte : verticale, en position fixe pour ne pas être coupée par le bloc */
+.qf.open .qf-opts {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  z-index: 40;
+  min-width: 110px;
+  max-height: min(60vh, 360px); /* longue liste : elle défile */
+  overflow-y: auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.qf.open .qf-opts button {
+  border-left: 0;
+  border-top: 1px solid var(--bord);
+  padding: 4px 10px;
+  font-size: 12.5px;
+}
+.qf.open .qf-opts button:first-child {
+  border-top: 0;
+}
+.bh .qfs {
+  font: inherit;
+  font-size: 12px;
+  max-width: 180px;
+}
+.bh .search {
+  width: 120px;
+  font: inherit;
+  font-size: 12px;
+  padding: 1px 6px;
+  border: 1px solid var(--bord);
+  border-radius: 3px;
+}
+/* Bloc « figé » : reste visible pendant que l'on fait défiler un bloc voisin très haut */
+.block.sticky {
+  position: sticky;
+  top: calc(var(--toph, 0px) + 6px);
+  align-self: start !important;
+  z-index: 2;
+  max-height: calc(100vh - var(--toph, 0px) - 14px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* un liseré blanc comble les espaces entre blocs figés et sous l'en-tête : le contenu qui défile
+     dessous n'apparaît plus par ces interstices ; une ombre légère marque la limite basse */
+  box-shadow:
+    0 -8px 0 var(--carte),
+    0 8px 0 var(--carte),
+    0 14px 10px -8px rgba(0, 0, 0, 0.18);
+}
+/* dans un bloc figé de hauteur limitée, c'est le tableau (ou le contenu) qui défile, pas le bloc :
+   les en-têtes de colonnes restent ainsi visibles */
+.block.sticky > .bb {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+.block.sticky > .bb > .tbl-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+#stickyMask > div {
+  position: fixed;
+  z-index: 2;
+  background: var(--carte);
+}
+.block.collapsed > .bb {
+  display: none !important;
+}
+.grid:not(.masonry) > .block.collapsed {
+  grid-row: auto !important;
+  align-self: start !important;
+}
+.grid.masonry > .block.collapsed {
+  align-self: start !important;
+} /* un bloc replié libère sa hauteur */
+/* séparateur (0.9.7.0) : titre de partie, commentaire en gris, trait ; commence une nouvelle rangée */
+.usep {
+  align-self: start; /* n'occupe que sa hauteur dans la rangée */
+  margin-top: 10px;
+  padding: 2px 2px 4px;
+  border-bottom: 2px solid var(--bleu);
+  min-width: 0;
+}
+.usep:first-child {
+  margin-top: 0;
+}
+.usep-t {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--bleu);
+}
+.usep-n {
+  font-size: 12.5px;
+  color: var(--muet);
+}
+@media print {
+  .usep {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+}
+/* replié : ni filtres ni recherche dans l'en-tête (0.9.6.12), ils reviennent quand le bloc est déplié */
+.block.collapsed .bh .qf,
+.block.collapsed .bh .qfs,
+.block.collapsed .bh .search {
+  display: none !important;
+}
+/* replié : fond coloré ; déplié : aucun effet (0.9.6.8) */
+.block.collapsed .bh {
+  border-bottom: 0;
+  background: var(--bleu-hover);
+  border-radius: 3px;
+  padding: 4px 6px;
+}
+.block.collapsed .bh:hover {
+  background: var(--bleu-clair);
+}
+/* bloc replié (0.9.4.27) : icône du type de vue (tableau, graphique, carte, texte…) devant le titre */
+.foldico {
+  display: none;
+}
+.block.collapsed .foldico {
+  display: inline-flex;
+  flex: none;
+}
+.block.collapsed .foldico .kico {
+  margin-right: 0;
+}
+.block.empty .bb {
+  color: var(--muet);
+  padding: 6px 10px;
+  font-style: italic;
+}
+.bb.pad {
+  padding: 4px 8px;
+}
+/* Un bloc étalé sur plusieurs lignes remplit toute sa hauteur */
+.block.tall {
+  display: flex;
+  flex-direction: column;
+}
+.block.tall > .bb {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.block.tall > .bb > .chart-box,
+.block.tall > .bb > .plot-box {
+  flex: none;
+  height: calc(var(--h, var(--ch, 260px)) * var(--rows, 1) + (var(--rows, 1) - 1) * 40px);
+}
+.block.tall > .bb > .map-box {
+  flex: none;
+  height: calc(var(--h, 320px) * var(--rows, 1) + (var(--rows, 1) - 1) * 40px);
+}
+.block.tall > .bb > .tbl-wrap {
+  flex: 1 1 auto;
+  min-height: 0; /* le tableau défile lui-même : en-têtes de colonnes figés */
+  /* hauteur maximale multipliée par le nombre de rangées (sinon le tableau s'affiche en entier
+     et c'est la page qui défile, en emportant les en-têtes) */
+  max-height: calc(var(--h, var(--tmh, 320px)) * var(--rows, 1) + (var(--rows, 1) - 1) * 40px) !important;
+}
+/* Plein écran d'un bloc */
+.bh .max {
+  border: 0;
+  background: none;
+  color: var(--muet);
+  padding: 0 2px;
+  font-size: 13px;
+  line-height: 1;
+}
+.bh .max:hover {
+  color: var(--bleu);
+}
+#backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 14;
+  display: none;
+}
+#backdrop.on {
+  display: block;
+}
+.block.maxed {
+  position: fixed !important;
+  inset: 10px;
+  border-radius: 6px;
+  padding: 0 8px 8px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  width: auto !important;
+  max-width: none !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+/* en mode empilé (masonry), les blocs ont align-self:start, qui empêcherait le bloc agrandi de s'étirer sur l'écran */
+.grid > .block.maxed {
+  align-self: stretch !important;
+  justify-self: stretch !important;
+  margin: 0 !important;
+}
+.block.maxed > .bb {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  overflow: auto;
+}
+.block.maxed > .bb > .chart-box,
+.block.maxed > .bb > .plot-box,
+.block.maxed > .bb > .map-box {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+.block.maxed > .bb > .tbl-wrap {
+  flex: 1 1 auto;
+  min-height: 0; /* le tableau défile lui-même : en-têtes de colonnes figés */
+  max-height: none !important;
+}
+.block.maxed td {
+  max-width: 420px;
+}
+.msg {
+  color: var(--muet);
+  padding: 6px 10px;
+  font-style: italic;
+}
+.msg.err {
+  color: var(--rouge);
+  font-style: normal;
+}
+
+/* Tableaux */
+.tbl-wrap {
+  overflow: auto;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12.5px;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--doux2);
+  text-align: center;
+  font-weight: 500; /* en-têtes discrets : graisse moyenne, gris foncé */
+  color: var(--texte2);
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--bord);
+  white-space: normal;
+  overflow-wrap: normal;
+  line-height: 1.25;
+  vertical-align: middle;
+}
+td {
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--bord-doux);
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+table.zebra tbody tr:nth-child(even) td {
+  background: var(--doux);
+}
+table.nohgrid td {
+  border-bottom-color: transparent;
+}
+table.vgrid td,
+table.vgrid th {
+  border-right: 1px solid var(--bord-doux);
+}
+table.vgrid td:last-child,
+table.vgrid th:last-child {
+  border-right: 0;
+}
+td.frz,
+th.frz {
+  position: sticky;
+  z-index: 1;
+  background: var(--carte);
+  box-shadow: inset -1px 0 0 var(--bord);
+}
+th.frz {
+  z-index: 3;
+  background: var(--doux2);
+}
+table.zebra tbody tr:nth-child(even) td.frz {
+  background: var(--doux);
+}
+tbody tr {
+  cursor: pointer;
+}
+tbody tr:hover td {
+  background: var(--bleu-hover);
+}
+/* ligne sélectionnée : un simple trait bleu en bas */
+tbody tr.sel td {
+  box-shadow: inset 0 -2px 0 var(--bleu);
+}
+/* références multiples / listes de choix : les valeurs se suivent sur la ligne tant qu'il y a la place,
+   puis passent à la ligne ; une valeur plus large que la colonne est tronquée */
+td.multi {
+  white-space: normal;
+}
+td.multi .chip {
+  display: inline-block;
+  vertical-align: top;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 1px 4px 1px 0;
+}
+.fiche dd.styled {
+  padding: 0 4px;
+  border-radius: 3px;
+}
+td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.more {
+  color: var(--muet);
+  font-size: 11.5px;
+  padding: 4px 8px;
+}
+
+/* Fiches */
+.fiche {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+}
+.fiche > div {
+  flex: 1 1 auto;
+  min-width: 80px;
+  max-width: 100%;
+}
+.fiche > div.long {
+  flex-basis: 100%;
+}
+.fiche.lay {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fiche .lv {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.fiche .lh {
+  display: flex;
+  gap: 6px 18px;
+  min-width: 0;
+}
+.fiche .lh > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.fiche .lh.wrap {
+  flex-wrap: wrap;
+}
+.fiche .lh.wrap > * {
+  flex: 1 1 auto;
+}
+.fiche.lay > div,
+.fiche .lv > div {
+  flex: 0 0 auto;
+  max-width: none;
+}
+.fiche .lh > div.long {
+  flex: 1 1 0;
+}
+.fiche dt {
+  font-size: 11px;
+  color: var(--muet);
+}
+.fiche dd {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.fiche dd.num {
+  font-variant-numeric: tabular-nums;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--muet);
+}
+.nav button {
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  border-radius: 3px;
+  padding: 0 6px;
+  color: var(--bleu);
+}
+.cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--cw, 100%)), 1fr));
+  align-items: start;
+  gap: 6px;
+  padding: 6px 2px;
+  max-height: var(--h, 640px);
+  overflow: auto;
+}
+.block.tall .cartes,
+.block.maxed .cartes {
+  max-height: none;
+  flex: 1 1 auto;
+}
+/* liste de fiches : sans disposition Grist, chaque champ a une largeur fixe (calculée sur toutes les fiches,
+   voir renderCards) ; un champ long occupe toute la ligne */
+.cartes .fiche:not(.lay) {
+  gap: 6px 18px;
+}
+.cartes .fiche:not(.lay) > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.fiche.nolabels dt {
+  display: none;
+}
+.fiche .vide {
+  visibility: hidden;
+}
+.cartes .mini {
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.cartes .mini.sel {
+  border-color: var(--bleu);
+  background: var(--bleu-hover);
+}
+
+/* Pastilles */
+/* Lien vers la fiche d'un enregistrement référencé (comme le maillon de Grist) */
+/* bouton « + Ajouter une ligne » en bas d'un tableau ou d'une liste de fiches modifiable */
+.addrow {
+  display: block;
+  flex: none;
+  margin: 4px 0 2px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--bleu);
+  background: transparent;
+  border: 1px dashed var(--bleu);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.rowcount {
+  flex: none;
+  text-align: right;
+  font-size: 11px;
+  color: var(--muet);
+  padding: 2px 6px 0;
+}
+.mdview {
+  padding: 4px 6px;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.mdview > :first-child {
+  margin-top: 0;
+}
+.mdview > :last-child {
+  margin-bottom: 0;
+}
+.mdview h1 {
+  font-size: 1.5em;
+}
+.mdview h2 {
+  font-size: 1.3em;
+}
+.mdview h3 {
+  font-size: 1.15em;
+}
+.mdview img {
+  max-width: 100%;
+}
+.mdview table {
+  width: auto;
+  font-size: inherit;
+}
+/* bloc-notes (0.9.4.25) : widget Markdown modifiable, aspect papier (fond jaune pâle, marge rouge, coin replié) */
+.mdnote {
+  position: relative;
+  min-height: 90px;
+  padding: 10px 34px 12px 22px;
+  background: var(--jaune-clair);
+  border: 1px solid var(--jaune-bord);
+  border-radius: 3px 3px 3px 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  line-height: 1.55;
+}
+.mdnote::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 12px;
+  border-left: 1.5px solid rgba(220, 90, 90, 0.65);
+}
+.mdnote .mdview {
+  padding: 0;
+}
+.mdnote-empty {
+  color: var(--muet);
+  font-style: italic;
+}
+.mdnote-edit {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--texte2);
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.55;
+}
+.mdnote:hover .mdnote-edit,
+.mdnote-edit:focus-visible {
+  opacity: 1;
+  border-color: var(--jaune-bord);
+  background: var(--carte);
+}
+.mdnote.editing {
+  padding-right: 12px;
+}
+.mdnote-ta {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120px;
+  padding: 4px 2px;
+  border: 0;
+  outline: 0;
+  resize: vertical;
+  background: transparent;
+  color: var(--texte);
+  font: inherit;
+  line-height: 1.55;
+}
+.mdnote-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--jaune-bord);
+}
+.mdnote-hint {
+  flex: 1 1 200px;
+  font-size: 11px;
+  color: var(--muet);
+}
+.mdnote-bar button {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--bleu);
+  background: var(--carte);
+  color: var(--bleu);
+  cursor: pointer;
+}
+.mdnote-bar .mdnote-save {
+  background: var(--bleu);
+  color: var(--sur-bleu, #fff);
+}
+.mdnote.saving {
+  opacity: 0.6;
+}
+/* texte modifiable sans l'aspect bloc-notes (0.9.4.26) */
+.mdnote.mdplain {
+  padding: 4px 34px 4px 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  box-shadow: none;
+  min-height: 0;
+}
+.mdnote.mdplain::before {
+  display: none;
+}
+.mdnote.mdplain.editing {
+  border-color: var(--bord);
+  padding: 6px;
+}
+.mdnote.mdplain .mdnote-edit:hover,
+.mdnote.mdplain:hover .mdnote-edit {
+  border-color: var(--bord);
+}
+.rowbtns {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.delrow {
+  color: var(--rouge);
+  border-color: var(--rouge);
+}
+.delrow:hover {
+  background: var(--rouge-clair);
+}
+.delrow.confirm,
+.delrow.confirm:hover {
+  color: #fff;
+  background: var(--rouge);
+  border-style: solid;
+}
+tr.todel > td,
+.mini.todel {
+  background: var(--rouge-clair) !important;
+}
+.addrow:hover {
+  background: var(--bleu-hover);
+}
+.addrow:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.rlink {
+  display: inline-flex;
+  vertical-align: -1px;
+  margin-right: 4px;
+  color: var(--bleu);
+  opacity: 0.5;
+  cursor: pointer;
+}
+.rlink:hover {
+  opacity: 1;
+}
+.rlink svg {
+  width: 12px;
+  height: 12px;
+}
+td[data-kind="sel"][data-ed]:hover,
+dd[data-kind="sel"][data-ed]:hover {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000091' d='m12 13.1 5-4.9 1.4 1.4-6.4 6.3-6.4-6.4L7 8.1l5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  background-size: 14px;
+}
+td[data-kind="sel"][data-ed],
+dd[data-kind="sel"][data-ed] {
+  padding-right: 18px;
+}
+/* Icône AIA (usage transparent de l'IA) dans l'en-tête de l'aide */
+#help .aia-mini {
+  flex: none;
+  border-radius: 3px;
+}
+/* Fenêtre d'aide (Markdown du dépôt) */
+#help {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+.leaflet-bar a.map-fit {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--bleu);
+}
+#fmodal {
+  position: fixed;
+  inset: 0;
+  z-index: 36;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+#fmodal[hidden] {
+  display: none;
+}
+#fmodal .fmbox {
+  background: var(--carte);
+  border-radius: 8px;
+  width: min(760px, 100%);
+  height: min(860px, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+#fmodal .hhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bord);
+}
+#fmodal h3 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--bleu);
+  flex: 1;
+}
+#fmodal .fmmsg {
+  color: var(--vert);
+  font-weight: 600;
+  font-size: 13px;
+}
+#fmodal a.btn {
+  text-decoration: none;
+}
+#fmFrame {
+  flex: 1;
+  border: 0;
+  width: 100%;
+}
+/* message d'accueil (0.9.3) */
+/* lien hypertexte (colonne « HyperLink » de Grist) */
+a.hlink {
+  color: var(--bleu);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+/* maintenance et accès fermé (0.9.6) */
+html.gated #pnav,
+html.gated #filters,
+html.gated #nativeLinks,
+html.gated #btnConfig,
+html.gated #btnSingle,
+html.gated #btnFold,
+html.gated #btnPrint {
+  display: none !important;
+}
+.gate {
+  grid-column: 1 / -1; /* toute la largeur de la grille des blocs */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 24px 16px;
+}
+.gate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(560px, 100%);
+  padding: 24px;
+  text-align: center;
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+.gate-ico {
+  font-size: 34px;
+  line-height: 1;
+}
+.gate-card h1 {
+  margin: 0;
+  font-size: 19px;
+  color: var(--bleu);
+}
+.gate-msg {
+  color: var(--texte2);
+  font-size: 13.5px;
+}
+.gate-fin {
+  margin: 4px 0 0;
+  font-weight: 600;
+  color: var(--texte);
+}
+#maintBanner {
+  margin: 4px 8px 6px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--jaune-bord);
+  background: var(--jaune-clair);
+  color: var(--texte);
+  font-size: 12.5px;
+}
+#maintBanner[hidden] {
+  display: none;
+}
+/* avertissements en bas à droite, comme dans Grist (0.9.5.11) */
+#toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(360px, calc(100vw - 32px));
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 10px 10px 12px;
+  border-radius: 6px;
+  background: #262633;
+  color: #fff;
+  font-size: 12.5px;
+  line-height: 1.45;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  animation: toastIn 0.2s ease;
+  transition: opacity 0.25s, transform 0.25s;
+}
+.toast.err {
+  border-left: 4px solid #e1000f;
+}
+.toast.info {
+  border-left: 4px solid #6a6af4;
+}
+.toast.out {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.toast-ico {
+  flex: none;
+  font-size: 15px;
+  line-height: 1.2;
+}
+.toast.err .toast-ico {
+  color: #ff8b8b;
+}
+.toast-body {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.toast-body b {
+  display: block;
+  margin-bottom: 2px;
+}
+.toast-x {
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: #bbb;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.toast-x:hover {
+  color: #fff;
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+/* pied de page des administrateurs (0.9.5.10) : liens vers les pages natives de Grist */
+#nativeLinks {
+  margin: 14px 8px 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--bord);
+  font-size: 11.5px;
+  color: var(--muet);
+}
+#nativeLinks a {
+  color: var(--bleu);
+  text-decoration: none;
+}
+#nativeLinks a:hover {
+  text-decoration: underline;
+}
+#nativeLinks .nl-h {
+  font-weight: 600;
+  cursor: help;
+}
+/* sous-titre d'une section de la configuration */
+.cs-sub {
+  margin: 12px 0 6px;
+  font-size: 12.5px;
+  color: var(--bleu);
+}
+.cs-sub small {
+  font-weight: 400;
+  color: var(--muet);
+}
+/* écran de chargement (0.9.5.9) : n'apparaît qu'après 0,4 s (chargement rapide : rien ne clignote) */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--fond);
+  opacity: 0;
+  animation: splIn 0.25s ease 0.4s forwards;
+  transition: opacity 0.3s;
+}
+.splash.spl-preview {
+  animation: none;
+  opacity: 1;
+  cursor: pointer;
+}
+.splash.out {
+  animation: none;
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes splIn {
+  to {
+    opacity: 1;
+  }
+}
+.spl-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(520px, 100%);
+  text-align: center;
+  color: var(--texte);
+}
+.spl-img {
+  max-width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+}
+.spl-title {
+  margin: 0;
+  font-size: 20px;
+  color: var(--bleu);
+}
+.spl-text {
+  margin: 0;
+  white-space: pre-line;
+  color: var(--texte2);
+  line-height: 1.5;
+}
+.spl-bar {
+  width: 70%;
+  height: 4px;
+  margin-top: 6px;
+  border-radius: 2px;
+  background: var(--bord-doux);
+  overflow: hidden;
+}
+.spl-bar i {
+  display: block;
+  width: 3%;
+  height: 100%;
+  background: var(--bleu);
+  transition: width 0.3s;
+}
+.spl-step {
+  font-size: 12px;
+  color: var(--muet);
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash,
+  .spl-bar i {
+    transition: none;
+  }
+}
+#welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 37;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+#welcome[hidden] {
+  display: none;
+}
+#welcome .wbox {
+  background: var(--carte);
+  border-radius: 6px;
+  border-top: 4px solid var(--bleu);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  width: 60vw; /* grand écran : 60 % de la largeur */
+  max-height: min(85vh, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  #welcome .wbox {
+    width: 90vw; /* petit écran : 90 % */
+  }
+}
+#welcome .wbody {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 22px 12px;
+  line-height: 1.55;
+  font-size: 14px;
+}
+/* parties repliables (« +++ Titre » … « +++ ») */
+#welcome .wbody details {
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  margin: 8px 0;
+  padding: 0 10px;
+}
+#welcome .wbody details[open] {
+  padding-bottom: 6px;
+}
+#welcome .wbody summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--bleu);
+  padding: 6px 0;
+}
+#welcome .wbody summary > p {
+  display: inline;
+  margin: 0;
+}
+#welcome .wbody details details {
+  border-style: dashed;
+}
+#welcome .wnote {
+  font-size: 12px;
+  color: var(--muet);
+}
+#welcome .wfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  border-top: 1px solid var(--bord);
+  background: var(--bleu-hover);
+  font-size: 13px;
+}
+@media print {
+  #toasts {
+    display: none !important;
+  }
+  #nativeLinks {
+    display: none !important;
+  }
+  .splash {
+    display: none !important;
+  }
+  .mdnote-edit {
+    display: none !important;
+  }
+  .mdnote {
+    box-shadow: none;
+  }
+  #welcome {
+    display: none !important;
+  }
+}
+#help[hidden] {
+  display: none;
+}
+#help .hbox {
+  background: var(--carte);
+  border-radius: 6px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  width: min(860px, 100%);
+  height: min(90vh, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#help .hhead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--bleu);
+}
+#help .hhead h3 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--bleu);
+  flex: 1;
+}
+#help .htabs {
+  display: flex;
+  gap: 4px;
+}
+#help .htabs button {
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  color: var(--bleu);
+  border-radius: 4px;
+  padding: 3px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+#help .htabs button.on {
+  background: var(--bleu);
+  color: var(--sur-bleu);
+  border-color: var(--bleu);
+}
+#help .hbody {
+  flex: 1;
+  overflow: auto;
+  padding: 6px 22px 24px;
+  line-height: 1.55;
+  font-size: 14px;
+}
+.md h1 {
+  font-size: 21px;
+  color: var(--bleu);
+}
+.md h2 {
+  font-size: 17px;
+  color: var(--bleu);
+  border-bottom: 1px solid var(--bord);
+  padding-bottom: 3px;
+  margin-top: 26px;
+}
+.md h3 {
+  font-size: 15px;
+  margin-top: 18px;
+}
+.md table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.md th,
+.md td {
+  border: 1px solid var(--bord);
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+  position: static;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: none;
+  height: auto;
+}
+.md code {
+  background: var(--doux);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 12.5px;
+}
+.md pre {
+  background: var(--doux);
+  padding: 8px 10px;
+  border-radius: 4px;
+  overflow: auto;
+}
+.md pre code {
+  background: none;
+  padding: 0;
+}
+.md blockquote {
+  margin: 8px 0;
+  padding: 4px 12px;
+  border-left: 4px solid var(--bleu-clair);
+  color: var(--muet);
+}
+.md hr {
+  border: 0;
+  border-top: 1px solid var(--bord);
+  margin: 18px 0;
+}
+/* pastille « nouvelle version » sur le bouton Aide */
+.tb {
+  position: relative;
+}
+#forms,
+#navbtns {
+  display: contents;
+}
+a.tb.formlink,
+a.tb.navbtn {
+  text-decoration: none;
+}
+/* pages du menu en boutons (0.9.6.7) : icône SVG de l'administrateur (dessin d'origine, couleur du bouton) */
+a.tb.navbtn.cur {
+  background: var(--bleu-hover);
+  border-color: var(--bleu-bord);
+}
+.tb .newdot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rouge);
+  box-shadow: 0 0 0 2px var(--carte);
+}
+.tb .newdot[hidden] {
+  display: none;
+}
+#rcBack {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 25;
+  display: none;
+}
+#rcBack.on {
+  display: block;
+}
+#rc {
+  position: fixed;
+  z-index: 26;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, calc(100vw - 24px));
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  background: var(--carte);
+  border-radius: 6px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  display: none;
+}
+#rc.on {
+  display: block;
+}
+#rc .rch {
+  position: sticky;
+  top: 0;
+  background: var(--carte);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bord);
+}
+#rc .rch h3 {
+  margin: 0;
+  font-size: 15px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#rc .rch small {
+  color: var(--muet);
+  font-weight: 400;
+}
+#rc .rcb {
+  padding: 10px 12px;
+}
+/* Édition des champs */
+[data-ed] {
+  cursor: text;
+}
+/* champ éditable survolé : fond de la cellule teinté */
+[data-ed]:hover {
+  background-color: var(--bleu-clair) !important;
+}
+.fiche dd[data-ed]:hover {
+  border-radius: 3px;
+}
+.fiche dd[data-ed]:empty::after,
+td[data-ed]:empty::after {
+  content: "—";
+  color: var(--muet2);
+}
+.ed-input {
+  font: inherit;
+  font-size: 13px;
+  width: 100%;
+  min-width: 80px;
+  box-sizing: border-box;
+  padding: 2px 4px;
+  border: 1px solid var(--bleu);
+  border-radius: 3px;
+  background: var(--carte);
+  color: var(--texte);
+}
+textarea.ed-input {
+  min-height: 60px;
+  resize: vertical;
+}
+.saving {
+  opacity: 0.5;
+}
+.picker {
+  position: fixed;
+  z-index: 28;
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  padding: 4px;
+  max-width: min(420px, calc(100vw - 8px));
+}
+.picker ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  max-height: 240px;
+  overflow: auto;
+}
+.picker li {
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
+.picker li.on {
+  background: var(--bleu-clair);
+}
+.picker li:not(.pk-none):hover {
+  background: var(--bleu-clair);
+}
+.picker li.cur {
+  font-weight: 700;
+}
+.picker .pk-empty,
+.picker .pk-none {
+  color: var(--muet);
+  font-style: italic;
+}
+.picker.multi li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.picker.multi li input {
+  margin: 0;
+  pointer-events: none;
+}
+.picker .pk-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+.picker .pk-count {
+  flex: 1;
+  color: var(--muet);
+  font-size: 12px;
+}
+.chip {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--doux2);
+  font-size: 11.5px;
+  margin: 0 2px 1px 0;
+}
+.ok {
+  color: var(--vert);
+}
+.ko {
+  color: var(--muet2);
+}
+/* booléen réglé « interrupteur » dans Grist (0.9.5.8) */
+.sw {
+  display: inline-block;
+  position: relative;
+  width: 26px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--bord);
+  vertical-align: middle;
+  transition: background 0.15s;
+}
+.sw i {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: left 0.15s;
+}
+.sw.on {
+  background: var(--vert);
+}
+.sw.on i {
+  left: 14px;
+}
+@media print {
+  .sw {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Graphiques */
+.chart-box {
+  position: relative;
+  height: var(--h, var(--ch, 260px));
+  padding: 6px 8px;
+}
+/* Plotly prend la taille de la boîte, marge intérieure comprise : sans marge ni débordement, aucun ascenseur parasite */
+.plot-box {
+  height: var(--h, var(--ch, 260px));
+  padding: 0;
+  overflow: hidden;
+}
+.chart-box {
+  overflow: hidden;
+}
+.map-box {
+  height: var(--h, 320px);
+  z-index: 0;
+}
+/* seconde ligne de l'en-tête (0.9.4.9) : filtre libre à gauche, outils de la carte à droite ; le titre reste lisible */
+.bh2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  padding: 3px 2px;
+  border-bottom: 1px solid var(--bord);
+  font-size: 11.5px;
+}
+.block.collapsed > .bh2 {
+  display: none;
+}
+.bh2 .qf-print {
+  display: none;
+}
+/* filtre libre : valeurs à cocher */
+.qf3m {
+  display: inline-flex;
+  position: relative;
+}
+.qf3-tog {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 260px;
+  padding: 1px 6px;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  background: var(--carte);
+  color: var(--bleu);
+  font: inherit;
+  cursor: pointer;
+}
+.qf3-tog .qf-lab {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.qf3m.active .qf3-tog {
+  background: var(--bleu);
+  border-color: var(--bleu);
+  color: var(--sur-bleu);
+}
+.qf3-tog .qf-ico {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+  flex: none;
+}
+.qf3-panel {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  max-width: 320px;
+  max-height: min(60vh, 360px);
+  overflow-y: auto;
+  padding: 6px 8px;
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.qf3-panel[hidden] {
+  display: none;
+}
+.qf3-panel label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.qf3-act {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--bord-doux);
+}
+.qf3-act button {
+  font: inherit;
+  padding: 1px 8px;
+  border: 1px solid var(--bleu);
+  border-radius: 4px;
+  background: var(--carte);
+  color: var(--bleu);
+  cursor: pointer;
+}
+.qf3-act button.primary {
+  background: var(--bleu);
+  color: var(--sur-bleu);
+}
+/* en-tête des cartes (0.9.4.7) : zonage au choix, imprimer la carte seule, exporter */
+.mapctl {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex: none;
+}
+.mapctl select {
+  font: inherit;
+  font-size: 11.5px;
+  max-width: 170px;
+  padding: 1px 4px;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  background: var(--carte);
+  color: var(--texte2);
+}
+.bh2 .qffree {
+  max-width: 200px;
+  font: inherit;
+  padding: 1px 4px;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  background: var(--carte);
+  color: var(--texte2);
+}
+.mapbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  background: var(--carte);
+  color: var(--bleu);
+  cursor: pointer;
+}
+.mapbtn:hover {
+  background: var(--bleu-hover);
+}
+.mapbtn svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+/* carte imprimée seule : même taille à l'écran pendant la préparation et sur papier (A4 paysage) */
+/* smartphone (0.9.4.8) : ni impression de la carte seule, ni zonage au choix, ni filtre libre */
+@media (max-width: 760px) {
+  .mapctl select,
+  .mapctl [data-mprint],
+  .bh2 .qffree,
+  .bh2 .qf3m {
+    display: none !important;
+  }
+}
+/* carte imprimée seule : même taille à l'écran pendant la préparation et sur papier ; avec l'en-tête (≈ 15 mm),
+   elle tient sur une page A4 paysage (186 mm utiles) */
+html.printone .block.printme > .bb > .map-box {
+  flex: none !important; /* bloc en plein écran : la carte ne s'étire plus à la hauteur de l'écran */
+  width: 275mm !important;
+  height: 158mm !important;
+}
+/* message des gestes sur carte (0.9.4.5) : « Ctrl + molette pour zoomer », « deux doigts… » */
+.map-hint {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.map-hint.on {
+  opacity: 1;
+}
+.leaflet-container {
+  font: inherit;
+  font-size: 12px;
+}
+.qpvinfo {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--rouge);
+  font-weight: 700;
+}
+.map-legend {
+  background: var(--voile);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+  max-height: 180px;
+  overflow: auto;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.map-legend b {
+  display: block;
+  margin-bottom: 2px;
+}
+.map-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: -1px;
+  border: 1px solid var(--carte);
+  box-shadow: 0 0 0 1px var(--bord);
+}
+.leaflet-tooltip.lbl {
+  font-size: 11px;
+  padding: 1px 5px;
+  box-shadow: none;
+  opacity: 0.9;
+}
+/* étiquettes des points : angles droits, fin cadre de la couleur du point (--tc, posée par le script) */
+.map-box .leaflet-tooltip {
+  border-radius: 0;
+  border: 2px solid var(--tc, #c8c8c8);
+  box-shadow: inset 0 0 0 8px var(--tc2, var(--carte));
+}
+.map-box .leaflet-popup-content-wrapper {
+  border-radius: 0;
+  border: 2px solid var(--tc, #c8c8c8);
+  /* second liseré à l'intérieur : couleur du contour du point (--tc2) */
+  box-shadow:
+    inset 0 0 0 8px var(--tc2, var(--carte)),
+    0 3px 14px rgba(0, 0, 0, 0.4);
+}
+.map-box .leaflet-popup-tip {
+  border: 2px solid var(--tc, #c8c8c8);
+}
+.map-box .leaflet-tooltip-top::before {
+  border-top-color: var(--tc, #c8c8c8);
+}
+.map-box .leaflet-tooltip-bottom::before {
+  border-bottom-color: var(--tc, #c8c8c8);
+}
+.map-box .leaflet-tooltip-left::before {
+  border-left-color: var(--tc, #c8c8c8);
+}
+.map-box .leaflet-tooltip-right::before {
+  border-right-color: var(--tc, #c8c8c8);
+}
+
+/* Panneau de configuration */
+#config {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 30;
+}
+#config[hidden] {
+  display: none;
+}
+.panel {
+  width: max(50vw, min(560px, 100%));
+  max-width: 100%;
+  height: 100%;
+  background: var(--fond);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15);
+}
+.panel h3 {
+  margin: 0;
+  color: var(--bleu);
+  font-size: 16px;
+  flex: 1;
+}
+.panel label {
+  display: block;
+  margin: 4px 0;
+}
+.panel label[title],
+.panel .hint[title] {
+  cursor: help;
+}
+.panel label[title] > .lt {
+  border-bottom: 1px dotted var(--muet2);
+}
+.panel select,
+.panel input[type="number"],
+.panel input[type="text"] {
+  font: inherit;
+  padding: 2px 4px;
+  max-width: 100%;
+}
+.phead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--carte);
+  border-bottom: 2px solid var(--bleu);
+}
+.pfix {
+  padding: 8px 16px 10px;
+  background: var(--carte);
+  border-bottom: 1px solid var(--bord);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+.pfix .pvt {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--muet);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+.pfix .preview {
+  max-height: 28vh;
+  overflow: auto;
+}
+.pbody {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 16px 24px;
+}
+.cs {
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-left: 4px solid var(--bleu);
+  border-radius: 6px;
+  padding: 8px 12px 10px;
+  margin-bottom: 14px;
+}
+.cpage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.cpage > label {
+  margin: 0;
+}
+.qfx {
+  margin: 2px 0 6px;
+}
+.qfx .qfx-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  max-height: 92px;
+  overflow: auto;
+  padding: 4px 6px;
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  margin-top: 2px;
+}
+.qfx .qfx-list label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: 12px;
+}
+/* réglages des cartes, regroupés par thème (0.8.11.3) */
+.mgrps {
+  grid-column: 1 / -1; /* toute la largeur des réglages du bloc */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 6px 10px;
+  align-items: start;
+  margin-top: 4px;
+}
+.mgrp {
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  padding: 4px 8px 6px;
+  background: var(--carte);
+}
+.mgrp-h {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--bleu);
+  margin: 0 0 2px;
+}
+.cforms {
+  margin-top: 8px;
+}
+.cforms > .lt {
+  display: block;
+  margin-bottom: 4px;
+}
+.cother {
+  background: var(--jaune-clair);
+  border: 1px solid var(--jaune-bord);
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.cother label {
+  display: block;
+  margin: 4px 0 0;
+}
+.cs > h4 {
+  margin: -8px -12px 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  color: var(--bleu);
+  background: var(--bleu-hover);
+  border-bottom: 1px solid var(--bord);
+  border-radius: 0 6px 0 0;
+}
+.cs > h4 small {
+  font-weight: 400;
+  color: var(--muet);
+}
+.cs.adv {
+  border-left-color: var(--brun);
+}
+.cs.adv > h4 {
+  color: var(--brun);
+  background: var(--brun-clair);
+}
+.pick {
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  max-height: 200px;
+  overflow: auto;
+  padding: 4px 8px;
+  background: var(--carte);
+}
+.pick label.dis {
+  color: var(--muet2);
+}
+.chosen {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* chaque vue retenue : une carte distincte, avec un bandeau de titre (icône, type, titre, flèches) */
+.chosen li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 0 0 6px;
+  border: 1px solid var(--bleu-bord2);
+  border-left: 4px solid var(--bleu);
+  border-radius: 6px;
+  background: var(--carte);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+.chosen li.folded {
+  padding-bottom: 2px;
+}
+/* séparateur dans la liste des vues retenues (0.9.7.2) : couleur distincte */
+.chosen li.sepitem {
+  border-color: #c96a00 !important;
+  border-left-color: #c96a00 !important;
+}
+.chosen li.sepitem > .chead {
+  background: #fff1e0;
+  border-bottom-color: #f0c48a;
+}
+.chosen li.sepitem > .chead .cname {
+  color: #8a4a00;
+}
+html.sombre .chosen li.sepitem > .chead {
+  background: #3a2810;
+}
+html.sombre .chosen li.sepitem > .chead .cname {
+  color: #f0b46a;
+}
+@media screen and (prefers-color-scheme: dark) {
+  html:not(.clair) .chosen li.sepitem > .chead {
+    background: #3a2810;
+  }
+  html:not(.clair) .chosen li.sepitem > .chead .cname {
+    color: #f0b46a;
+  }
+}
+.chosen .chead {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  background: var(--bleu-hover);
+  border-bottom: 1px solid var(--bleu-bord2);
+}
+.chosen li > .ctrls,
+.chosen li > .fl {
+  padding: 0 10px;
+}
+.chosen .cname {
+  font-size: 13.5px;
+}
+.ctype {
+  color: var(--bleu);
+  font-weight: 700;
+  margin-right: 2px;
+}
+.ctype::after {
+  content: " ·";
+  color: var(--muet);
+  font-weight: 400;
+}
+.ctitle {
+  font-weight: 700;
+}
+.pick .ctype,
+.pick .ctitle {
+  font-weight: 500;
+}
+/* bloc replié dans la configuration : titre, flèches et place dans la grille seulement */
+.chosen li.folded > .ctrls.more,
+.chosen li.folded > .fl {
+  display: none;
+}
+.chosen .ctrls.lay + .ctrls.more {
+  margin-top: -2px;
+}
+.chosen .fold-btn {
+  min-width: 22px;
+}
+.kico {
+  width: 15px;
+  height: 15px;
+  margin-right: 5px;
+  vertical-align: -2px;
+  fill: none;
+  stroke: var(--bleu);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.chosen .cname {
+  font-weight: 700;
+}
+.chosen .ctrls {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 2px 14px;
+  font-size: 12px;
+  color: var(--muet);
+}
+.chosen .ctrls label {
+  margin: 1px 0;
+}
+.chosen .ctrls select {
+  font-size: 12px;
+}
+.chosen .fl {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: var(--muet);
+}
+.preview {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: 22px;
+  gap: 3px;
+  background: var(--fond);
+  padding: 4px;
+  border-radius: 4px;
+}
+.preview.dense {
+  grid-auto-flow: row dense;
+}
+.preview.flux {
+  display: flex;
+  flex-wrap: wrap;
+}
+.preview div {
+  background: var(--bleu-clair);
+  border: 1px solid var(--bleu-bord);
+  border-radius: 3px;
+  font-size: 10px;
+  padding: 1px 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mrules {
+  grid-column: 1 / -1;
+  border: 1px dashed var(--bord);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 2px 0;
+  cursor: help;
+}
+.mrules .mr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 3px 0;
+  cursor: default;
+}
+.mrules input[type="color"] {
+  width: 32px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--bord);
+  background: none;
+  cursor: pointer;
+}
+.pdiag {
+  font-size: 11px;
+  color: var(--muet);
+}
+@media (max-width: 760px) {
+  .panel {
+    width: 100%;
+  }
+  .pfix .preview {
+    max-height: 20vh;
+  }
+}
+.chosen li span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chosen li small {
+  color: var(--muet);
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.btn {
+  border: 1px solid var(--bleu);
+  background: var(--carte);
+  color: var(--bleu);
+  padding: 4px 14px;
+  border-radius: 4px;
+}
+.btn.primary {
+  background: var(--bleu);
+  color: var(--sur-bleu);
+}
+#printhead {
+  display: none;
+}
+th .ths {
+  cursor: pointer;
+}
+th .ths:hover {
+  color: var(--bleu);
+}
+th .arr {
+  color: var(--bleu);
+  font-size: 10px;
+}
+th .thf {
+  position: absolute;
+  right: 1px;
+  bottom: 3px;
+  border: 0;
+  background: var(--voile2);
+  padding: 0 2px;
+  font-size: 10px;
+  color: var(--muet2);
+  cursor: pointer;
+  opacity: 0;
+  border-radius: 3px;
+  line-height: 1.3;
+}
+th:hover .thf,
+th .thf:focus {
+  opacity: 1;
+}
+th .thf:hover {
+  color: var(--bleu);
+}
+th .thf.on {
+  color: var(--sur-bleu);
+  background: var(--bleu);
+  opacity: 1;
+}
+.fpop {
+  position: fixed;
+  z-index: 28;
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  padding: 6px;
+  width: 260px;
+  max-height: min(420px, calc(100vh - 8px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.fpop ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 60px;
+}
+.fpop li label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.fpop li label:hover {
+  background: var(--bleu-hover);
+}
+.fpop li span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fpop li small {
+  color: var(--muet);
+}
+.fpop .fbtn {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.fpop .fbtn button:not(.btn) {
+  border: 0;
+  background: none;
+  color: var(--bleu);
+  cursor: pointer;
+  padding: 0 4px;
+}
+/* préparation de l'impression (printPage) : grille à la largeur d'une A4 paysage (277 mm ≈ 1040 px) */
+html.printing #grid {
+  width: 1040px;
+  max-width: none;
+}
+@media print {
+  #stickyMask {
+    display: none;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 12mm 10mm;
+  }
+  body {
+    padding: 0;
+    font-size: 11px;
+    background: #fff;
+  }
+  #top,
+  #status,
+  #rc,
+  #rcBack,
+  #help,
+  #backdrop,
+  #tip,
+  .picker,
+  .fpop,
+  #config {
+    display: none !important;
+  }
+  #printhead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--bleu);
+  }
+  #printhead .phicon {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    color: var(--bleu);
+  }
+  #printhead h1 {
+    font-size: 16px;
+    color: var(--bleu);
+    margin: 0 0 2px;
+  }
+  #printhead p {
+    margin: 0;
+    font-size: 11px;
+    color: #3a3a3a;
+  }
+  .bh .tog,
+  .bh .max,
+  .bh .search,
+  .bh .qf,
+  .bh .qfs,
+  .bh2 .qffree,
+  .bh2 .qf3m,
+  .bh2 .mapctl,
+  .map-hint {
+    display: none !important;
+  }
+  /* filtre rapide actif : rappelé en texte à la place des boutons */
+  .bh .qf-print {
+    display: inline !important;
+  }
+  .addrow,
+  .rowbtns {
+    display: none !important;
+  }
+  /* Sur papier, la grille CSS se coupe mal d'une page à l'autre (pages blanches, morceaux de
+     tableaux isolés). On passe en flux normal : les blocs courts se rangent côte à côte avec leur
+     largeur en sixièmes (--span) ; un bloc long (printbig) part à la ligne et se coupe librement. */
+  .grid:not(.flux) {
+    display: block !important;
+    font-size: 0; /* supprime les espaces entre blocs côte à côte */
+    margin-right: -8px; /* compense la marge droite du dernier bloc de chaque ligne */
+  }
+  .grid:not(.flux) > .block {
+    display: inline-block !important;
+    vertical-align: top;
+    font-size: 11px;
+    width: calc(var(--span, 6) * 100% / 6 - 8.5px) !important;
+    margin: 0 8px 8px 0 !important;
+    height: auto !important;
+    break-inside: avoid;
+  }
+  /* bloc long : bloc normal (un « inline-block » ne peut pas se couper entre deux pages) */
+  .grid:not(.flux) > .block.printbig {
+    display: block !important;
+  }
+  /* bloc trop large pour sa place (tableau à nombreuses colonnes) : toute la largeur de la page, sur sa propre
+     ligne, au lieu de déborder sur le bloc voisin (0.9.5.4) */
+  .grid:not(.flux) > .block.printwide {
+    display: block !important;
+    width: auto !important;
+    margin-right: 8px !important;
+  }
+  /* graphiques : suivent la largeur du papier */
+  .block canvas {
+    max-width: 100% !important;
+  }
+  /* ni défilement interne, ni hauteur limitée, ni mise en page flex (blocs figés, très grands) */
+  .block,
+  .block > .bb,
+  .block > .bb > .tbl-wrap,
+  .block.tall > .bb > .tbl-wrap,
+  .block.sticky > .bb > .tbl-wrap {
+    position: static !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+  .block.tall,
+  .block.sticky,
+  .block.tall > .bb,
+  .block.sticky > .bb {
+    display: block !important;
+    height: auto !important;
+  }
+  .block.collapsed > .bb {
+    display: block !important;
+  }
+  .block.printbig,
+  .block.printbig > .bb {
+    break-inside: auto !important;
+  }
+  .tbl-wrap,
+  .cartes {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  thead {
+    display: table-header-group;
+  }
+  th {
+    position: static !important;
+  }
+  tr {
+    break-inside: avoid;
+  }
+  td {
+    max-width: none;
+  }
+  .cartes .mini {
+    break-inside: avoid;
+  }
+  .rlink,
+  .info,
+  th .thf {
+    display: none !important;
+  }
+  .block.maxed {
+    position: static !important;
+  }
+  /* carte imprimée seule (0.9.4.7) : les autres blocs disparaissent, le titre passe dans l'en-tête imprimé */
+  html.printone #grid > .usep,
+  html.printone #grid > .block:not(.printme) {
+    display: none !important;
+  }
+  html.printone #grid > .block.printme {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border: 0 !important;
+  }
+  /* légendes complètes sur papier (à l'écran, elles défilent au-delà de 180 px) */
+  .map-legend {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  html.printone .block.printme > .bh,
+  html.printone .block.printme > .bh2 {
+    display: none !important;
+  }
+  .bh2 {
+    border: 0;
+    padding: 0 2px;
+  }
+  .bh2 .qf-print {
+    display: inline !important;
+  }
+  html.printone #printhead p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  html.printone .block.printme,
+  html.printone .block.printme > .bb {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  html.printone .block.printme .leaflet-control-zoom,
+  html.printone .block.printme .leaflet-bar {
+    display: none !important;
+  }
+}
