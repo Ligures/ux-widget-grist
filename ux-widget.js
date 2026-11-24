@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.7.0). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.7.1). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.7.0"; // voir CHANGELOG.md
+const VERSION = "0.9.7.1"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -1576,7 +1576,8 @@ function setupMasonry(grid) {
       el.style.gridRowEnd = `span ${Math.max(1, Math.ceil((el.offsetHeight + gap) / 2))}`;
   };
   S.masonRO = new ResizeObserver((es) => es.forEach((e) => fit(e.target)));
-  grid.querySelectorAll(":scope > .block").forEach((el) => {
+  grid.querySelectorAll(":scope > .block, :scope > .usep").forEach((el) => {
+    // séparateurs compris (0.9.7.1) : sans hauteur réservée, ils passaient sous les blocs suivants
     fit(el);
     S.masonRO.observe(el);
   });

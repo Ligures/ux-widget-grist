@@ -26,6 +26,14 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.7.1] — Séparateurs en disposition « empilée » — 2026-11-24
+
+### Utilisateurs
+- *Corrigé* — **Séparateurs** : ils n'apparaissaient pas quand la page est réglée sur « Empiler les blocs sans trous » ; ils passaient sous les blocs suivants.
+
+### Développeurs
+- *Corrigé* — `setupMasonry` réserve aussi la hauteur des `.usep`.
+
 ## [0.9.7.0] — Séparateurs, sans réglage des couleurs ni actualisation automatique — 2026-11-24
 
 Palier 0.9.7 ; les livraisons 0.9.6.0 à 0.9.6.15 sont regroupées dans « 0.9.6 » ci-dessous.
