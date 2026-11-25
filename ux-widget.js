@@ -1,4 +1,4 @@
-/* UX widget grist — script principal (version 0.9.7.2). Développeur : Ligures. Licence MIT (voir LICENSE).
+/* UX widget grist — script principal (version 0.9.7.3). Développeur : Ligures. Licence MIT (voir LICENSE).
    Chargé par index.html, à la fin du corps de la page. Voir le sommaire ci-dessous.
    Depuis 0.9.5, deux parties sont chargées à la demande (loadPart), dans le même espace global :
      ux-carte.js  : cartes (Leaflet, zonages, QPV, impression et export d'une carte), si la page a une carte ;
@@ -61,7 +61,7 @@
 /* ---------- État et constantes ---------- */
 // DEFAULTS — options d'une page neuve. KIND — libellé des types de vues Grist (parentKey).
 // SUPPORTED — types affichables. DEFAULT_WIDTH — largeur initiale (en sixièmes) d'un bloc ajouté.
-const VERSION = "0.9.7.2"; // voir CHANGELOG.md
+const VERSION = "0.9.7.3"; // voir CHANGELOG.md
 const DEFAULTS = {
   name: "Page composée",
   title: "",
@@ -125,7 +125,8 @@ function kindIcon(s, b) {
 }
 // kindTitle — Icône, type puis titre d'une vue (configuration).
 function kindTitle(s, b) {
-  return `${kindIcon(s, b)}<b class="ctype">${esc(viewKind(s, b)[1])}</b> <span class="ctitle">${esc(getInfo(s.id)?.title || `#${s.id}`)}</span>`;
+  // nom de la vue en bleu, précédé de l'icône de son type, puis le type en gris (0.9.7.3)
+  return `${kindIcon(s, b)}<b class="ctitle">${esc(getInfo(s.id)?.title || `#${s.id}`)}</b> <span class="ctype">${esc(viewKind(s, b)[1])}</span>`;
 }
 const DEFAULT_WIDTH = { record: 6, single: 2, detail: 6, chart: 3, custom: 3 };
 // BRAND — couleur principale des graphiques et cartes : bleu France (DSFR) ou rouge bordeaux du style neutre (voir applyTheme)
@@ -3323,11 +3324,14 @@ async function renderAdvChart(info, rows, body, jobs) {
   const layout = {
     ...JSON.parse(JSON.stringify(spec.layout || {})),
     autosize: true,
-    margin: { l: 45, r: 10, t: spec.layout?.title ? 34 : 10, b: 40 },
+    // marge réglée dans Grist reprise ; sinon, place en haut pour le titre ou les étiquettes au-dessus des barres
+    margin: { l: 45, r: 10, t: spec.layout?.title ? 34 : data.some((t) => t?.type === "bar" && (t.text !== undefined || t.texttemplate) && t.textposition !== "inside" && t.textposition !== "none") ? 24 : 10, b: 40, ...(spec.layout?.margin || {}) },
     font: { family: "Marianne, Arial, sans-serif", size: 11, color: cssVar("--texte2") || "#3a3a3a" },
     paper_bgcolor: cssVar("--carte") || "#fff",
     plot_bgcolor: cssVar("--carte") || "#fff",
   };
+  // barres : étiquettes placées à l'extérieur affichées en entier, même au-delà de la zone du graphique (0.9.7.3)
+  for (const t of data) if (t?.type === "bar" && t.cliponaxis === undefined) t.cliponaxis = false;
   // axes : grilles et traits aux couleurs du thème, sauf réglage explicite du graphique
   for (const k of ["xaxis", "yaxis", ...Object.keys(layout).filter((x) => /^[xy]axis\d+$/.test(x))]) {
     const ax = (layout[k] = { ...(layout[k] || {}) });

@@ -1,4 +1,4 @@
-/* UX widget grist — feuilles de style (version 0.9.7.2).
+/* UX widget grist — feuilles de style (version 0.9.7.3).
    Mise en page (grille de 6 colonnes), blocs, tableaux, fiches, cartes, panneau de configuration, impression.
    Chargée par index.html ; ne contient aucune donnée. */
 @font-face {
@@ -1262,9 +1262,9 @@ tbody tr {
 tbody tr:hover td {
   background: var(--bleu-hover);
 }
-/* ligne sélectionnée : un simple trait bleu en bas */
+/* ligne sélectionnée : bordure basse bleue (trait fin, tracé au pixel près, distinct des séparateurs) */
 tbody tr.sel td {
-  box-shadow: inset 0 -1px 0 var(--bleu);
+  border-bottom-color: var(--bleu);
 }
 /* références multiples / listes de choix : les valeurs se suivent sur la ligne tant qu'il y a la place,
    puis passent à la ligne ; une valeur plus large que la colonne est tronquée */
@@ -2916,20 +2916,20 @@ html.sombre .chosen li.sepitem > .chead .cname {
 .chosen .cname {
   font-size: 13.5px;
 }
-.ctype {
+.ctitle {
   color: var(--bleu);
   font-weight: 700;
   margin-right: 2px;
 }
-.ctype::after {
+.ctitle::after {
   content: " ·";
   color: var(--muet);
   font-weight: 400;
 }
-.ctitle {
-  font-weight: 700;
+.ctype {
+  color: var(--muet);
+  font-weight: 400;
 }
-.pick .ctype,
 .pick .ctitle {
   font-weight: 500;
 }

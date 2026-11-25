@@ -26,6 +26,19 @@ Les versions antérieures à 0.5.0 ont été développées avant la mise en dép
 
 ---
 
+## [0.9.7.3] — Étiquettes des barres, en-têtes de la configuration — 2026-11-25
+
+### Utilisateurs
+- *Corrigé* — **Graphiques avancés** : une valeur affichée au-dessus de la barre la plus haute n'est plus tronquée.
+
+### Administrateurs
+- *Amélioré* — **2. Vues retenues** et **1. Vues disponibles** : le nom de la vue apparaît en premier, en bleu, après l'icône de son type ; le type suit en gris.
+- *Amélioré* — Graphiques avancés : la marge réglée dans Grist (Style → Layout → Margins) est reprise.
+
+### Développeurs
+- *Corrigé* — `renderAdvChart` : `cliponaxis: false` sur les traces `bar` (sauf réglage contraire), marge haute de 24 px si des étiquettes de barres sont hors de la barre, `spec.layout.margin` prioritaire.
+- *Amélioré* — `kindTitle` : `.ctitle` (bleu) puis `.ctype` (gris).
+
 ## [0.9.7.2] — Séparateurs : colonne de départ, couleur dans la configuration — 2026-11-24
 
 ### Utilisateurs
